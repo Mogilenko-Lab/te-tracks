@@ -1,9 +1,12 @@
-# Build products live in the reference cache, never in the repo.
+# Build products live in the reference cache. The repo carries logic and expectations.
 *.gz
-*.tsv
 *.bed
 *.saf
 *.gtf
 *.parquet
 *.locInd
+*.tsv
 work/
+
+# Expectations are part of the contract and stay tracked.
+!tests/expectations/*.tsv
