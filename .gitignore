@@ -1,0 +1,9 @@
+# Build products live in the reference cache, never in the repo.
+*.gz
+*.tsv
+*.bed
+*.saf
+*.gtf
+*.parquet
+*.locInd
+work/
