@@ -51,6 +51,7 @@ for stage in "$REPO_ROOT"/src/[0-9][0-9]_*.sh; do
   bash "$stage" "$SNAP" "$CFG"
 done
 
-ln -sfn "te_${GENOME}_${DATE}" "$FAMILY/current"
-log "current -> te_${GENOME}_${DATE}"
+# Publication is content-addressed, so it runs after the stages and owns the `current` symlink.
+log "--- release.sh ---"
+bash "$REPO_ROOT/src/release.sh" "$SNAP" "$CFG"
 log "done"

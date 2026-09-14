@@ -23,8 +23,12 @@ Two public URLs and one gene annotation. All three are md5-pinned in `config/<ge
 ./build.sh --genome mm39 --dest /data2/users/shared/refcache
 ```
 
-The build writes a dated snapshot and moves `current` onto it. Transfer the snapshot to any other
-root and verify it with `src/99_verify.sh --check`.
+The build writes a dated snapshot, fingerprints it, and moves `current` onto it. A re-run that
+reproduces the same content leaves `current` alone and records a `reconfirmed` row. A build that
+changes any output archives the previous snapshot and records both.
+
+Every build carries a `BUILD_ID`, so a project cites one id and gets exactly those bytes.
+`docs/RELEASES.md` holds the contract.
 
 ## Outputs
 
@@ -39,7 +43,9 @@ root and verify it with `src/99_verify.sh --check`.
 
 ## Guarantees
 
-- A re-run reproduces byte-identical outputs. `src/99_verify.sh --check` proves it by md5.
+- A re-run reproduces byte-identical outputs, and `BUILD_ID` proves it by content.
+- Every published build stays on disk. Superseded builds move to `archive/` complete, so a result
+  produced against an earlier annotation stays reproducible against the bytes that produced it.
 - Scripts run under `LC_ALL=C`, so sort order is stable across machines and locales.
 - Data files carry coordinates and annotation. `MANIFEST.json` carries timestamps, input md5s,
   output md5s and the builder's git SHA.
@@ -57,6 +63,9 @@ same pins and the same rule extend to them by adding a `config/<genome>.env`.
 
 `docs/DECISIONS.md` records the choices that shape every output: the `locus_id` form, the contig
 namespace, exon subtraction as a view, and the class policy.
+
+`docs/RELEASES.md` records the `BUILD_ID` contract, the archive behaviour and how a project cites a
+build.
 
 `docs/PROVENANCE.md` records the derivation and the evidence that it reproduces the annotation the
 lab has been using.
