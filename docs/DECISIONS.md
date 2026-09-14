@@ -29,11 +29,15 @@ identity.
 
 ## Exon subtraction is a view
 
-The canonical table carries every TE locus at full length and an `exon_overlap_bp` column.
+The canonical table carries every TE locus at full length. An `exon_overlap_bp` column lands with the
+genic-context stage, so a consumer reads the overlap and cuts its own threshold.
 
 Subtraction serves one purpose: keeping a read from counting toward both a gene and a TE inside a
-joint bulk matrix. The bulk views apply it. Single-cell TE tools quantify TEs on their own terms, so
-they read the full-length intervals, and locus boundaries stay intact for locus-level EM.
+joint matrix. `te_subfamily_noExon.saf` applies it, and the joint bulk matrix reads that view. Every
+other view carries full-length intervals, which is what locus-level EM and peak intersection need.
+
+So subtraction follows the analysis that needs it rather than the modality. A single-cell joint
+gene + TE matrix reads the subtracted view on the same grounds.
 
 ## Contig names ship in both flavours
 
@@ -46,10 +50,24 @@ flavours from one build keeps the mapping in one place, and each flavour carries
 
 ## The class policy is explicit
 
-`TE_CLASSES` in the genome config lists the carried classes, and `EXCLUDE_FAMILY_PREFIX` removes the
-tRNA-derived SINE families.
+Two filters define the TE set, and they rest on different grounds.
 
-The carried set includes `Satellite`, so "TE" in these tracks means "interspersed repeat plus
-satellite". `docs/PROVENANCE.md` records the record counts each rule accounts for. Changing the
-policy is a config edit, and `src/99_verify.sh` compares the result against
+**`TE_CLASSES` carries the biology.** `repClass` `tRNA`, `rRNA`, `scRNA`, `snRNA` and `srpRNA` name
+Pol III and structural-RNA loci, and holding them out keeps abundant structural RNA clear of a TE
+count. In mm39 that leaves the 3,508 annotated tRNA genes outside the set. The carried classes
+include `Satellite`, so "TE" in these tracks means "interspersed repeat plus satellite".
+
+**`EXCLUDE_FAMILY_PREFIX` carries provenance.** `"tRNA"` matches `repFamily` `tRNA`, `tRNA-RTE` and
+`tRNA-Deu` — the families RepeatMasker names for the ancestral source RNA rather than for a lineage.
+In mm39 it drops one subfamily each: `LFSINE_Vert` 1,235, `MamSINE1` 925, `AmnSINE2` 388, all
+ancient conserved vertebrate and amniote SINEs. The tRNA-derived SINE families carrying lineage
+names stay in the set: `B4` 380,688, `B2` 370,294, `MIR` 120,815, `ID` 60,640 loci. So this filter
+selects on nomenclature, and it earns its place by reproducing the packaged annotation behind
+13036-DM, 14839-DM and the earlier Yasmine results, which `docs/PROVENANCE.md` records exactly.
+
+Setting `EXCLUDE_FAMILY_PREFIX=""` requires a code change, since an empty prefix anchors to `^` and
+matches every family.
+
+Changing either policy is a config edit. It yields a new `BUILD_ID`, the previous build stays in
+`archive/`, and `src/99_verify.sh` compares the result against
 `tests/expectations/<genome>_class_counts.tsv`.

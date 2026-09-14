@@ -8,14 +8,23 @@ rule reproduces the annotation the lab has been using.
 ```
 UCSC <genome>/database/rmsk.txt.gz
   1. carry repClass in {SINE LTR LINE DNA Satellite Retroposon Unknown RC Unspecified DNA?}
-  2. carry repFamily outside the tRNA-derived families (repFamily !~ ^tRNA)
+  2. carry repFamily outside the source-RNA-named families (repFamily !~ ^tRNA)
   3. start = genoStart + 1          rmsk is 0-based half-open; the table is 1-based inclusive
   4. gene hierarchy = repName (subfamily), repFamily (family), repClass (class)
   5. contig names map through <genome>.chromAlias.txt for the Ensembl-named views
 ```
 
-Rule 1 carries `Satellite`, so "TE" in these tracks means "interspersed repeat plus satellite".
-Rule 2 removes 2,548 records in mm39: `tRNA` 1,235, `tRNA-RTE` 925, `tRNA-Deu` 388.
+Rule 1 carries `Satellite`, so "TE" in these tracks means "interspersed repeat plus satellite". It
+also holds the Pol III and structural-RNA classes out, `tRNA` among them, so mm39's 3,508 annotated
+tRNA genes stay outside the TE set.
+
+Rule 2 removes 2,548 SINE records in mm39, one subfamily per family: `tRNA` → `LFSINE_Vert` 1,235,
+`tRNA-RTE` → `MamSINE1` 925, `tRNA-Deu` → `AmnSINE2` 388. It selects on RepeatMasker nomenclature,
+and `docs/DECISIONS.md` records its standing.
+
+Rule 1 is a whitelist and the snippet under "Reproducing this" is the complementary blacklist. Both
+yield 3,799,629 records against the current class census, measured. The whitelist is the rule in
+force, so a class new to a future `rmsk` release arrives excluded and surfaces in `99_verify.sh`.
 
 ## Evidence, mm39
 
@@ -31,7 +40,7 @@ coordinate, strand, family and class matching.
 
 | Class | rmsk | packaged |
 |---|---|---|
-| SINE | 1,495,172 | 1,492,624 → the 2,548 tRNA-derived SINEs removed by rule 2 |
+| SINE | 1,495,172 | 1,492,624 → the 2,548 records removed by rule 2 |
 | LTR | 1,105,064 | equal |
 | LINE | 976,368 | equal |
 | DNA | 164,783 | equal |

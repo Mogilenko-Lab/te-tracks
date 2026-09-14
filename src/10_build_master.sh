@@ -18,8 +18,10 @@ mkdir -p "$WORK"
 # 7 genoStart, 8 genoEnd, 9 genoLeft, 10 strand, 11 repName, 12 repClass, 13 repFamily,
 # 14 repStart, 15 repEnd, 16 repLeft, 17 id
 #
-# Two filters define the TE set, and together they reproduce the annotation the lab has used:
-# carried classes, and the exclusion of tRNA-derived SINE families.
+# Two filters define the TE set, and together they reproduce the annotation the lab has used.
+# TE_CLASSES carries the biology: it holds the Pol III and structural-RNA classes out of the set.
+# EXCLUDE_FAMILY_PREFIX carries provenance: it reproduces an upstream naming convention.
+# config/<genome>.env states what each one costs.
 # genoStart is 0-based, so the table start is genoStart + 1.
 log "selecting the TE set from rmsk"
 zcat "$SRC/rmsk.txt.gz" \

@@ -2,9 +2,13 @@
 
 Reproducible transposable-element annotation tracks, built from RepeatMasker.
 
-One canonical table holds one row per TE locus. Every delivered track is a projection of that table,
-so bulk RNA-seq, single-cell RNA and single-cell ATAC share one subfamily universe and one locus
-identity. A TE locus in an ATAC peak and a TE locus in a bulk locus-level call are the same object,
+One canonical table holds one row per TE locus. 
+Every delivered track is a projection of that table.
+So bulk RNA-seq, single-cell RNA and single-cell ATAC are intended to share 
+* one subfamily universe 
+* and one locus identity. 
+
+A TE locus in an ATAC peak and a TE locus in a bulk locus-level call are the same object,
 joined by string equality on `locus_id`.
 
 ## Sources
@@ -23,23 +27,43 @@ Two public URLs and one gene annotation. All three are md5-pinned in `config/<ge
 ./build.sh --genome mm39 --dest /data2/users/shared/refcache
 ```
 
-The build writes a dated snapshot, fingerprints it, and moves `current` onto it. A re-run that
-reproduces the same content leaves `current` alone and records a `reconfirmed` row. A build that
-changes any output archives the previous snapshot and records both.
+The build writes a dated snapshot, fingerprints it, and moves `current` onto it. 
+A re-run that reproduces the same content leaves `current` alone and records a `reconfirmed` row. 
+A build that changes any output archives the previous snapshot and records both.
 
 Every build carries a `BUILD_ID`, so a project cites one id and gets exactly those bytes.
 `docs/RELEASES.md` holds the contract.
 
 ## Outputs
 
-`docs/OUTPUTS.md` states every file, its columns and its consumer.
+One interval set, projected along two axes: the **level** the name field carries, and the **format**
+the tool parses. Bulk and single-cell tools read the same cells of this grid.
 
-| Family | Files | Consumer |
+| Format | subfamily level | locus level |
 |---|---|---|
-| canonical | `te_loci.tsv.gz`, `te_loci.parquet`, `te_dim.tsv` | ledger joins, rollups, any new view |
-| bulk | `subfamily.saf`, `subfamily_noExon.saf`, `context_*.saf`, `te_loci.locInd` | featureCounts, TElocal |
-| single cell | `te_subfamily.bed`, `te_locus.bed`, `te_loci.gtf` | IRescue, scTE, SoloTE, Telescope |
-| namespace | `ensembl_named/` | consumers on Ensembl contig names |
+| SAF, 1-based — featureCounts | `te_subfamily.saf` | `te_locus.saf` |
+| BED, 0-based — IRescue, scTE, SoloTE, bedtools | `te_subfamily.bed` | `te_locus.bed` |
+| GTF, 1-based — TEtranscripts, Telescope | `te_subfamily.gtf` | `te_locus.gtf` |
+| locInd — TElocal | | `te_locus.locInd` |
+
+At subfamily level the name field holds `subfamily`, and a count means reads per subfamily summed
+over its loci. At locus level it holds `locus_id`, and a count means reads per insertion.
+featureCounts and IRescue read subfamily level by default; TElocal and `irescue --locus-level`
+resolve loci.
+
+**Canonical table** — `te_loci.tsv.gz`, `te_loci.parquet`, `te_dim.tsv`. Every cell above is a
+projection of it, and ledger joins and rollups read it directly.
+
+**Interval variants**, the views whose intervals depart from the canonical set:
+
+| Variant | Purpose |
+|---|---|
+| `te_subfamily_noExon.saf` | a joint gene + TE bulk matrix counts each read once |
+| `te_context_{intronic,adjacent,intergenic}.saf` | genic-context strata for the bulk ladder |
+
+**Namespace** — `ensembl_named/` carries every view on Ensembl contig names.
+
+`docs/OUTPUTS.md` states every file, its columns and its consumer.
 
 ## Guarantees
 

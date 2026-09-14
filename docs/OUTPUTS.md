@@ -45,19 +45,29 @@ keeps naming the version that produced the bytes.
 These land once the identity and policy questions settle. Each is a projection of the canonical
 table, so adding one changes no upstream stage.
 
-| File | Coordinates | Consumer |
-|---|---|---|
-| `bulk/subfamily.saf` | 1-based | featureCounts, TE counting at subfamily level |
-| `bulk/subfamily_noExon.saf` | 1-based | featureCounts, joint gene + TE matrices |
-| `bulk/context_{intronic,adjacent,intergenic}.saf` | 1-based | context-stratified counting |
-| `bulk/te_loci.locInd` | 1-based | TElocal locus-level quantification |
-| `singlecell/te_subfamily.bed` | 0-based | IRescue default, scTE; column 4 is `subfamily:family:class` |
-| `singlecell/te_locus.bed` | 0-based | `irescue --locus-level`, ATAC peak intersection; column 4 is `locus_id` |
-| `singlecell/te_loci.gtf` | 1-based | Telescope, TEtranscripts |
-| `te_loci.parquet` | 1-based | DuckDB ledgers |
-| `locus_context.tsv` | — | `locus_id`, `genic_context`, signed `dist_to_gene`, `nearest_gene_id`, `nearest_gene_strand` |
-| `rename_map.tsv` | — | packaged-annotation names mapped to rmsk names, for comparisons against earlier results |
-| `ensembl_named/` | as above | consumers on Ensembl contig names |
+Views are named `te_<level>[_<variant>].<format>`. The level sets the name field, the format sets the
+container, and the two are independent. Consumers appear here rather than in the layout, so one file
+serves every tool that reads its format.
+
+| File | Coordinates | Name field | Consumer |
+|---|---|---|---|
+| `te_subfamily.saf` | 1-based | `subfamily` | featureCounts |
+| `te_locus.saf` | 1-based | `locus_id` | featureCounts, locus-level bulk counting |
+| `te_subfamily.bed` | 0-based | `subfamily` | IRescue default, scTE, SoloTE |
+| `te_locus.bed` | 0-based | `locus_id` | `irescue --locus-level`, ATAC peak intersection |
+| `te_subfamily.gtf` | 1-based | `gene_id` = `subfamily` | TEtranscripts |
+| `te_locus.gtf` | 1-based | locus attribute | Telescope |
+| `te_locus.locInd` | 1-based | `locus_id` | TElocal |
+| `te_subfamily_noExon.saf` | 1-based | `subfamily` | featureCounts, joint gene + TE matrices |
+| `te_context_{intronic,adjacent,intergenic}.saf` | 1-based | `subfamily` | context-stratified counting |
+| `te_loci.parquet` | 1-based | — | DuckDB ledgers |
+| `locus_context.tsv` | — | — | `locus_id`, `genic_context`, signed `dist_to_gene`, `nearest_gene_id`, `nearest_gene_strand` |
+| `rename_map.tsv` | — | — | packaged-annotation names mapped to rmsk names, for comparisons against earlier results |
+| `ensembl_named/` | as above | as above | consumers on Ensembl contig names |
+
+`te_subfamily.gtf` and `te_locus.gtf` differ in the attribute that names the feature, so each tool
+reads the file built for it. The exact attribute keys are confirmed against each tool's
+documentation when the view stage is written.
 
 ### BED column layout
 

@@ -16,7 +16,7 @@ fetch "$CHROMALIAS_URL" "$SRC/chromAlias.txt"
 fetch "$GENE_GTF_URL"   "$SRC/$(basename "$GENE_GTF_URL")"
 
 RMSK_OBSERVED="$(verify_md5 "$SRC/rmsk.txt.gz" "$RMSK_MD5")"
-ALIAS_OBSERVED="$(verify_md5 "$SRC/chromAlias.txt" "")"
+ALIAS_OBSERVED="$(verify_md5 "$SRC/chromAlias.txt" "$CHROMALIAS_MD5")"
 GTF_OBSERVED="$(verify_md5 "$SRC/$(basename "$GENE_GTF_URL")" "$GENE_GTF_MD5")"
 
 # The source md5s become the provenance of every derived track.
