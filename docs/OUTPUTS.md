@@ -45,13 +45,15 @@ Consensus start and end follow the source; two mm39 records carry start above en
 (`L1MdFanc_II|chr1:9847889-9847905|-`, `L1MdF_III|chr2:116363011-116363342|-`), so a derived
 consensus-match length is signed.
 
-Rows sort by `(chrom, start_1, end_1, strand, rmsk_name)` with C-locale text order. Source
-and UCSC rows join one-to-one on these five fields. Class-only `.out` tokens project the
+Rows sort by `(chrom, start_1, end_1, strand, rmsk_name)`, with text columns in C-locale byte
+order and coordinate columns ascending numerically. Source and UCSC rows join one-to-one
+on these five fields. Class-only `.out` tokens project the
 class into both raw taxonomy fields under the qualified UCSC convention.
 
 Record components remain authoritative for computation. Names and contig names are free of
 `|`, `:` and whitespace, so each record key parses back into its
-components. Genomic bounds satisfy `1 <= start_1 <= end_1 <= contig length`. Equal coordinates
+components. Repeat names also exclude `/`, keeping unresolved rank tokens separator-free.
+Genomic bounds satisfy `1 <= start_1 <= end_1 <= contig length`. Equal coordinates
 with different names retain separate record identities; exact duplicate keys fail the build.
 
 ### `tables/rmsk_instance_members.tsv.gz`
@@ -245,10 +247,10 @@ records its membership.
 Columns are `subfamily`, `family`, `class`, `n_loci` and `total_bp`. Each row summarizes one
 source `(subfamily, family, class)` triple.
 
-## Deferred
+## Exports and later phases
 
 Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>[_<profile>].<format>`.
-The core release supplies six `interspersed` full-interval exports in each of the `ucsc`,
+The core release supplies seven `interspersed` full-interval exports in each of the `ucsc`,
 `ensembl` and `gencode` contig namespaces. The gene child family supplies `exon_subtracted`
 intervals in phase 8. Each emitted feature and block registers to source records through
 `tables/export_feature_members.tsv.gz`.
@@ -277,33 +279,143 @@ intervals in phase 8. Each emitted feature and block registers to source records
 
 ### Phase 4: UCSC full-interval exports
 
-All six exports land under `exports/ucsc/interspersed/full/`.
-Exports carry no provisional flag; the status is a class property recoverable by joining names to `rmsk_taxonomy`.
+All seven exports land under `exports/ucsc/interspersed/full/`.
+The builder reads the default universe from `universes.json` and selects its records through
+`tables/universe_members.tsv.gz`. Provisional status is a class property recoverable by joining
+names to `rmsk_taxonomy` or records to `universe_members`.
+
+Every file is uncompressed UTF-8 with LF endings, sorted by
+`(chrom, start_1, end_1, strand, rmsk_name)`, with text columns in C-locale byte order and
+coordinate columns ascending numerically. Each selected record supplies
+one full interval in every export. Identifier components match `[A-Za-z0-9_.+?()-]+`; emitted
+identifiers additionally admit the separators `|`, `:` and `/`. The builder validates every
+BED name, GTF attribute value and SAF GeneID and reports the offending value and file on failure.
 
 | File | Coordinates | Feature identity |
 |---|---|---|
 | `record.bed` | 0-based half-open | BED6 name = `rmsk_record_id` |
 | `subfamily.bed` | 0-based half-open | BED6 name = `rmsk_name` |
-| `family.bed` | 0-based half-open | BED6 name = `<canonical_class>/<canonical_family>` or `unresolved_family_<rmsk_name>` |
+| `family.bed` | 0-based half-open | BED6 name = `<class>/<family>`; each position carries its canonical label or `unresolved_<rank>_<rmsk_name>` token |
 | `record.gtf` | 1-based inclusive | Exon rows; `gene_id` = `rmsk_name`; `transcript_id` and `locus` = record alias |
+| `subfamily.gtf` | 1-based inclusive | Exon rows; `gene_id`, `transcript_id` and `locus` = `rmsk_name` |
 | `subfamily.saf` | 1-based inclusive | `GeneID` = `rmsk_name` |
 | `taxonomy_triple.saf` | 1-based inclusive | Canonical taxonomy-triple grouping; `GeneID` = `<rmsk_name>:<canonical_family>:<canonical_class>` |
 
-Canonical labels are a function of the name, so `taxonomy_triple.saf` carries one `GeneID` per
-`rmsk_name`, and a name whose raw labels differ across records appears once, under its canonical
-triple.
+#### `record.bed`
 
-BED6 columns are `chrom`, `start`, `end`, `name`, `score` and `strand`;
-`score = min(sw_score, 1000)`. The GTF record alias is
-`R|mm39|<name>|<chrom>|<start_1>|<end_1>|<strand>`.
-GTF `family_id` and `class_id` carry canonical labels, `rmsk_family` and `rmsk_class` carry raw
-labels, and `instance_id` is `I|mm39|<id>`. Unresolved GTF ranks use
-`unresolved_family_<rmsk_name>` and `unresolved_class_<rmsk_name>` in `family_id` and `class_id`;
-the triple `GeneID` uses these tokens in its family and class positions.
+BED6 columns are `chrom`, `start_1 - 1`, `end_1`, `rmsk_record_id`, `min(sw_score, 1000)` and
+`strand`. Coordinates are 0-based half-open. Column 4 identifies the source record for IRescue
+and interval operations.
 
-`tables/export_feature_members.tsv.gz` carries `export_path`, `feature_level`,
-`emitted_feature_id`, `rmsk_record_id`, `block_start_1` and `block_end_1`.
-Full-interval exports register one block per record.
+Check contig and coordinate order with `LC_ALL=C sort -c -t$'\t' -k1,1 -k2,2n -k3,3n record.bed`.
+
+#### `subfamily.bed`
+
+BED6 uses the same 0-based half-open columns and clipped score as `record.bed`, with
+`rmsk_name` in column 4. Repeated names group records into subfamilies for IRescue.
+
+#### `family.bed`
+
+BED6 uses 0-based half-open coordinates and the clipped score, with `<class>/<family>` in
+column 4. The two positions carry the name's canonical labels. An unresolved class occupies
+the class position as `unresolved_class_<rmsk_name>`; an unresolved family occupies the family
+position as `unresolved_family_<rmsk_name>`. Family identity includes its class.
+The prefix `unresolved_` is reserved for generated rank tokens; the exporter rejects resolved
+canonical class or family labels beginning with it.
+
+#### `record.gtf`
+
+One exon row per record uses the nine GTF columns: `chrom`, `te-tracks`, `exon`, `start_1`,
+`end_1`, `sw_score`, `strand`, `.`, and attributes. Coordinates are 1-based inclusive and the
+score retains its source value. The colon-free record alias is
+`R|mm39|<rmsk_name>|<chrom>|<start_1>|<end_1>|<strand>`; the instance alias is
+`I|mm39|<rmsk_instance_id>`. Record aliases retain UCSC contig names; both aliases stay fixed
+across namespace exports.
+
+Attributes appear in this order: `gene_id`, `transcript_id`, `locus`, `family_id`, `class_id`,
+`rmsk_family`, `rmsk_class`, `instance_id`, `rmsk_record_id`. Each is written as `key "value";`,
+with one space between attributes. Stellarscope's default `locus` groups by record;
+`--attribute instance_id` selects the source instance grouping.
+
+#### `subfamily.gtf`
+
+One exon row per record uses the same fixed GTF columns and 1-based inclusive coordinates.
+Attributes appear in this order: `gene_id`, `transcript_id`, `locus`, `family_id`, `class_id`,
+`rmsk_family`, `rmsk_class`. The first three values equal `rmsk_name`, supplying subfamily
+identity for Stellarscope, TEsingle and TElocal.
+
+The following attribute mapping applies to both GTFs. TEtranscripts groups by
+`gene_id:family_id:class_id`; TEsingle and TElocal use
+`transcript_id:gene_id:family_id:class_id`. Canonical ranks come from the name's row in
+`taxonomy_canonical`; an unresolved rank emits `unresolved_<rank>_<rmsk_name>` in its position.
+
+| Attribute | Source column or transformation | Consumer that reads it |
+|---|---|---|
+| `gene_id` | `rmsk_records.rmsk_name` | TEtranscripts, TEsingle, TElocal |
+| `transcript_id` | Record alias in `record.gtf`; `rmsk_name` in `subfamily.gtf` | TEsingle, TElocal |
+| `locus` | Record alias in `record.gtf`; `rmsk_name` in `subfamily.gtf` | Stellarscope default grouping |
+| `family_id` | `taxonomy_canonical.canonical_family` or unresolved family token | TEtranscripts, TEsingle, TElocal |
+| `class_id` | `taxonomy_canonical.canonical_class` or unresolved class token | TEtranscripts, TEsingle, TElocal |
+| `rmsk_family` | `rmsk_records.rmsk_family` | Source-taxonomy audit readers |
+| `rmsk_class` | `rmsk_records.rmsk_class` | Source-taxonomy audit readers |
+| `instance_id` (record GTF) | `I\|mm39\|<rmsk_instance_id>` | Stellarscope with `--attribute instance_id` |
+| `rmsk_record_id` (record GTF) | `rmsk_records.rmsk_record_id` | Registration and catalog joins |
+
+#### `subfamily.saf`
+
+Tab-separated SAF starts with the header `GeneID`, `Chr`, `Start`, `End`, `Strand`.
+Each data row contains `rmsk_name`, `chrom`, `start_1`, `end_1`, `strand`, using 1-based
+inclusive coordinates. featureCounts groups intervals sharing the subfamily GeneID.
+
+#### `taxonomy_triple.saf`
+
+Tab-separated SAF uses the same header and 1-based inclusive intervals as `subfamily.saf`.
+GeneID is `<rmsk_name>:<canonical_family>:<canonical_class>`, with unresolved rank tokens in
+their family or class positions. Canonical labels are a function of the name, so the 1,220
+interspersed names yield 1,220 GeneIDs, including the 20 names carrying two raw labels.
+The filename identifies the legacy lab taxonomy grouping read by featureCounts.
+
+#### `tables/export_feature_members.tsv.gz`
+
+Columns appear in this order:
+
+| Column | Type | Contract |
+|---|---|---|
+| `universe_name` | text | Selected membership, `interspersed`. |
+| `variant` | text | Interval support, `full`. |
+| `feature_level` | text | `record`, `subfamily`, `family` or `taxonomy_triple`. |
+| `emitted_feature_id` | text | Exact emitted feature identifier at that level. |
+| `rmsk_record_id` | text | Member record in the canonical table. |
+| `block_start_1` | int64 | Retained block start, 1-based inclusive. |
+| `block_end_1` | int64 | Retained block end, inclusive. |
+
+Each `(universe_name, variant, feature_level, emitted_feature_id, rmsk_record_id)` occurs
+once. Full intervals register one block equal to the record bounds. Record level registers
+both `rmsk_record_id` for BED and the record alias for GTF. Subfamily level registers each
+name-record pair once for BED, GTF and SAF. Family and taxonomy-triple levels each register
+one name-derived feature per record, yielding five registration rows per selected record.
+
+Emitted IDs retain UCSC names inside record identities and are namespace-invariant; the same
+registration serves phase 6 namespaces. Rows follow export record order, then record BED,
+record GTF, subfamily, family and taxonomy-triple spelling. Gzip uses the deterministic table
+serialization above. Counts remain at their measured feature grain; selecting supporting
+records selects each distinct measured feature once before summing its count.
+
+#### `tables/exports.tsv`
+
+One row per export file, sorted by `export_path`, inventories these columns in order:
+
+| Column | Type | Contract |
+|---|---|---|
+| `export_path` | text | Path relative to the build directory. |
+| `namespace` | text | Contig-column namespace, `ucsc` in phase 4. |
+| `universe_name` | text | Registered universe, `interspersed`. |
+| `variant` | text | Registered interval variant, `full`. |
+| `feature_level` | text | Export's default feature level. |
+| `format` | text | `bed`, `gtf` or `saf`. |
+| `rows` | int64 | Data rows; SAF headers are counted separately. |
+| `distinct_features` | int64 | Distinct BED names, GTF `locus` values or SAF GeneIDs. |
+| `sha256` | text | SHA-256 of the complete emitted file bytes. |
 
 ### Phase 5: consumer fixtures
 
@@ -312,7 +424,7 @@ enter a release with a named consumer and a passing fixture.
 
 ### Phase 6: contig namespaces and qualification
 
-The six full-interval exports also land under `exports/ensembl/interspersed/full/` and
+The seven full-interval exports also land under `exports/ensembl/interspersed/full/` and
 `exports/gencode/interspersed/full/`. They carry the same rows as their UCSC counterparts,
 with contig columns renamed through `tables/contig_aliases.tsv`.
 Record ids retain their UCSC contig names. `tables/contig_coverage.tsv` reports per-contig record

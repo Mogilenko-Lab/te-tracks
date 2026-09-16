@@ -1,0 +1,6 @@
+rmsk_name	canonical_class	canonical_family	class_status	family_status
+A	LINE	L1	resolved_uncertainty_suffix	resolved_uncertainty_suffix
+B	LINE	L1	concordant	concordant
+Excluded	LINE	L1	concordant	concordant
+Mystery	DNA		concordant	unresolved
+Opaque			unresolved	unresolved

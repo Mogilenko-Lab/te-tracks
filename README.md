@@ -59,7 +59,8 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 | `tests/fixtures/taxonomy/dfam_snapshot.provenance.json` | delivered, tested | 3 |
 | `tests/fixtures/taxonomy/rule_cases.tsv` | delivered, tested | 3 |
 | `tests/fixtures/taxonomy/rollup_counts.tsv` | delivered, tested | 3 |
-| `tests/fixtures/exports/` | deferred | 4 |
+| `tests/fixtures/taxonomy/weighting_context.tsv` | delivered, tested | 3 |
+| `tests/fixtures/exports/` | delivered, tested | 4 |
 | `tests/fixtures/consumers/` | deferred | 5 |
 | `tests/lib/consumers.py` | deferred | 5 |
 | `tests/lib/records.py` | delivered, tested | 2 |
@@ -74,26 +75,29 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 | `universes.json` | delivered, tested | 2 |
 | `tables/universe_members.tsv.gz` | delivered, tested | 2 |
 | `tables/universe_summary.tsv` | delivered, tested | 2 |
-| `tables/export_feature_members.tsv.gz` | deferred | 4 |
-| `tables/export_summary.tsv` | deferred | 4 |
+| `tables/export_feature_members.tsv.gz` | delivered, tested | 4 |
+| `tables/exports.tsv` | delivered, tested | 4 |
 | `tables/contig_aliases.tsv` | deferred | 6 |
 | `tables/contig_coverage.tsv` | deferred | 6 |
-| `exports/ucsc/interspersed/full/record.bed` | deferred | 4 |
-| `exports/ucsc/interspersed/full/subfamily.bed` | deferred | 4 |
-| `exports/ucsc/interspersed/full/family.bed` | deferred | 4 |
-| `exports/ucsc/interspersed/full/record.gtf` | deferred | 4 |
-| `exports/ucsc/interspersed/full/subfamily.saf` | deferred | 4 |
-| `exports/ucsc/interspersed/full/taxonomy_triple.saf` | deferred | 4 |
+| `exports/ucsc/interspersed/full/record.bed` | delivered, tested | 4 |
+| `exports/ucsc/interspersed/full/subfamily.bed` | delivered, tested | 4 |
+| `exports/ucsc/interspersed/full/family.bed` | delivered, tested | 4 |
+| `exports/ucsc/interspersed/full/record.gtf` | delivered, tested | 4 |
+| `exports/ucsc/interspersed/full/subfamily.gtf` | delivered, tested | 4 |
+| `exports/ucsc/interspersed/full/subfamily.saf` | delivered, tested | 4 |
+| `exports/ucsc/interspersed/full/taxonomy_triple.saf` | delivered, tested | 4 |
 | `exports/ensembl/interspersed/full/record.bed` | deferred | 6 |
 | `exports/ensembl/interspersed/full/subfamily.bed` | deferred | 6 |
 | `exports/ensembl/interspersed/full/family.bed` | deferred | 6 |
 | `exports/ensembl/interspersed/full/record.gtf` | deferred | 6 |
+| `exports/ensembl/interspersed/full/subfamily.gtf` | deferred | 6 |
 | `exports/ensembl/interspersed/full/subfamily.saf` | deferred | 6 |
 | `exports/ensembl/interspersed/full/taxonomy_triple.saf` | deferred | 6 |
 | `exports/gencode/interspersed/full/record.bed` | deferred | 6 |
 | `exports/gencode/interspersed/full/subfamily.bed` | deferred | 6 |
 | `exports/gencode/interspersed/full/family.bed` | deferred | 6 |
 | `exports/gencode/interspersed/full/record.gtf` | deferred | 6 |
+| `exports/gencode/interspersed/full/subfamily.gtf` | deferred | 6 |
 | `exports/gencode/interspersed/full/subfamily.saf` | deferred | 6 |
 | `exports/gencode/interspersed/full/taxonomy_triple.saf` | deferred | 6 |
 | `te_mm39_gene`: `exports/ucsc/interspersed/exon_subtracted/subfamily.saf` | deferred | 8 |
@@ -119,9 +123,9 @@ The redesign contract establishes these guarantees as the listed phases land:
   `interspersed` is the default.
 - `rmsk_record_id` is `<rmsk_name>|<chrom>:<start_1>-<end_1>|<strand>`. Export membership
   registers each emitted feature and interval block to its source records.
-- The `interspersed` full-interval exports contain six files in each of `ucsc`, `ensembl` and
-  `gencode`: BED at record, subfamily and family level; GTF at record level; SAF at subfamily
-  level and at the legacy taxonomy-triple grouping.
+- The `interspersed` full-interval exports contain seven files in each of `ucsc`, `ensembl` and
+  `gencode`: `record.bed`, `subfamily.bed`, `family.bed`, `record.gtf`, `subfamily.gtf`,
+  `subfamily.saf` and `taxonomy_triple.saf`.
 - Tables, GTF and SAF use 1-based inclusive coordinates; BED uses 0-based half-open coordinates.
   Contig aliases preserve record identity across `ucsc`, `ensembl` and `gencode` exports.
 - Exon subtraction guarantees exon-disjoint sequence support under the declared mask;

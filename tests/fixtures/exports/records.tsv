@@ -1,0 +1,7 @@
+rmsk_record_id	chrom	start_1	end_1	strand	rmsk_name	rmsk_family	rmsk_class	rmsk_instance_id	sw_score
+A|chr2:30-35|-	chr2	30	35	-	A	L1?	LINE?	007	42
+B|chr2:10-20|+	chr2	10	20	+	B	L1	LINE	009	50
+Excluded|chr1:5-9|+	chr1	5	9	+	Excluded	L1	LINE	003	7
+Opaque|chr10:9-12|-	chr10	9	12	-	Opaque	L1	LINE	02	1000
+Mystery|chr10:1-1|+	chr10	1	1	+	Mystery	F1	DNA	0001	9
+A|chr2:10-20|+	chr2	10	20	+	A	L1	LINE	007	1400

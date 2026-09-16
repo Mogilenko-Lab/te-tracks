@@ -65,7 +65,7 @@ def load_sizes(path):
 
 def validate_records(frame, sizes):
     """Enforce parseable unique identities, genomic bounds and instance scope."""
-    for name, pattern in (("rmsk_name", r"[|:\s]"), ("chrom", r"[|:\s]")):
+    for name, pattern in (("rmsk_name", r"[|:/\s]"), ("chrom", r"[|:\s]")):
         fail_row(frame, frame[name].str.contains(pattern) | frame[name].eq(""),
                  f"invalid {name} for record identity")
     fail_row(frame, frame.duplicated(RECORD_KEY), "exact duplicate key")

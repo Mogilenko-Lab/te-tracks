@@ -94,6 +94,7 @@ with TemporaryDirectory(prefix="te-tracks-records-") as directory:
         ("invalid_name.out", "invalid_name.tsv", "invalid rmsk_name", "Bad|Name"),
         ("invalid_chrom.out", "invalid_chrom.tsv", "invalid chrom", "chr:Bad"),
         ("colon_name.out", "colon_name.tsv", "invalid rmsk_name for record identity", "Bad:Name"),
+        ("slash_name.out", "slash_name.tsv", "invalid rmsk_name for record identity", "Bad/Name"),
     ):
         sizes = identity_sizes if filename == "invalid_chrom.out" else FIXTURES / "chrom.sizes"
         expect_failure(lambda: build_records(FIXTURES / filename, FIXTURES / table,

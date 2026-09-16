@@ -1,0 +1,6 @@
+feature_level	target	count
+record	L1MdA_VI|chr1:3050294-3050775|+	7
+record	L1MdA_VI|chr1:3176469-3182632|-	7
+record	L1MdA_VI|chr1:3805141-3810283|+	7
+subfamily	L1MdA_VI	7
+family	LINE/L1	7

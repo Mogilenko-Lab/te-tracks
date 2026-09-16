@@ -101,23 +101,44 @@ implementation reproduces all 15 columns on all 18,484 rows); codex re-review of
 Digests: `rmsk_taxonomy.tsv` 26a9110f…, `taxonomy_canonical.tsv` a3663b64…, `taxonomy_resolution_report.tsv`
 1f8c068f….
 
+**Phase 4** (`interspersed` exports in the UCSC namespace) is complete and committed on the branch. Loop:
+implemented by codex (`te-tracks-p4-impl`) from `prompts/p4_impl.md` aligned with the milestone 2 and phase 3
+rulings: seven exports (`record.bed`, `subfamily.bed`, `family.bed`, `record.gtf`, `subfamily.gtf`,
+`subfamily.saf`, `taxonomy_triple.saf`), `export_feature_members` keyed by `(universe_name, variant,
+feature_level)` with both id spellings at level `record` (18,824,745 rows), `tables/exports.tsv` as the inventory
+with measured rows and sha256, the component alphabet without `/` and `/` rejected in names, rank tokens in
+position. Codex review `reviews/p4_codex.md` (BLOCKING on the DuckDB conservation query the plan asked for in a
+container without DuckDB; three advisories) and Opus re-review `reviews/p4_opus.md` (PASS WITH ADVISORIES; every
+export and both tables regenerated bit-identically with independent code; five gates broken on demand; the sort
+statement corrected to text columns in byte order and coordinates numeric; the writer's 5.5 GB peak RSS recorded
+in the phase 7 plan). Rulings in `reviews/p4_rulings.md`; fix `te-tracks-p4-fix` from `prompts/p4_fix.md`
+(README count to seven; conservation fixture asserting targets and totals; the DuckDB form as
+`tests/checks/consumers/30_registration_duckdb.py`, unsupported here; the `unresolved_` prefix reserved and
+enforced with a fixture; sort sentences). Orchestrator verification: thirteen core checks; `consumers` one
+unsupported, exit 0; an independent recount over all 3,764,949 universe records reproduces every export (offsets,
+names, clipped scores, 49 family buckets, 1,220 triple GeneIDs, GTF attribute order and values, inventory digests,
+two spellings per record, no character outside the alphabet); every export digest unchanged by the fix; the seven
+exports measure 2.6 GB per namespace.
+
 ## Next session starts here
 
-1. Phase 4: `launch.sh --unit te-tracks-p4-impl --workdir <te-tracks> --effort xhigh --prompt
-   docs/_internal/redesign-2026-09/prompts/p4_impl.md` (aligned with milestone 2 and phase 3 rulings: seven exports
-   including `subfamily.gtf`, registration keyed by level, `exports.tsv`, component alphabet without `/`, rank
-   tokens, `/` rejected in names); verify (export stage on the existing build dir); codex review
-   (`prompts/p4_review.md`, paste the implementer report) then Opus (`prompts/p4_opus.md`); fix loop; commit
-   "Phase 4: interspersed exports in the UCSC namespace".
-2. Phase 5 with `p5_impl.md` after aligning it with the rulings (TElocal index built by its own indexer; TEsingle grain
-   fixtures from both GTFs); milestone review m5 (codex, Opus, divergent). Phases 6 to 9 follow; milestone reviews
-   after 7 and 9; the owner runs the host build at phase 9 (`docs/RUNBOOK.md`), the orchestrator verifies the
-   published bytes and records `BUILD_ID` and `CATALOG_ID` here; then the umbrella pin bumps and D2/D3 resume.
+1. Phase 5: `launch.sh --unit te-tracks-p5-impl --workdir <te-tracks> --effort xhigh --prompt
+   docs/_internal/redesign-2026-09/prompts/p5_impl.md` (aligned: TElocal index built by its own indexer, TEsingle
+   grain from both GTFs, eleven-record fixture roster); verify (`tests/run.sh consumers` against the fixture refroot);
+   codex review (`prompts/p5_review.md`, paste the implementer report) then Opus (`prompts/p5_opus.md`); fix loop;
+   commit "Phase 5: consumer fixtures".
+2. Milestone 5: stamp the commit hash into `prompts/m5_{codex,opus,divergent}.md` (drafted; `__HASH__`
+   placeholder), fan out the three reviewers in parallel, rule in `reviews/m5_rulings.md`, fix if needed, commit,
+   bump the umbrella pin.
+3. Phases 6 to 9 with `p6_impl.md` … `p9_impl.md`, each aligned with the rulings in its plan file before launch;
+   milestone reviews after 7 and 9; the owner runs the host build at phase 9 (`docs/RUNBOOK.md`; host floor 5.5 GB
+   resident, about 9 GB disk per build), the orchestrator verifies the published bytes and records `BUILD_ID` and
+   `CATALOG_ID` here; then the umbrella pin bumps and D2/D3 resume.
 
-Prompts p4 to p9 carry pre-measured acceptance numbers; the plan files are authoritative where a prompt and a plan
+Prompts p5 to p9 carry pre-measured acceptance numbers; the plan files are authoritative where a prompt and a plan
 file disagree, and the disagreement is a deviation to report. Rulings the owner may overturn: instance weighting
 (`p3_rulings.md` H1), `CATALOG_ID` (`m2_rulings.md` H5), `subfamily.gtf` (H2), compat as membership (H1),
-`gene_context` deferred (H3).
+`gene_context` deferred (H3), pandas as the in-container conservation proof (`p4_rulings.md` B1).
 
 ## Open at handoff
 

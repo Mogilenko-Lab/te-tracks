@@ -2,11 +2,14 @@
 
 You are the implementer for phase 5 of the te-tracks redesign. Working directory (absolute):
 `/workspaces/Meta-Aging/01_modules/te-tracks`, git branch `redesign-2026-09`. Phases 0 to 4 have landed: read
-`AGENTS.md`, `tests/run.sh` (checks: executables under `tests/checks/<mode>/`, exit 0 pass, 3 unsupported,
-other fail), `docs/OUTPUTS.md` (export formats and the GTF attribute mapping), `src/lib/build_exports.py`.
+`AGENTS.md`, `tests/run.sh` (checks are `tests/checks/<mode>/*.sh` and `*.py`, run by name order through `bash`
+or `python3`; exit 0 pass, 3 unsupported, other fail; `tests/lib/records.py` supplies `BUILD`, `require` and a
+typed TSV reader), `docs/OUTPUTS.md` (export formats and the GTF attribute mapping), `src/lib/build_exports.py`,
+`src/lib/build_taxonomy.py` (`resolve`, the rule the fixture's canonical labels come from).
 
 ## Read first
-1. `docs/_internal/_project/plans/2026-09-16_te-tracks-redesign/15_phase5_consumer_fixtures.md` (your phase)
+1. `docs/_internal/_project/plans/2026-09-16_te-tracks-redesign/15_phase5_consumer_fixtures.md` (your phase) and
+   the phase 5 rulings in `docs/_internal/redesign-2026-09/reviews/m2_rulings.md` (A4 TElocal index, H2 grain)
 2. `docs/_internal/redesign-2026-09/consults/A_consumer_contracts.md` (every parser fact below with its
    source line) and `docs/_internal/redesign-2026-09/audit/AUDIT.md` F9 (IRescue facts)
 3. The local read-only consumer checkouts under `/workspaces/Meta-Aging/01_modules/.ref/`:
@@ -17,7 +20,8 @@ other fail), `docs/OUTPUTS.md` (export formats and the GTF attribute mapping), `
    `annotation/utils.py` 60–115 (attribute regex, sentinel); `TEsingle/TEsingle` 92–93 (UR cutoff), 110–135
    (gene index on `transcript` rows), `TEsingle/TEtools/TEindex.py` 287–335 (four-attribute tuple);
    `TEtranscripts/TEToolkit/TEindex.py` 436–437 (`gene_id:family_id:class_id`);
-   `TElocal/TElocal_Toolkit/TEindex.py` 367–420 (`.locInd` as GTF text, four-part feature);
+   `TElocal/TElocal` around line 627 (`.locInd` loaded as a pickle) and `TElocal/TElocal_Toolkit/TEindex.py`
+   367–420 (the index built from GTF text; four-part feature);
    `MATES/MATES/bam_processor.py` 17–18 (`ref_path.split('.')[0]+'.bed'`), `MATES/scripts/calculate_MU.py`
    271–295 (`?`/`Unknown` groups dropped).
 4. `/workspaces/Meta-Aging/AGENTS.md` sections "Prose" and "Comments" (binding)
@@ -36,10 +40,14 @@ honest. Execution-level tests exit 3 naming the missing executable.
    builders: a FASTA with two contigs (`chrA` 5,000 bp, `chrB` 3,000 bp, deterministic sequence from a
    fixed seed), a records table with: two records of one subfamily `SubA` (`chrA:1001-1200 +`,
    `chrA:2001-2200 -`), one two-record instance `SubB` + `SubB-int` sharing `.out` ID 7 (`chrA:3001-3100`,
-   `chrA:3201-3400`), a missing-family name `NoFam` (raw token `DNA`), a two-label name `TwoLab` (records
-   with `DNA/hAT-Tip100` and `DNA/hAT-Blackjack`), and the boundary record `chrB:101-110 +` named `Edge`.
-   Exports for the fixture produced by calling `src/lib/build_exports.py` on that table (so the real exporter
-   is under test), written under `$TE_TRACKS_REFROOT/fixtures/consumers/`.
+   `chrA:3201-3400`), a missing-family name `NoFam` (raw token `DNA`), a two-label name `TwoLab` (three records:
+   two `DNA/hAT-Tip100` on distinct instances and one `DNA/hAT-Blackjack`, so `resolve` elects `hAT-Tip100` by
+   plurality 2:1), the boundary record `chrB:101-110 +` named `Edge`, and the coordinate-duplicate pair `DupX`
+   and `DupY` (equal coordinates on `chrB`, distinct names). Roster: 11 records, 8 names, 10 instances
+   (`SubB` and `SubB-int` share one; `TwoLab`'s three records sit on three). The fixture's `taxonomy_canonical`
+   comes from `build_taxonomy.resolve` over the fixture's raw labels with instance counts, and the exports,
+   including `subfamily.gtf`, from `src/lib/build_exports.py` on those tables (so the real rule and exporter are
+   under test), written under `$TE_TRACKS_REFROOT/fixtures/consumers/`.
    Synthetic BAMs via pysam, sorted and indexed: `arc_3prime.bam` (single cDNA read per molecule, tags `CB`,
    `UB`), `ocm_5prime_pe.bam` (paired mates, `CB`, `UB`), `bulk_pe.bam` (paired, no cell tags). Molecules:
    unique to one record; duplicated (same CB+UB twice); multimapping (two alignments, `NH:2`, one primary);
@@ -50,22 +58,23 @@ honest. Execution-level tests exit 3 naming the missing executable.
    `unsupported: <reason>`):
    - `00_tool_inventory.py`: prints every tool with its version or `absent`; always exit 0.
    - `10_irescue_parser.py`: from the checkout, drive the custom-BED reader with `record.bed` and
-     `subfamily.bed` and assert feature counts (6 record features; 5 subfamily names counting `SubB` and
+     `subfamily.bed` and assert feature counts (11 record features; 8 subfamily names counting `SubB` and
      `SubB-int` separately); assert a name containing `,` splits (documenting the hazard) and that our
      exporter rejects it (import `build_exports` validation).
-   - `11_stellarscope_parser.py`: group `record.gtf` by `locus` (6 features) and by `instance_id`
-     (5 features: the two-record instance merges); boundary gate on `Edge` with the four reads: expected
+   - `11_stellarscope_parser.py`: group `record.gtf` by `locus` (11 features) and by `instance_id`
+     (10 features: the two-record instance merges); boundary gate on `Edge` with the four reads: expected
      overlaps `0,1,1,0`; when the checkout yields `0,1,1,1` exit 3 with
      `unsupported: stellarscope 1.5 right-boundary overlap defect, observed 0,1,1,1 expected 0,1,1,0`;
      any other result exits 1. Also assert the attribute regex accepts every line of `record.gtf`.
-   - `12_tesingle_parser.py`: build the four-attribute tuple from `record.gtf` through the checkout's
-     TEindex; assert `TwoLab` records produce two distinct tuples (canonical labels are identical, so
-     assert the tuple equals `<alias>:TwoLab:hAT-Tip100:DNA` for both, and that the raw labels live in
-     `rmsk_family`); assert the UR cutoff semantics on a synthetic per-barcode UR count (999 dropped, 1,000
-     kept) by reading the exact comparison in `TEsingle` lines 92–93.
+   - `12_tesingle_parser.py`: build the four-attribute tuple through the checkout's TEindex from `record.gtf`
+     (record grain: `TwoLab`'s three records give three distinct tuples `<alias>:TwoLab:hAT-Tip100:DNA`, the raw
+     labels living in `rmsk_family`; 11 tuples over the fixture) and from `subfamily.gtf` (subfamily grain: one
+     tuple `TwoLab:TwoLab:hAT-Tip100:DNA`; 8 tuples over the fixture); assert the UR cutoff semantics on a synthetic
+     per-barcode UR count (999 dropped, 1,000 kept) by reading the exact comparison in `TEsingle` lines 92–93.
    - `13_tetranscripts_telocal_parser.py`: TEtranscripts grain `gene_id:family_id:class_id` from
-     `record.gtf` yields 5 groups (`TwoLab` one group); TElocal ingests `record.gtf` as `.locInd` and yields
-     6 four-part features.
+     `record.gtf` yields 8 groups (`TwoLab` one group); TElocal's `.locInd` is built from `record.gtf` through
+     the checkout's `TEindex`, written as the pickle TElocal loads, read back through that loader, and yields
+     11 four-part features (one per fixture record); the same path over `subfamily.gtf` yields 8.
    - `14_mates_parser.py` (optional adapter): parse an eight-column CSV+BED pair written by a small
      fixture writer in `tests/lib/consumers.py`; assert the stem rule (`record_mates.csv` →
      `record_mates.bed`; `record.mates.csv` breaks) and that `?`/`Unknown` groups are dropped by the model
@@ -76,15 +85,17 @@ honest. Execution-level tests exit 3 naming the missing executable.
    - `21_featurecounts_exec.sh`: exit 3 when absent; otherwise one SAF feature with two molecules counts 2;
      a one-base feature counts an exactly overlapping read.
    - `22_bedtools_exec.sh`: supported here: `bedtools intersect -wa -wb` of a query against `record.bed`
-     for the coordinate-duplicate fixture pair (add to the fixture table: two records equal coordinates,
-     names `DupX` and `DupY`) preserves both names; a right-adjacent query has no hit; `-s`/`-S` strand.
+     for the coordinate-duplicate fixture pair `DupX` and `DupY` preserves both names; a right-adjacent query
+     has no hit; `-s`/`-S` strand.
    - `23_samtools_fixture_integrity.sh`: supported: every fixture BAM indexes and `samtools view -c` matches
      the molecule counts the builder intended.
 3. `tests/run.sh consumers` output summarises supported/unsupported per tool (the runner already prints
    the first line of each check).
-4. `docs/OUTPUTS.md`: a "Consumer contracts" section: one row per consumer with the export it reads, the
-   attribute or column that carries feature identity, the fixture that proves it, and its support status
-   in-container. README truth table: fixtures row `tested`, phase 5, with the unsupported executables named.
+4. `docs/OUTPUTS.md`: a "Consumer contracts" section: one row per consumer with the export it reads (both GTFs
+   where a tool's grain follows `transcript_id`), the attribute or column that carries feature identity, the
+   fixture that proves it, and its support status in-container; the TElocal row states that its index is built
+   from `record.gtf` by TElocal's own indexer. README truth table: fixtures row `tested`, phase 5, with the
+   unsupported executables named.
 
 ## Rules
 - Touch only: `tests/lib/**`, `tests/checks/consumers/**`, `tests/fixtures/consumers/**` (hand-authored

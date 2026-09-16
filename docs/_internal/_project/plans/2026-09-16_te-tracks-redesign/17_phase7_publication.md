@@ -17,7 +17,10 @@ Deliverables
   `docs/OUTPUTS.md`; `schema_version` owns predicate semantics and a new key bumps it (rulings A2, A3).
 - `provenance` records Python, pandas, pyarrow and zlib versions and the devcontainer image identity;
   the host build runs inside the same image (ruling H6). Retention is restated from a measured build
-  size (ruling M4).
+  size (ruling M4): the seven `interspersed` full exports measure 2.6 GB uncompressed per namespace and
+  `export_feature_members.tsv.gz` 162 MB (phase 4, 2026-09-16), so three namespaces plus the canonical
+  tables approach 9 GB per build before the child family. The export writer peaks at 5.5 GB resident for mm39
+  (phase 4 Opus A5), the host floor the runbook states beside the disk figure.
 - `docs/OUTPUTS.md` publishes reader settings for pandas, DuckDB and R (`data.table`, `arrow`): text
   instance ids, signed int64 fields, no quoting, empty strings literal; a nullable column defines its
   literal before it lands (ruling A5). The identity section publishes the single source-run

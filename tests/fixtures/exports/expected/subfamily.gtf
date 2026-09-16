@@ -1,0 +1,5 @@
+chr10	te-tracks	exon	1	1	9	+	.	gene_id "Mystery"; transcript_id "Mystery"; locus "Mystery"; family_id "unresolved_family_Mystery"; class_id "DNA"; rmsk_family "F1"; rmsk_class "DNA";
+chr10	te-tracks	exon	9	12	1000	-	.	gene_id "Opaque"; transcript_id "Opaque"; locus "Opaque"; family_id "unresolved_family_Opaque"; class_id "unresolved_class_Opaque"; rmsk_family "L1"; rmsk_class "LINE";
+chr2	te-tracks	exon	10	20	1400	+	.	gene_id "A"; transcript_id "A"; locus "A"; family_id "L1"; class_id "LINE"; rmsk_family "L1"; rmsk_class "LINE";
+chr2	te-tracks	exon	10	20	50	+	.	gene_id "B"; transcript_id "B"; locus "B"; family_id "L1"; class_id "LINE"; rmsk_family "L1"; rmsk_class "LINE";
+chr2	te-tracks	exon	30	35	42	-	.	gene_id "A"; transcript_id "A"; locus "A"; family_id "L1"; class_id "LINE"; rmsk_family "L1?"; rmsk_class "LINE?";

@@ -1,0 +1,6 @@
+GeneID	Chr	Start	End	Strand
+Mystery:unresolved_family_Mystery:DNA	chr10	1	1	+
+Opaque:unresolved_family_Opaque:unresolved_class_Opaque	chr10	9	12	-
+A:L1:LINE	chr2	10	20	+
+B:L1:LINE	chr2	10	20	+
+A:L1:LINE	chr2	30	35	-

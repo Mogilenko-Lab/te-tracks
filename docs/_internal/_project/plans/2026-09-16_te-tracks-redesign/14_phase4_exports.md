@@ -40,7 +40,10 @@ Acceptance
   + header; `taxonomy_triple.saf` has 1,220 distinct GeneIDs (canonical labels collapse the 20 doubled names).
 - Round trip: BED start = start_1 - 1 for every row; GTF and SAF coordinates equal the table.
 - Every emitted feature id resolves to at least one record through `export_feature_members`;
-  registration conservation fixture (count 7 over 3 records stays 7) as a DuckDB query in tests.
+  registration conservation fixture (count 7 over 3 records stays 7) as a pandas query in the core check and
+  as the same query in DuckDB in a `consumers`-mode check that reports `unsupported` naming the module where `duckdb` is absent
+  (phase 4 review B1). Resolved canonical tokens beginning with `unresolved_` are rejected by the exporter,
+  reserving the prefix for generated tokens (review A3).
 
 Review focus: attribute mapping documented once in `docs/OUTPUTS.md`; no consumer or modality
 vocabulary in file names.

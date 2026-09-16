@@ -1,0 +1,6 @@
+GeneID	Chr	Start	End	Strand
+Mystery	chr10	1	1	+
+Opaque	chr10	9	12	-
+A	chr2	10	20	+
+B	chr2	10	20	+
+A	chr2	30	35	-

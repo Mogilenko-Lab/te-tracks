@@ -1,0 +1,7 @@
+universe_name	rmsk_record_id	provisional
+interspersed	A|chr2:30-35|-	false
+interspersed	B|chr2:10-20|+	false
+interspersed	Mystery|chr10:1-1|+	false
+interspersed	A|chr2:10-20|+	false
+interspersed	Opaque|chr10:9-12|-	false
+satellites	Excluded|chr1:5-9|+	false
