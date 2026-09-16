@@ -12,6 +12,8 @@ import pyarrow.parquet as pq
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
 from records import BUILD, KEY, ROOT, TRIPLE, read_tsv, require
+sys.path.insert(0, str(ROOT / "src/lib"))
+from build_universes import DEFINITIONS, INTERSPERSED_CLASSES
 
 
 require("tables/rmsk_records.parquet", "tables/rmsk_taxonomy.tsv", "universes.json",
@@ -25,15 +27,28 @@ expected_census = pd.read_csv(
     dtype={"rmsk_class": str, "records": "int64"}, keep_default_na=False,
 )
 classes = pd.read_csv(ROOT / "config/mm39.classes.tsv", sep="\t",
-                      dtype={"rmsk_class": str}, keep_default_na=False)
-assert list(classes) == ["rmsk_class"]
-assert classes["rmsk_class"].is_unique
+                      dtype=str, keep_default_na=False)
+assert list(classes) == ["rmsk_class", "disposition"], "class set columns differ"
+assert classes["rmsk_class"].is_unique, "duplicate reviewed class"
+assert set(classes["disposition"]) <= {
+    "interspersed", "satellite", "simple_repeat", "low_complexity", "structural_rna"
+}, "unknown class disposition"
+assert set(frame["rmsk_class"]) == set(classes["rmsk_class"]), "observed/reviewed class sets differ"
 assert set(expected_census["rmsk_class"]) == set(classes["rmsk_class"]), "census/config class sets differ"
 pd.testing.assert_frame_equal(census, expected_census)
-interspersed = frame["rmsk_class"].isin([
-    "SINE", "LTR", "LINE", "DNA", "RC", "Retroposon", "Unknown", "Unspecified", "DNA?"
-])
-satellites = frame["rmsk_class"].eq("Satellite")
+interspersed_classes = set(classes.loc[classes["disposition"].eq("interspersed"), "rmsk_class"])
+satellite_classes = set(classes.loc[classes["disposition"].eq("satellite"), "rmsk_class"])
+assert classes["disposition"].eq("interspersed").equals(
+    classes["rmsk_class"].isin(INTERSPERSED_CLASSES)
+), "interspersed disposition/predicate classes differ"
+assert classes["disposition"].eq("satellite").equals(
+    classes["rmsk_class"].eq("Satellite")
+), "satellite disposition/predicate classes differ"
+assert set(INTERSPERSED_CLASSES) <= set(classes["rmsk_class"]), "mm39 predicate classes require review"
+for universe in DEFINITIONS["universes"]:
+    assert set(universe["provisional_classes"]) <= interspersed_classes, universe["name"]
+interspersed = frame["rmsk_class"].isin(interspersed_classes)
+satellites = frame["rmsk_class"].isin(satellite_classes)
 masks = {
     "all_rmsk": pd.Series(True, index=frame.index),
     "interspersed": interspersed,
@@ -69,6 +84,11 @@ summaries = []
 for universe in sorted(definitions["universes"], key=lambda item: item["name"]):
     name = universe["name"]
     assert universe["description"].endswith(".")
+    assert set(universe["provisional_classes"]) <= interspersed_classes, name
+    if name == "interspersed":
+        assert set(universe["predicate"]["class_in"]) == interspersed_classes, name
+    if name == "satellites":
+        assert set(universe["predicate"]["class_in"]) == satellite_classes, name
     assert declared_mask(universe["predicate"]).equals(masks[name]), name
     selected = frame.loc[masks[name]]
     provisional = (["Unknown", "Unspecified", "DNA?"] if name in

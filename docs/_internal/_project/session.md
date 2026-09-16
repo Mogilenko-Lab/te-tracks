@@ -56,21 +56,41 @@ UCSC-style and scaffolds by GenBank accession (22 + 39 of 61 contigs); hence the
 rows (all `C` strand) carry a negative consensus-left value; zero rows carry a negative query-left value
 (`audit/AUDIT.md` section 7).
 
+**Milestone 2 review** (after phase 2, tree `c28caea`) is complete and committed. Three parallel read-only
+reviewers: codex on schema and identity (`reviews/m2_codex.md`, PASS WITH ADVISORIES, five advisories on
+instance scope, grammar versioning, the `universes.json` byte profile, TElocal's pickle index and reader
+settings), Opus on numbers and fixtures (`reviews/m2_opus.md`, PASS WITH ADVISORIES; every published number
+re-derived from the pinned `.out` with independent code, zero mismatches over 5,320,771 rows and 24 columns,
+rebuild byte-identical, every gate broken by mutation; six advisories), and a `divergent` pass on unstated
+assumptions (`reviews/m2_divergent.md`, seven High, eight Medium, four Low). Every finding has a ruling in
+`reviews/m2_rulings.md`; the rulings are written into the plan files for phases 3 to 9 and into
+`02_orchestration.md`. Two fix rounds (`prompts/m2_fix.md`, `prompts/m2_fix2.md`; the first round stopped on two
+prompt errors and reported them) landed the package changes: `config/mm39.classes.tsv` carries a `disposition`
+column and the build asserts it agrees with the `interspersed` and `satellite` predicates class by class;
+`SOURCES.json` carries the declared assembly FASTA pins and check 11 asserts them; `rmsk_name` rejects `:`;
+each single-row gate fixture has its own one-row UCSC table; a runner self-test check exercises every runner
+status and exit; four legacy disposition rows, the consensus ordering sentence and the class-set wording in
+`docs/OUTPUTS.md` and `docs/DECISIONS.md` are corrected. Orchestrator re-verification: seven core checks pass,
+every table digest and `universes.json` byte-identical to the phase 2 build, four class-file mutations and a
+colon name fail with the intended messages.
+
+Rulings the owner may still overturn before their phases: phase 7 publishes a second identity, `CATALOG_ID`
+over the record catalog alone, for consuming ledgers to key on (H5); phase 4 adds `subfamily.gtf` because
+TEsingle and TElocal key features on `transcript_id` (H2); the compat universe ships as membership only and
+the legacy comparison is a phase 9 reconciliation (H1); `gene_context` for 14761 waits for the transcript-context
+design session (H3).
+
 ## Next session starts here
 
-1. Milestone review after phase 2 (prompts written: `prompts/m2_codex.md` schema and identity seam via
-   `launch.sh --unit te-tracks-m2-codex`; `prompts/m2_opus.md` numbers and fixtures via the `opus-reviewer`
-   agent; `prompts/m2_divergent.md` unstated assumptions via the `divergent` agent). All three run in
-   parallel, read-only, each writing one file under `reviews/m2_*.md`. Rulings go to `prompts/m2_fix.md`
-   (codex unit `te-tracks-m2-fix`) if anything needs a change before phase 3; otherwise record them in
-   the plan files and proceed.
-2. Phase 3: launch `launch.sh --unit te-tracks-p3-impl --workdir <te-tracks> --effort xhigh --prompt
-   docs/_internal/redesign-2026-09/prompts/p3_impl.md`; verify (the taxonomy stage runs on the existing
-   build dir in about a minute); codex review (`review_template.md`, N=3, `13_phase3_taxonomy.md`);
-   Opus re-review (`opus_template.md`); fix loop; commit "Phase 3: canonical taxonomy by rule".
-3. Phases 4 to 9 follow with `p4_impl.md` … `p9_impl.md`; milestone reviews after 5, 7, 9; the owner runs
-   the host build at phase 9 (`docs/RUNBOOK.md`), the orchestrator verifies the published bytes and records
-   the `BUILD_ID`s here; then the umbrella pin bumps and D2/D3 resume.
+1. Phase 3: `launch.sh --unit te-tracks-p3-impl --workdir <te-tracks> --effort xhigh --prompt
+   docs/_internal/redesign-2026-09/prompts/p3_impl.md`; verify (the taxonomy stage runs on the existing build dir
+   in about a minute); reviews in parallel: codex (`prompts/p3_review.md`, paste the implementer report), Opus
+   (`prompts/p3_opus.md`, `opus-reviewer` agent), divergent (`prompts/p3_divergent.md`, `divergent` agent, per
+   ruling M7); fix loop; commit "Phase 3: canonical taxonomy by rule".
+2. Phases 4 to 9 follow with `p4_impl.md` … `p9_impl.md`, each aligned with the milestone 2 rulings in its plan
+   file before launch; milestone reviews after 5, 7, 9; the owner runs the host build at phase 9
+   (`docs/RUNBOOK.md`), the orchestrator verifies the published bytes and records the `BUILD_ID` and
+   `CATALOG_ID` here; then the umbrella pin bumps and D2/D3 resume.
 
 Prompts p1 to p9 carry pre-measured acceptance numbers; the plan files are authoritative where a prompt
 and a plan file disagree, and the disagreement is a deviation to report.

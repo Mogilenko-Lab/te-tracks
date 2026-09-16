@@ -41,12 +41,16 @@ this order; `text` is Arrow UTF-8, and every column has a value.
 | `ucsc_rep_left` | int64 | Raw signed UCSC `repLeft`. |
 | `source_row_number` | int64 | One-based ordinal among primary `.out` annotation rows before sorting. |
 
+Consensus start and end follow the source; two mm39 records carry start above end
+(`L1MdFanc_II|chr1:9847889-9847905|-`, `L1MdF_III|chr2:116363011-116363342|-`), so a derived
+consensus-match length is signed.
+
 Rows sort by `(chrom, start_1, end_1, strand, rmsk_name)` with C-locale text order. Source
 and UCSC rows join one-to-one on these five fields. Class-only `.out` tokens project the
 class into both raw taxonomy fields under the qualified UCSC convention.
 
-Record components remain authoritative for computation. Names are free of `|` and whitespace;
-contig names are free of `|`, `:` and whitespace, so each record key parses back into its
+Record components remain authoritative for computation. Names and contig names are free of
+`|`, `:` and whitespace, so each record key parses back into its
 components. Genomic bounds satisfy `1 <= start_1 <= end_1 <= contig length`. Equal coordinates
 with different names retain separate record identities; exact duplicate keys fail the build.
 
@@ -83,9 +87,16 @@ every record.
 | `compat_tetranscripts_mm39` | `interspersed_plus_satellites` classes with the `tRNA` family-prefix exclusion. |
 
 `interspersed` and `interspersed_plus_satellites` flag Unknown, Unspecified and DNA? members
-as provisional. The other universes have empty `provisional_classes` arrays. Universe publication
-requires the observed class set to equal `config/<genome>.classes.tsv`; core checks compare
-measured counts with `tests/expectations/<genome>/class_census.tsv`.
+as provisional. The other universes have empty `provisional_classes` arrays.
+`config/<genome>.classes.tsv` has exactly two columns, `rmsk_class` and `disposition`, with one
+row per class and dispositions from `interspersed`, `satellite`, `simple_repeat`, `low_complexity`
+and `structural_rna`. The build requires the observed class set to equal the reviewed set,
+the disposition `interspersed` to agree with the authored predicate class by class, the
+disposition `satellite` to mark exactly `Satellite`, and every provisional class to be dispositioned
+`interspersed`. Core checks compare measured counts with `tests/expectations/<genome>/class_census.tsv`.
+
+The `compat_tetranscripts_mm39` universe ships as membership, and the legacy comparison is a
+phase 9 reconciliation.
 
 ### `tables/universe_members.tsv.gz`
 
@@ -163,13 +174,13 @@ intervals in phase 8. Each emitted feature and block registers to source records
 | `te_locus.saf` | A record-level SAF enters a release with a named consumer and a passing fixture ([ADR 3](DECISIONS.md#3-delivered-scope)); record-level counting reads `record.bed` or `record.gtf` |
 | `te_subfamily.bed` | `subfamily.bed` (phase 4) |
 | `te_locus.bed` | `record.bed` (phase 4) |
-| `te_subfamily.gtf` | `record.gtf`: one GTF; consumers group by attribute (phase 4) |
-| `te_locus.gtf` | `record.gtf`: one GTF; consumers group by attribute (phase 4) |
-| `te_locus.locInd` | `record.gtf` read as `.locInd` (fixture, phase 5) |
+| `te_subfamily.gtf` | `subfamily.gtf` (phase 4) |
+| `te_locus.gtf` | `record.gtf` (phase 4) |
+| `te_locus.locInd` | `.locInd` index built from `record.gtf` by TElocal's own indexer (fixture, phase 5) |
 | `te_subfamily_noExon.saf` | `exon_subtracted/subfamily.saf` in `te_mm39_gene` (phase 8) |
 | `te_context_*.saf` | Deferred to the transcript-context design session after phase 8 |
 | `locus_context.tsv` | Deferred to the transcript-context design session after phase 8 |
-| `rename_map.tsv` | Superseded by `taxonomy_triple.saf` and the `compat_tetranscripts_mm39` universe |
+| `rename_map.tsv` | Superseded by `tables/taxonomy_canonical.tsv` (phase 3); the legacy selection is reproducible as the `compat_tetranscripts_mm39` membership |
 | `te_loci.tsv.gz` | `tables/rmsk_records.tsv.gz` (phase 2) |
 | `te_loci.parquet` | `tables/rmsk_records.parquet` (phase 2) |
 | `te_dim.tsv` | `tables/rmsk_taxonomy.tsv` and `tables/universe_summary.tsv` (phase 2) |
@@ -188,6 +199,7 @@ Family and class rollups join through `taxonomy_canonical`; unresolved names ent
 ### Phase 4: UCSC full-interval exports
 
 All six exports land under `exports/ucsc/interspersed/full/`.
+Exports carry no provisional flag; the status is a class property recoverable by joining names to `rmsk_taxonomy`.
 
 | File | Coordinates | Feature identity |
 |---|---|---|

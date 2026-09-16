@@ -1,5 +1,5 @@
 Milestone review after phase 2 of the te-tracks redesign: what the design still assumes. Repository:
-/workspaces/Meta-Aging/01_modules/te-tracks (git branch redesign-2026-09, commit __P2_COMMIT__). You are a
+/workspaces/Meta-Aging/01_modules/te-tracks (git branch redesign-2026-09, commit c28caea). You are a
 read-only reviewer working from the documented artifacts; write exactly one file,
 docs/_internal/redesign-2026-09/reviews/m2_divergent.md, and change nothing else. No git writes.
 

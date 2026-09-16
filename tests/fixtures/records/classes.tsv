@@ -1,9 +1,9 @@
-rmsk_class
-DNA
-DNA?
-LINE
-SINE
-Satellite
-Simple_repeat
-Unknown
-Unspecified
+rmsk_class	disposition
+DNA	interspersed
+DNA?	interspersed
+LINE	interspersed
+SINE	interspersed
+Satellite	satellite
+Simple_repeat	simple_repeat
+Unknown	interspersed
+Unspecified	interspersed

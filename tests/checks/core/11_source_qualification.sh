@@ -41,14 +41,20 @@ cmp "$report" "$ROOT/docs/_internal/redesign-2026-09/audit/source_qualification_
 
 source "$ROOT/config/mm39.env"
 python3 - "$(dirname "$report")/SOURCES.json" \
-  "$RMSK_OUT_MD5" "$RMSK_TABLE_MD5" "$CHROMALIAS_MD5" "$CHROM_SIZES_MD5" <<'PY'
+  "$RMSK_OUT_MD5" "$RMSK_TABLE_MD5" "$CHROMALIAS_MD5" "$CHROM_SIZES_MD5" \
+  "$GENOME_FA_URL" "$GENOME_FA_MD5" <<'PY'
 import json
 import sys
 from pathlib import Path
 
-sources = json.loads(Path(sys.argv[1]).read_text())["sources"]
-for key, pin in zip(("rmsk_out", "rmsk_table", "chromAlias", "chrom_sizes"), sys.argv[2:]):
+metadata = json.loads(Path(sys.argv[1]).read_text())
+sources = metadata["sources"]
+for key, pin in zip(("rmsk_out", "rmsk_table", "chromAlias", "chrom_sizes"), sys.argv[2:6]):
     observed = sources[key]["md5"]
     assert observed == pin, (key, observed, pin)
+declared = metadata["declared_assembly"]
+for key, pin in zip(("genome_fa_url", "genome_fa_md5"), sys.argv[6:8]):
+    assert declared[key] == pin, (key, declared[key], pin)
+assert declared["status"] == "declared", declared
 PY
-printf '%s\n' '13 summary metrics and 10 field disagreements verified; reports identical; four source md5s match config pins'
+printf '%s\n' '13 summary metrics and 10 field disagreements verified; reports identical; four source md5s and declared assembly match config pins'

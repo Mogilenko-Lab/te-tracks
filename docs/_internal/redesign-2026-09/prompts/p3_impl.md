@@ -47,12 +47,15 @@ The reviewed class set lives in `config/mm39.classes.tsv`.
      canonical_class, canonical_family, class_status, family_status): one case per status; a class-level
      competition; a two-way family tie (expects `unresolved`); a two-way class tie; a name mixing `?` and an
      unspecified family (Eulor5B shape); a name whose only labels are class-only with and without `?`
-     (MER124 shape, expects `DNA/DNA`, family `unspecified`); a rollup case where a name with two labels and
-     one record count contributes once to its family total.
+     (MER124 shape, expects `DNA/DNA`, family `unspecified`); a parent/child family competition where the
+     specific token holds the majority (MER53 shape: hAT 7, hAT-Blackjack 1633; expects `hAT-Blackjack`,
+     `resolved_majority`); a rollup case where a name with two labels and one record count contributes
+     once to its family total.
 4. `docs/OUTPUTS.md`: sections for `taxonomy_canonical` and `taxonomy_resolution_report` (columns, one-line
    contracts), the rule stated in four numbered sentences with its version, and the rollup rule (family and
-   class rollups join through `taxonomy_canonical`; `unresolved` names roll into an explicit `unresolved`
-   bucket, distinct from RepeatMasker's literal `Unknown`). README truth table rows to `tested`, phase 3.
+   class rollups join through `taxonomy_canonical`; a name unresolved at a rank carries an empty canonical
+   label there, and every rollup at that rank names it `unresolved/<rmsk_name>`, one bucket per name,
+   distinct from RepeatMasker's literal `Unknown`). README truth table rows to `tested`, phase 3.
 
 ## Rules
 - Touch only: `src/20_build_taxonomy.sh`, `src/lib/build_taxonomy.py`, `tests/fixtures/taxonomy/**`,

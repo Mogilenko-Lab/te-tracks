@@ -9,7 +9,8 @@ behind a seam and gets its own design session. Evidence and reasoning live in
 
 ## Phases
 
-One phase, one implementer, one review pair. Milestone reviews after phases 2, 5, 7 and 9.
+One phase, one implementer, one review pair. Milestone reviews after phases 2, 5, 7 and 9; phase 3
+adds a `divergent` pass on the rule.
 
 | # | file | phase | seam it closes |
 |---|---|---|---|

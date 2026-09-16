@@ -1,7 +1,7 @@
 # te-tracks milestone review after phase 2: schema and identity seam (codex, read-only)
 
 You review the committed state of the te-tracks redesign after phases 0, 1 and 2. Working directory:
-`/workspaces/Meta-Aging/01_modules/te-tracks`, git branch `redesign-2026-09`, commit `__P2_COMMIT__`. You
+`/workspaces/Meta-Aging/01_modules/te-tracks`, git branch `redesign-2026-09`, commit `c28caea`. You
 write exactly one file: `docs/_internal/redesign-2026-09/reviews/m2_codex.md`. You change nothing else. No
 git writes, no installs, no network. Scratch work goes under `/workspaces/Meta-Aging/_scratch/te-tracks-audit/m2-codex/`
 and is removed when you finish; the orchestrator's build at

@@ -38,12 +38,13 @@ done
 
 python3 - "$SRC/SOURCES.json" "$GENOME" "$ASSEMBLY" \
   "$RM_VERSION" "$RM_LIBRARY" "$RM_RUN_EVIDENCE" "$RMSK_OUT_PROFILE" \
+  "$GENOME_FA_URL" "$GENOME_FA_MD5" \
   "${source_metadata[@]}" <<'PY'
 import json
 import sys
 from pathlib import Path
 
-output, genome, assembly, version, library, evidence, profile, *items = sys.argv[1:]
+output, genome, assembly, version, library, evidence, profile, fa_url, fa_md5, *items = sys.argv[1:]
 sources = {}
 for i in range(0, len(items), 4):
     key, url, md5, path = items[i:i + 4]
@@ -51,6 +52,7 @@ for i in range(0, len(items), 4):
 metadata = {
     "genome": genome,
     "assembly": assembly,
+    "declared_assembly": {"genome_fa_url": fa_url, "genome_fa_md5": fa_md5, "status": "declared"},
     "rm_version": version,
     "rm_library": library,
     "rm_run_evidence": evidence,

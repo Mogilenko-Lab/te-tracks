@@ -77,16 +77,39 @@ def evaluate_predicate(frame, predicate):
 
 
 def check_class_set(frame, class_set_path):
-    """Require exact agreement with the assembly's reviewed class set."""
-    classes = pd.read_csv(class_set_path, sep="\t", dtype={"rmsk_class": str},
-                          keep_default_na=False)
-    if list(classes) != ["rmsk_class"] or classes["rmsk_class"].duplicated().any():
-        raise ValueError(f"invalid class set: {class_set_path}")
+    """Require reviewed dispositions to agree with observed classes and universes."""
+    classes = pd.read_csv(class_set_path, sep="\t", dtype=str, keep_default_na=False)
+    if list(classes) != ["rmsk_class", "disposition"]:
+        raise ValueError(f"class set columns must be rmsk_class, disposition: {class_set_path}")
+    duplicates = classes.loc[classes["rmsk_class"].duplicated(), "rmsk_class"]
+    if not duplicates.empty:
+        raise ValueError(f"duplicate rmsk_class in class set: {sorted(set(duplicates))}")
+    vocabulary = {"interspersed", "satellite", "simple_repeat", "low_complexity", "structural_rna"}
+    unknown = set(classes["disposition"]) - vocabulary
+    if unknown:
+        raise ValueError(f"unknown class disposition: {sorted(unknown)}")
     observed = set(frame["rmsk_class"])
     reviewed = set(classes["rmsk_class"])
     if observed != reviewed:
         raise ValueError(f"class set gate: unreviewed={sorted(observed - reviewed)}; "
                          f"absent={sorted(reviewed - observed)}")
+    interspersed = set(classes.loc[classes["disposition"].eq("interspersed"), "rmsk_class"])
+    for disposition, predicate_classes in (
+        ("interspersed", set(INTERSPERSED_CLASSES)),
+        ("satellite", {"Satellite"}),
+    ):
+        dispositioned = set(classes.loc[classes["disposition"].eq(disposition), "rmsk_class"])
+        disposition_without_predicate = dispositioned - predicate_classes
+        predicate_without_disposition = (reviewed & predicate_classes) - dispositioned
+        if disposition_without_predicate or predicate_without_disposition:
+            raise ValueError(f"{disposition} disposition gate: "
+                             f"disposition_without_predicate={sorted(disposition_without_predicate)}; "
+                             f"predicate_without_disposition={sorted(predicate_without_disposition)}")
+    for universe in DEFINITIONS["universes"]:
+        unreviewed = (set(universe["provisional_classes"]) & reviewed) - interspersed
+        if unreviewed:
+            raise ValueError(f"provisional disposition gate: universe={universe['name']}; "
+                             f"outside_interspersed={sorted(unreviewed)}")
 
 
 def build_universes(build_dir, class_set_path):

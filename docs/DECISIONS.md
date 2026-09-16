@@ -18,7 +18,7 @@ The build defines `all_rmsk`, `interspersed` as the default, `interspersed_plus_
 `retrotransposon_derived`, `satellites` and `compat_tetranscripts_mm39`.
 `interspersed` keeps the tRNA-ancestry SINE families and carries Unknown, Unspecified and `DNA?`
 records as flagged provisional members.
-Each new assembly passes a class census before any biological universe publishes.
+The observed class set matches the reviewed disposition file (`config/<genome>.classes.tsv`) before any biological universe publishes.
 
 ## 3. Delivered scope
 

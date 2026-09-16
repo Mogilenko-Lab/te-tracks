@@ -27,7 +27,9 @@ The orchestrator holds the whole picture and never implements. Per phase:
 
 **Milestone reviews** (after phases 2, 5, 7, 9): fan out two or three independent read-only
 reviewers with disjoint questions, for example codex on schema and identity, Opus on numbers and
-fixtures, and a `divergent` agent on what the design still assumes. Each writes one file.
+fixtures, and a `divergent` agent on what the design still assumes. Each writes one file. Rulings on
+milestone findings land in `reviews/m<N>_rulings.md` and in the plan files of the phases they touch.
+Phase 3 adds a `divergent` pass on the rule (ruling M7).
 
 **Validation challenges** that deserve their own reviewer when reached: the Stellarscope boundary
 gate; the IRescue 4/2 versus 3/3 allocation fixture; the registration conservation query; the
@@ -48,6 +50,8 @@ orchestrator reads reviews and diffs, never whole artifacts.
 - **Prompts are records.** Every implementer, fix, review and re-review prompt is kept under
   `docs/_internal/redesign-2026-09/prompts/` (`p<N>_impl.md`, `p<N>_fix.md`, `review_template.md`,
   `opus_template.md`); reviews land in `docs/_internal/redesign-2026-09/reviews/p<N>_{codex,opus}.md`.
+  Anything given to a running unit is appended to its prompt file under an `Amendments at run time`
+  heading before the review launches (milestone 2 ruling L3).
 - **Exit 32 from `launch.sh`** is the blind-run detector reacting to skill prose in the stream; read
   `codex_exit` from `status.sh --unit <unit>` and the final message; codex_exit 0 plus disk truth decide.
 - **`/tmp` is mounted noexec**; scratch that must execute lives under `/workspaces/Meta-Aging/_scratch/`.

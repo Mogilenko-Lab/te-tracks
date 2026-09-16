@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+import pandas as pd
 import pyarrow.parquet as pq
 
 sys.dont_write_bytecode = True
@@ -16,7 +17,7 @@ sys.path.insert(0, str(ROOT / "tests/lib"))
 from records import SCHEMA, read_tsv, require
 sys.path.insert(0, str(ROOT / "src/lib"))
 from build_records import build_records, validate_records
-from build_universes import build_universes
+from build_universes import build_universes, check_class_set
 
 
 FIXTURES = ROOT / "tests/fixtures/records"
@@ -35,6 +36,26 @@ def expect_failure(action, *messages):
 
 with TemporaryDirectory(prefix="te-tracks-records-") as directory:
     scratch = Path(directory)
+    reviewed = pd.read_csv(ROOT / "config/mm39.classes.tsv", sep="\t", dtype=str,
+                           keep_default_na=False)
+    for disposition, message in (
+        ("interspersed", "interspersed disposition gate: disposition_without_predicate=['Simple_repeat']"),
+        ("novel_disposition", "unknown class disposition"),
+    ):
+        altered_classes = reviewed.copy()
+        altered_classes.loc[altered_classes["rmsk_class"].eq("Simple_repeat"), "disposition"] = disposition
+        class_set = scratch / f"{disposition}.classes.tsv"
+        altered_classes.to_csv(class_set, sep="\t", index=False)
+        offender = "Simple_repeat" if disposition == "interspersed" else disposition
+        expect_failure(lambda: check_class_set(reviewed, class_set), message, offender)
+    fixture_classes = pd.read_csv(FIXTURES / "classes.tsv", sep="\t", dtype=str,
+                                 keep_default_na=False)
+    altered_classes = fixture_classes.copy()
+    altered_classes.loc[altered_classes["rmsk_class"].eq("LINE"), "disposition"] = "structural_rna"
+    class_set = scratch / "structural_rna.classes.tsv"
+    altered_classes.to_csv(class_set, sep="\t", index=False)
+    expect_failure(lambda: check_class_set(fixture_classes, class_set),
+                   "interspersed disposition gate", "predicate_without_disposition=['LINE']")
     source = scratch / "source"
     source.mkdir()
     for original, target in (("records.out", "records.out.gz"), ("rmsk.tsv", "rmsk.txt.gz")):
@@ -60,16 +81,20 @@ with TemporaryDirectory(prefix="te-tracks-records-") as directory:
     for name in ("interspersed", "interspersed_plus_satellites"):
         for key in ("Mystery|chr10:5-9|+", "Maybe|chr2:70-74|+", "Unassigned|chr2:80-84|+"):
             assert f"{name}\t{key}\ttrue" in members
-    for filename, message, offender in (
-        ("duplicate.out", "exact duplicate key", "Duplicate"),
-        ("beyond_end.out", "outside contig bounds", "BeyondEnd"),
-        ("missing_chrom.out", "absent from chrom.sizes", "chrMissing"),
-        ("spanning_instance.out", "instance spans multiple contigs", "007"),
-        ("invalid_name.out", "invalid rmsk_name", "Bad|Name"),
-        ("invalid_chrom.out", "invalid chrom", "chr:Bad"),
+    identity_sizes = scratch / "identity.chrom.sizes"
+    identity_sizes.write_text((FIXTURES / "chrom.sizes").read_text() + "chr:Bad\t100\n")
+    for filename, table, message, offender in (
+        ("duplicate.out", "rmsk.tsv", "exact duplicate key", "Duplicate"),
+        ("beyond_end.out", "beyond_end.tsv", "outside contig bounds", "BeyondEnd"),
+        ("missing_chrom.out", "missing_chrom.tsv", "absent from chrom.sizes", "chrMissing"),
+        ("spanning_instance.out", "spanning_instance.tsv", "instance spans multiple contigs", "007"),
+        ("invalid_name.out", "invalid_name.tsv", "invalid rmsk_name", "Bad|Name"),
+        ("invalid_chrom.out", "invalid_chrom.tsv", "invalid chrom", "chr:Bad"),
+        ("colon_name.out", "colon_name.tsv", "invalid rmsk_name for record identity", "Bad:Name"),
     ):
-        expect_failure(lambda: build_records(FIXTURES / filename, FIXTURES / "rmsk.tsv",
-                                             FIXTURES / "chrom.sizes", scratch / "failed"),
+        sizes = identity_sizes if filename == "invalid_chrom.out" else FIXTURES / "chrom.sizes"
+        expect_failure(lambda: build_records(FIXTURES / filename, FIXTURES / table,
+                                             sizes, scratch / "failed"),
                        message, offender)
     for column, value in (("rmsk_name", "Bad Name"), ("chrom", "chr Bad")):
         malformed = expected.to_pandas()

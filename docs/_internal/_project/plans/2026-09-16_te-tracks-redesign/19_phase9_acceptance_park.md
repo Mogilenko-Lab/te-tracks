@@ -17,5 +17,10 @@ Deliverables
   is unsupported (tool executables), what is deferred (hg38, transcript context, ERV units, age
   tiers), and the next gates.
 
+Milestone 2 rulings landing here: the `compat_tetranscripts_mm39` membership count equals the row count
+of the published legacy `te_subfamily.saf` (H1); published table digests, `CATALOG_ID` and `BUILD_ID`
+equal the in-container `_scratch` build (H6); the runbook seeds the host `TE_TRACKS_SOURCE_CACHE` from
+the container's retained source copy, and a checksum mismatch stops for a re-pin decision (L4).
+
 Final review: codex and Opus on the whole release plus a `divergent` pass on the handoff.
 Then the umbrella pin bumps and D2 and D3 resume.

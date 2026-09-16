@@ -11,9 +11,11 @@ Deliverables under `tests/fixtures/consumers/`
 - Parser-level tests from the local checkouts (always supported): IRescue `makeRmsk` and
   `chrcat` name handling; Stellarscope `_intervaltree` grouping and the boundary gate (expected
   `0,1,1,0`; current source predicts a failing final overlap, keep the assertion and label the
-  consumer version unsupported until fixed upstream); TEsingle four-attribute tuple and the
-  999/1,000 UR cutoff; TEtranscripts `gene_id:family_id:class_id` grain; TElocal ingestion of
-  `record.gtf` as `.locInd`; MATES eight-column pair parsing (optional adapter).
+  consumer version unsupported until fixed upstream); TEsingle four-attribute tuple at record
+  grain from `record.gtf` and at subfamily grain from `subfamily.gtf`, and the 999/1,000 UR cutoff;
+  TEtranscripts `gene_id:family_id:class_id` grain; TElocal `.locInd` built from `record.gtf` by
+  TElocal's own indexer (`TElocal_Toolkit/TEindex.py`) and loaded back through the pickle reader TElocal
+  uses (milestone 2 rulings A4, H2); MATES eight-column pair parsing (optional adapter).
 - Execution-level tests (supported only where the executable exists): IRescue subfamily run
   A=2, record run 1+1, 4/2 vs 3/3 allocation; featureCounts one feature with two molecules,
   one-base feature; bedtools intersect with the coordinate-duplicate pair.

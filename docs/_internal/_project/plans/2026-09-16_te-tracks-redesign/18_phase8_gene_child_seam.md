@@ -26,3 +26,7 @@ Deferred to a dedicated design session, recorded here so nothing pretends otherw
   gene annotation pin is the mechanism, the policy for choosing and reconciling them is the open
   question.
 - Promoter window parameters, isoform selection, spliced versus genomic distance.
+- `gene_context` for the 14761 ledger. `exon_subtraction_status` describes counting-support geometry
+  under the exon mask, and `unchanged` covers intronic and intergenic records alike; the context relation
+  supplies intron, promoter and TSS distances. D2 records `gene_context` as pending this design session
+  and populates nothing from the status table (milestone 2 ruling H3).

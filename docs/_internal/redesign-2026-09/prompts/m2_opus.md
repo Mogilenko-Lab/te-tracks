@@ -1,5 +1,5 @@
 Milestone review after phase 2 of the te-tracks redesign: numbers and fixtures. Repository:
-/workspaces/Meta-Aging/01_modules/te-tracks (git branch redesign-2026-09, commit __P2_COMMIT__). You are
+/workspaces/Meta-Aging/01_modules/te-tracks (git branch redesign-2026-09, commit c28caea). You are
 read-only: no edits, no git writes, no installs, no network. Scratch work goes under
 /workspaces/Meta-Aging/_scratch/te-tracks-audit/m2-opus/ (the /tmp filesystem is noexec) and is removed when
 you finish. The orchestrator's build at /workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot/te_mm39/build
@@ -33,7 +33,7 @@ Do, with your own code (write it from the format specifications; import nothing 
     (tracked files unchanged; verify by md5 before and after).
 (e) Every number in README.md, docs/OUTPUTS.md, docs/DECISIONS.md and the plan files 10 to 12: confirm it
     against disk or mark it unverifiable.
-(f) Confirm no git write happened: git reflog -3 shows __P2_COMMIT__ as the latest entry and a clean tree.
+(f) Confirm no git write happened: git reflog -3 shows c28caea as the latest entry and a clean tree.
 
 Report as:
 # Milestone 2 re-review: numbers and fixtures (Opus)

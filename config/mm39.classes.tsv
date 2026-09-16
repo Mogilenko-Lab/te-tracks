@@ -1,18 +1,18 @@
-rmsk_class
-DNA
-DNA?
-LINE
-LTR
-Low_complexity
-RC
-Retroposon
-SINE
-Satellite
-Simple_repeat
-Unknown
-Unspecified
-rRNA
-scRNA
-snRNA
-srpRNA
-tRNA
+rmsk_class	disposition
+DNA	interspersed
+DNA?	interspersed
+LINE	interspersed
+LTR	interspersed
+Low_complexity	low_complexity
+RC	interspersed
+Retroposon	interspersed
+SINE	interspersed
+Satellite	satellite
+Simple_repeat	simple_repeat
+Unknown	interspersed
+Unspecified	interspersed
+rRNA	structural_rna
+scRNA	structural_rna
+snRNA	structural_rna
+srpRNA	structural_rna
+tRNA	structural_rna

@@ -21,6 +21,11 @@ record count. Class resolves first, family within the winning class.
    `canonical_family = canonical_class`, the RepeatMasker convention.
 4. A tie at either rank publishes `unresolved` at that rank and below.
 
+A refinement-aware variant, where a family token extending another with `-` outranks the coarser
+token, would be `taxonomy_rule_v2` and waits for a measured source in which the coarse token holds the
+majority. mm39's three parent/child competitions (`MER53`, `UCON44`, `X4b_DNA`) resolve to the specific
+token by count (milestone 2 ruling H7).
+
 Rank-specific statuses, chosen by the most consequential step that fired:
 `class_status` in {`concordant`, `resolved_uncertainty_suffix`, `resolved_majority`, `unresolved`};
 `family_status` in {`concordant`, `resolved_uncertainty_suffix`, `resolved_unspecified`,
@@ -55,11 +60,13 @@ canonical `DNA/DNA`.
   and every report name appears in the snapshot. A disagreement fails with the name and both
   labels.
 - Rule fixtures under `tests/fixtures/taxonomy/`: synthetic `rmsk_taxonomy` inputs covering each
-  status, a class-level competition, a two-way tie (expects `unresolved`), and a name mixing `?`
-  and unspecified family. Expected outputs authored by hand.
+  status, a class-level competition, a two-way tie (expects `unresolved`), a name mixing `?`
+  and unspecified family, and a parent/child family competition where the specific token holds the
+  majority (`MER53` shape). Expected outputs authored by hand.
 - Rollup rule documented in `docs/OUTPUTS.md`: family and class rollups join through
-  `taxonomy_canonical`; `unresolved` names roll into an explicit `unresolved` bucket, distinct from
-  RepeatMasker's literal `Unknown`.
+  `taxonomy_canonical`; a name unresolved at a rank carries an empty canonical label there, and every
+  rollup at that rank names it `unresolved/<rmsk_name>`, one bucket per name, distinct from
+  RepeatMasker's literal `Unknown` (milestone 2 ruling M2).
 
 ## Acceptance
 
@@ -73,7 +80,11 @@ canonical `DNA/DNA`.
   `unresolved/<rmsk_name>`.
 
 Review focus: the rule is total and deterministic over any input; raw tables stay untouched;
-the build reads no network and no Dfam data; the snapshot is test evidence only.
+the build reads no network and no Dfam data; the snapshot is test evidence only. Reviewers: codex,
+Opus and a `divergent` pass on the rule (milestone 2 ruling M7).
 
 Deferred, recorded: extending the Dfam snapshot from the 20 multi-label names to every
 `interspersed` name (one clade-scoped API pull) so the agreement test covers concordant names too.
+The agreement test asserts set equality between the resolution report and the snapshot, so a source
+whose multi-label names outgrow the snapshot fails the check until the snapshot covers them; that
+assertion is the admission gate for a new source or assembly.

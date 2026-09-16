@@ -16,11 +16,15 @@ Deliverables
   `chr4_JH584295v1_random` and `chrM` carry zero records.
 - `bin/te-tracks-preflight <export> <bam|fai|sizes>`: reads contig names and lengths from a BAM header, a
   `.fai`, or a two-column sizes file; reports contigs in the alignment reference absent from the export,
-  contigs in the export absent from the reference, and length disagreements; non-zero exit on any.
+  contigs in the export absent from the reference, and length disagreements. Exit 0 when the contig sets
+  agree and every length matches; exit 2 when the sets differ with a non-empty agreeing intersection,
+  both lists printed; exit 1 when a shared contig disagrees in length or the intersection is empty
+  (milestone 2 ruling M1).
 
 Acceptance: row counts equal across the three namespaces for every export; scaffold
 `chr1_GL456210v1_random` maps to `GL456210.1` in both `ensembl` and `gencode`, `chrM` maps to `MT` in
 `ensembl` and stays `chrM` in `gencode`; preflight against the GENCODE FASTA contig list
-(`redesign-2026-09/audit/gencode_grcm39_fasta_contigs.tsv`, 61 contigs) passes for `gencode`, fails
-for `ucsc` with the 39 scaffolds listed, and fails for `ensembl` with the 22 chromosomes listed; all
-61 lengths agree. `docs/DECISIONS.md` entry 3 names the three namespaces.
+(`redesign-2026-09/audit/gencode_grcm39_fasta_contigs.tsv`, 61 contigs) exits 0 for `gencode`, exits 2
+for `ucsc` with the 39 scaffolds listed in both directions, exits 2 for `ensembl` with the 22
+chromosomes listed in both directions, and exits 1 for `ensembl` against a 21-chromosome UCSC sizes
+file (empty intersection); all 61 lengths agree. `docs/DECISIONS.md` entry 3 names the three namespaces.
