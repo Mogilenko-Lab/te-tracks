@@ -212,6 +212,9 @@ that Dfam names. Snapshot rows may also cover concordant names. The current snap
 snapshot row count. The snapshot provenance records its fetch date, endpoint pattern, source,
 role and per-family version evidence; the next refresh adds the release endpoint response.
 
+Check 30 proves the published canonical table equals the rule's output on every row.
+`tests/fixtures/taxonomy/rule_cases.tsv` through check 32 proves the rule itself, including ties, plurality and weighting cases mm39 never exercises.
+
 ## Published legacy release
 
 Published legacy releases in the reference cache carry `te_loci.tsv.gz`, `te_dim.tsv`,
@@ -307,6 +310,9 @@ BED6 columns are `chrom`, `start_1 - 1`, `end_1`, `rmsk_record_id`, `min(sw_scor
 `strand`. Coordinates are 0-based half-open. Column 4 identifies the source record for IRescue
 and interval operations.
 
+The clipped BED score is a display convention; `rmsk_records.sw_score` is the filterable value.
+Among interspersed records, 1,224,713 (32.5%) have a source score above 1,000.
+
 Check contig and coordinate order with `LC_ALL=C sort -c -t$'\t' -k1,1 -k2,2n -k3,3n record.bed`.
 
 #### `subfamily.bed`
@@ -383,23 +389,41 @@ Columns appear in this order:
 |---|---|---|
 | `universe_name` | text | Selected membership, `interspersed`. |
 | `variant` | text | Interval support, `full`. |
-| `feature_level` | text | `record`, `subfamily`, `family` or `taxonomy_triple`. |
-| `emitted_feature_id` | text | Exact emitted feature identifier at that level. |
+| `feature_level` | text | `record`, `subfamily`, `family`, `taxonomy_triple` or `instance`. |
+| `key_grammar` | text | `rmsk_record_id`, `record_alias`, `four_tuple`, `rmsk_name`, `family_bucket`, `taxonomy_triple` or `instance_alias`. |
+| `emitted_feature_id` | text | Exact emitted feature identifier at that level and grammar. |
 | `rmsk_record_id` | text | Member record in the canonical table. |
 | `block_start_1` | int64 | Retained block start, 1-based inclusive. |
 | `block_end_1` | int64 | Retained block end, inclusive. |
 
-Each `(universe_name, variant, feature_level, emitted_feature_id, rmsk_record_id)` occurs
-once. Full intervals register one block equal to the record bounds. Record level registers
-both `rmsk_record_id` for BED and the record alias for GTF. Subfamily level registers each
-name-record pair once for BED, GTF and SAF. Family and taxonomy-triple levels each register
-one name-derived feature per record, yielding five registration rows per selected record.
+Uniqueness holds over `(universe_name, variant, feature_level, key_grammar, emitted_feature_id,
+rmsk_record_id, block_start_1, block_end_1)`. The `full` variant registers one block per member
+at each level and grammar, equal to the record bounds. Each selected record registers eight
+spellings in this order; `name` is `rmsk_name`, and `family_id` and `class_id` are the canonical
+or positional unresolved tokens emitted by the GTFs.
+
+| Order | `feature_level` | `key_grammar` | `emitted_feature_id` |
+|---|---|---|---|
+| 1 | `record` | `rmsk_record_id` | `rmsk_record_id` |
+| 2 | `record` | `record_alias` | `R\|mm39\|<name>\|<chrom>\|<start_1>\|<end_1>\|<strand>` |
+| 3 | `record` | `four_tuple` | `<record alias>:<name>:<family_id>:<class_id>` |
+| 4 | `subfamily` | `rmsk_name` | `rmsk_name` |
+| 5 | `subfamily` | `four_tuple` | `<name>:<name>:<family_id>:<class_id>` |
+| 6 | `family` | `family_bucket` | `<class_id>/<family_id>` |
+| 7 | `taxonomy_triple` | `taxonomy_triple` | `<name>:<family_id>:<class_id>` |
+| 8 | `instance` | `instance_alias` | `I\|mm39\|<rmsk_instance_id>` |
 
 Emitted IDs retain UCSC names inside record identities and are namespace-invariant; the same
-registration serves phase 6 namespaces. Rows follow export record order, then record BED,
-record GTF, subfamily, family and taxonomy-triple spelling. Gzip uses the deterministic table
-serialization above. Counts remain at their measured feature grain; selecting supporting
-records selects each distinct measured feature once before summing its count.
+registration serves phase 6 namespaces. Rows follow export record order, then the spelling
+order above. Gzip uses the deterministic table serialization above. The mm39 interspersed
+registration has 30,119,592 rows and 3,152,636 distinct instance aliases.
+
+A run's matrix binds to one `(feature_level, key_grammar)`.
+Counts join the registration through the run's measured feature ids at that pair.
+A traversal from records to the registration without a matrix join lists possible support and is never summed.
+Selecting supporting records selects each distinct measured feature once before summing its count.
+A mixed-name instance attributes to a subfamily only through an explicit allocation.
+The mm39 interspersed selection includes 30,569 mixed-name instances holding 95,830 records.
 
 #### `tables/exports.tsv`
 
@@ -422,21 +446,26 @@ One row per export file, sorted by `export_path`, inventories these columns in o
 `tests/run.sh consumers` reports parser and executable support separately. The local checkout
 parsers establish feature identity; executable fixtures establish the stated counting and overlap
 behavior. Generated inputs live under `$TE_TRACKS_REFROOT/fixtures/consumers/`.
-`00_tool_inventory.py` is reporting-only for executable availability; its in-process import
+`00_tool_inventory.required.py` is reporting-only for executable availability; its in-process import
 self-test verifies exit 1 for a missing symbol and exit 3 for an absent external module.
-Parser versions are read from the checkouts on each run.
+Every checkout parser support line reports its declared version and `git describe --tags --always`.
+The table names the checkout commit each fixture authorizes; an installed release may differ in
+the exercised entry points, including IRescue's `makeRmsk` and MATES's `split_count_10X_data`.
+Checks 00, 10, 12, 13, 14, 16, 22 and 23 are required; unsupported status in any of them fails the runner.
+Checks 11, 15, 20, 21 and 30 report optional support.
 
-| Consumer | Export read | Feature identity | Fixture in `tests/checks/consumers/` | Support in-container |
-|---|---|---|---|---|
-| IRescue 1.2.0 | `record.bed`, `subfamily.bed` | BED column 4 | `10_irescue_parser.py`: roster identities and coordinates, 11 record features, 8 names, comma splitting and exporter rejection; `15_irescue_chrcat.py`: real `chrcat` serialization; `20_irescue_exec.sh`: 2 molecules versus 1+1, 4/2 and 3/3 allocation | Identity parser supported; `chrcat` unsupported: system tool `gawk` absent; execution unsupported: `irescue` absent |
-| Stellarscope 1.5 | `record.gtf` | `locus` for records; `instance_id` for instances | `11_stellarscope_parser.py`: isolated annotation package, 11 records, 10 instances, attributes, endpoint gate | Parser exercised; unsupported: right-boundary overlap defect, observed `0,1,1,1`, expected `0,1,1,0`; executable `stellarscope` absent |
-| TEsingle 1.0 | `record.gtf`, `subfamily.gtf` | `transcript_id:gene_id:family_id:class_id` | `12_tesingle_parser.py`: 11 record tuples, 8 subfamily tuples, BAM `UR` cutoff at 1,000, reverse-strand annotation and duplicate/QC-fail read filtering | Parser supported; executable `TEsingle` absent |
-| TEtranscripts 2.2.4 | `record.gtf`, `subfamily.gtf` | `gene_id:family_id:class_id` | `13_tetranscripts_telocal_parser.py`: 8 groups through either GTF | Parser supported; executable `TEcount` absent |
-| TElocal 1.1.3 | `.locInd` built from `record.gtf` by TElocal's own indexer; `subfamily.gtf` supplies subfamily grain | `transcript_id:gene_id:family_id:class_id` | `13_tetranscripts_telocal_parser.py`: index construction and the checkout's pickle loader, semantic feature-tuple comparison, 11 record or 8 subfamily features; the pickle embeds the GTF path | Parser and index round trip supported; executable `TElocal` absent |
-| MATES 0.1.8, optional adapter | Fixture-only `record_mates.csv` and `record_mates.bed`, eight columns each | Column 5 integer index; column 4 `TE_Name` group; column 7 raw class/family model group | `14_mates_parser.py`: isolated source functions, pair agreement, companion stem, `?`/`Unknown` model filters; minimal `pkg_resources.resource_filename` stand-in | Adapter supported in isolation; installed package depends on `pkg_resources` (setuptools below 82), absent here |
-| featureCounts | `subfamily.saf`; fixture `onebase.saf` | SAF `GeneID` | `21_featurecounts_exec.sh`: `-s 0`, shared feature counts 2 fragments; one-base feature counts 1 read | Execution unsupported: `featureCounts` absent |
-| bedtools 2.31.1 | `record.bed` | BED column 4 retained by `intersect -wa -wb` | `22_bedtools_exec.sh`: equal-coordinate names, right-adjacent query, `-s`/`-S` | Execution supported |
-| samtools 1.21 | Fixture BAMs and their sequence dictionaries | BAM query name, strand and filter flags, `CB`/`UB`/`UR` tags | `23_samtools_fixture_integrity.sh`: sort order, indexes, alignment accounting, molecule counts by tag and flagged read names | Execution supported |
+| Consumer / authorized checkout | Export read | Feature identity | Registration `(feature_level, key_grammar)` | Fixture in `tests/checks/consumers/` | Support in-container |
+|---|---|---|---|---|---|
+| IRescue 1.2.0, `26f36fb` | `record.bed`, `subfamily.bed` | BED column 4 | `(record, rmsk_record_id)`, `(subfamily, rmsk_name)` | `10_irescue_parser.required.py`: roster identities and coordinates, 11 record features, 8 names, comma splitting and exporter rejection; `15_irescue_chrcat.py`: real `chrcat` serialization; `20_irescue_exec.sh`: 2 molecules versus 1+1, 4/2 and 3/3 allocation | Identity parser supported; `chrcat` unsupported: system tool `gawk` absent; execution unsupported: `irescue` absent |
+| Stellarscope 1.5, `0e0d594` | `record.gtf`, `subfamily.gtf` | `locus` for records or subfamilies; `instance_id` in record GTF | `(record, record_alias)`, `(subfamily, rmsk_name)`, `(instance, instance_alias)` | `11_stellarscope_parser.py`: isolated annotation package, 11 records, 10 instances, attributes, registration joins, endpoint gate | Parser exercised; unsupported: right-boundary overlap defect, observed `0,1,1,1`, expected `0,1,1,0`; executable `stellarscope` absent |
+| TEsingle 1.0, `655f127` | `record.gtf`, `subfamily.gtf` | `transcript_id:gene_id:family_id:class_id` | `(record, four_tuple)`, `(subfamily, four_tuple)` | `12_tesingle_parser.required.py`: 11 record tuples, 8 subfamily tuples, registration joins, BAM `UR` cutoff at 1,000, reverse-strand annotation and duplicate/QC-fail read filtering | Parser supported; executable `TEsingle` absent |
+| TEtranscripts 2.2.4, `e7f9b93` | `record.gtf`, `subfamily.gtf` | `gene_id:family_id:class_id` | `(taxonomy_triple, taxonomy_triple)` | `13_tetranscripts_telocal_parser.required.py`: 8 groups through either GTF, registration joins | Parser supported; executable `TEcount` absent |
+| TElocal 1.1.3, `1a168c2` | `.locInd` built from `record.gtf` by TElocal's own indexer; `subfamily.gtf` supplies subfamily grain | `transcript_id:gene_id:family_id:class_id` | `(record, four_tuple)`, `(subfamily, four_tuple)` | `13_tetranscripts_telocal_parser.required.py`: index construction and the checkout's pickle loader, semantic feature-tuple comparison, registration joins, 11 record or 8 subfamily features; the pickle embeds the GTF path | Parser and index round trip supported; executable `TElocal` absent |
+| MATES 0.1.8, `87c1218`, optional adapter | Fixture-only `record_mates.csv` and `record_mates.bed`, eight columns each | Column 5 fixture roster ordinal; column 4 `TE_Name` group; column 7 raw class/family model group | `TE_Name`: `(subfamily, rmsk_name)`; integer index maps through the fixture roster | `14_mates_parser.required.py`: isolated source functions, pair agreement, companion stem, `?`/`Unknown` model filters; minimal `pkg_resources.resource_filename` stand-in | Adapter supported in isolation; installed package depends on `pkg_resources` (setuptools below 82), absent here |
+| featureCounts | `subfamily.saf`, `taxonomy_triple.saf`; fixture `onebase.saf` | SAF `GeneID` | `(subfamily, rmsk_name)`, `(taxonomy_triple, taxonomy_triple)`; `OneBase` is fixture-only | `21_featurecounts_exec.sh`: `-s 0`, shared subfamily and triple features each count 2 fragments; one-base feature counts 1 read | Execution unsupported: `featureCounts` absent |
+| bedtools 2.31.1 | `record.bed`, `family.bed` | BED column 4 retained by `intersect -wa -wb` | `(record, rmsk_record_id)`, `(family, family_bucket)` | `22_bedtools_exec.required.sh`: equal-coordinate names, right-adjacent query, `-s`/`-S`; `16_family_triple_readers.required.py`: canonical buckets and registration joins | Execution supported |
+| SAF column reader | `taxonomy_triple.saf` | SAF `GeneID` | `(taxonomy_triple, taxonomy_triple)` | `16_family_triple_readers.required.py`: 8 GeneIDs, three `TwoLab` rows sharing one triple, registration joins | Reader supported |
+| samtools 1.21 | Fixture BAMs and their sequence dictionaries | BAM query name, strand and filter flags, `CB`/`UB`/`UR` tags | BAM integrity check | `23_samtools_fixture_integrity.required.sh`: sort order, indexes, alignment accounting, molecule counts by tag and flagged read names | Execution supported |
 
 The authored oracle in `tests/fixtures/consumers/expected.json` specifies 11 records, 8 names and
 10 instances. The production taxonomy resolver elects `TwoLab`'s `hAT-Tip100` family by 2:1
@@ -453,6 +482,8 @@ and raw `UR`: `unique_a` copy 0 and `duplicate_b` copy 1 have one-base raw error
 in these totals and records flagged query names per BAM. Bulk carries query and mate identities.
 Separate counting fixtures preserve each assay layout and report IRescue's fitted
 allocation in `irescue_allocation.json` when its executable is available.
+The allocation check asserts A = 6.0, B = 3.0 for 4/2 support and A = B = 4.5 for 3/3, within 0.05.
+Every tagged fixture BAM carries one barcode, so whitelist, empty-cell and per-barcode threshold behaviour are the consumer's audit.
 
 Stellarscope's endpoint gate expects `0,1,1,0` for the four reads against GTF `101..110`.
 The checkout observes `0,1,1,1` and reports the right-boundary defect as unsupported. The gate
@@ -461,6 +492,7 @@ MATES resolves
 `record_mates.csv` to its companion correctly; a dotted stem resolves to `record.bed`.
 Its preparation fixture supplies coverage vectors and executes the upstream model-group filter.
 MATES works in `$TE_TRACKS_REFROOT/fixtures/consumers_scratch/mates/` and removes that directory.
+The MATES pair is fixture-only, its index is the fixture roster's ordinal, and a MATES release export waits for a named consumer.
 IRescue's five parser `.tsv.gz` files have mtime 0 and an empty gzip filename. TElocal indexes
 are compared by feature tuples across GTF paths.
 The existing registration query remains unsupported through the missing Python module `duckdb`.

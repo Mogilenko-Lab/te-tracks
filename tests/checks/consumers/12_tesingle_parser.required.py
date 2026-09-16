@@ -11,7 +11,7 @@ from types import SimpleNamespace
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
 from consumers import (CELL, EXPECTED, FIXTURES, build_fixture, checkout_import, checkout_version,
-                       expected_tuples, export_path, run_check, source_tree)
+                       assert_registered, expected_tuples, export_path, run_check, source_tree)
 
 
 def check_alignment_filter(alignment, index, counters, cutoff):
@@ -27,10 +27,11 @@ def check_alignment_filter(alignment, index, counters, cutoff):
     usable = [read for read in reads if not (read.is_duplicate or read.is_qcfail)]
     assert set(cells) == {CELL}
     assert set(cells[CELL]) == {read.get_tag("UR") for read in usable}
-    assert len(cells[CELL]) == EXPECTED["bams"]["arc_3prime.bam"]["molecules_by_tag"]["UR"] - 2
+    flagged = EXPECTED["bams"]["arc_3prime.bam"]["flagged_reads"]
+    flagged_molecules = len(flagged["duplicate"]) + len(flagged["qcfail"])
+    assert len(cells[CELL]) == EXPECTED["bams"]["arc_3prime.bam"]["molecules_by_tag"]["UR"] - flagged_molecules
     parsed_names = {name for molecules in cells.values() for names in molecules.values() for name in names}
     assert parsed_names == {read.query_name for read in usable}, parsed_names
-    flagged = EXPECTED["bams"]["arc_3prime.bam"]["flagged_reads"]
     assert parsed_names.isdisjoint(flagged["duplicate"] + flagged["qcfail"])
     for name in ("duplicate_b_copy0", "duplicate_b_copy1", "minus_twolab_copy0"):
         assert any(hit[1] for names in cells[CELL].values() for hit in names.get(name, [])), name
@@ -65,6 +66,7 @@ def check():
         index.build(str(export_path(f"{level}.gtf")))
         observed = index.getElements()
         assert len(observed) == number and set(observed) == expected_tuples(level), observed
+        assert_registered(observed, level, "four_tuple")
         two = [label for label in observed if label.split(":")[1] == "TwoLab"]
         assert len(two) == (3 if level == "record" else 1)
         assert all(label.endswith(":TwoLab:hAT-Tip100:DNA") for label in two), two

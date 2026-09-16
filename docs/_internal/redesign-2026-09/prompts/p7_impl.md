@@ -41,7 +41,10 @@ Two top-level sections. `identity` (hashed): `schema_version` ("te-tracks-manife
 `chrom.sizes` bytes), `catalog` (see below), `universes` (the full `universes.json` object; its
 `schema_version` owns the predicate grammar), `taxonomy_rule_version` (read from
 `build_taxonomy.TAXONOMY_RULE_VERSION`), `export_contracts` (per export path: format, level, feature identity
-field or attribute, coordinate convention; source it from one dict in `src/lib/build_exports.py` so the exporter
+field or attribute, the attribute-to-source-column mapping, the output key each named consumer constructs (BED
+name; GTF `locus` and `instance_id`; the TEsingle and TElocal `transcript_id:gene_id:family_id:class_id` tuple;
+the TEtranscripts `gene_id:family_id:class_id` triple; SAF `GeneID`), the selectable levels, coordinate
+convention (milestone 5 ruling A3); source it from one dict in `src/lib/build_exports.py` so the exporter
 and the manifest agree, and cross-check it against `tables/exports.tsv`), `parent_build_id` and
 `parent_catalog_id` (null for the core family), `inventory` (sorted list of `{path, bytes, sha256}` for every
 regular file under the build dir except `MANIFEST.json`, `BUILD_ID` and `CATALOG_ID`; `source/` files
@@ -59,7 +62,9 @@ exposes; state what you found), `built_at` UTC, `source_acquisition` (cache path
 `validation` (verifier summary), `peak_rss_bytes` of the export writer when measurable. Canonical encoding:
 `json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)` encoded UTF-8;
 `BUILD_ID = sha256(b"te-tracks-build-v1\n" + canonical_bytes(identity)).hexdigest()`; the `BUILD_ID` and
-`CATALOG_ID` files hold the hex digest and a newline. State both encodings in `docs/RELEASES.md` once, and the
+`CATALOG_ID` files hold the hex digest and a newline. `docs/DECISIONS.md` entry 7 publishes both ids and the ledger
+key `(te_catalog_id, rmsk_record_id)`, and the README names both (milestone 5 ruling M1). State both encodings in
+`docs/RELEASES.md` once, and the
 `universes.json` byte profile (insertion order, indent 2, `ensure_ascii=False`, UTF-8, final LF) in
 `docs/OUTPUTS.md` beside the serialization contract, together with reader settings for pandas, DuckDB and R
 (`data.table`, `arrow`): text instance ids, signed int64 fields, no quoting, empty strings literal.

@@ -46,8 +46,10 @@ universes, taxonomy, exports, contigs, manifest), `src/90_manifest.py`, `src/99_
    - `exports/{ucsc,ensembl,gencode}/interspersed/exon_subtracted/subfamily.saf` (GeneID = rmsk_name, one
      row per piece) and `taxonomy_triple.saf`, sorted like the parent's exports;
    - `tables/export_feature_members.tsv.gz` for these exports keyed `(universe_name, variant =
-     exon_subtracted, feature_level)` with `block_start_1`, `block_end_1` per piece, namespace-invariant like the
-     parent's; `tables/exports.tsv` with one row per export file;
+     exon_subtracted, feature_level)` with `block_start_1`, `block_end_1` per piece, one row per retained block
+     (uniqueness over the key plus the block columns), namespace-invariant like the parent's; the exporter takes
+     universe, variant and block bounds as explicit inputs; the child build's own `tables/exports.tsv` with one row
+     per export file;
    - `tables/exon_subtraction_status.tsv`: `rmsk_record_id, status (unchanged|trimmed|split|fully_subtracted),
      pieces, retained_bp, removed_bp`; assert `retained_bp + removed_bp = length_bp` for every record and zero
      residual overlap between any piece and the mask (interval check, vectorised);

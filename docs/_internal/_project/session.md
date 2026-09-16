@@ -146,13 +146,38 @@ bytecode cache from the first round removed. Support matrix: parsers supported f
 TEtranscripts, TElocal and the MATES adapter; Stellarscope exercised to its defect; executables `irescue`,
 `featureCounts`, `stellarscope`, `TEsingle`, `TEcount`, `TElocal`, `duckdb`, `gawk` absent in-container.
 
+**Milestone 5 review** (after phase 5, commit `9ac66fb`) is complete and committed. Three parallel read-only
+reviewers: codex on the consumer seam (`reviews/m5_codex.md`, BLOCKING: the registration carried five spellings and
+matched none of the keys TEsingle, TElocal and a Stellarscope instance run emit on 1,000 sampled rows per export; three
+advisories on split-piece uniqueness, the hardcoded namespace, universe and variant with an inventory writer that
+replaces the file, and the manifest's export contracts), Opus on numbers and fixtures (`reviews/m5_opus.md`, PASS WITH
+ADVISORIES; every phase 3 to 5 number re-derived by an independent route, the seven export digests reproduced from an
+independent byte stream, thirteen mutations and two resolver probes each failing their check; seven advisories) and
+divergent on assumptions (`reviews/m5_divergent.md`, 4 High, 8 Medium, 5 Low). Rulings in `reviews/m5_rulings.md`.
+Divergent H1 (the compat universe short by 1,235 `LFSINE_Vert` records) was rejected on its premise: the directory it
+measured was the audit's changed-policy experiment of the legacy release mechanics (`6ff3ee9-dirty`, prefix `tRNA-`),
+which the orchestrator moved to `_scratch/te-tracks-audit/legacy_release_experiments/`; the legacy rule is `^tRNA` and
+the compat count 3,799,629 stands. Fix `te-tracks-m5-fix` from `prompts/m5_fix.md` (fifteen items):
+`export_feature_members` gains `key_grammar` and eight rows per record (`rmsk_record_id`, `record_alias` and
+`four_tuple` at `record`; `rmsk_name` and `four_tuple` at `subfamily`; `family_bucket`; `taxonomy_triple`;
+`instance_alias` at the new `instance` level), 30,119,592 rows over 3,152,636 instances, 255 MB; check 41 asserts the
+eight slots and composes every GTF row's tuple and instance id for its joins; the 40 fixture rows hand-authored; every
+consumer parser check joins its keys to the fixture registration; a family and triple reader check; `git describe` in
+every support line; EM fixed-point assertions; the always-supported consumer checks renamed `.required`; contract
+sentences on matrix binding, allocation, the clipped score, the single barcode, the fixture-only MATES pair and which
+check proves what; README paragraphs current. Orchestrator re-verification: an independent regeneration of the
+registration from the phase 2 and 3 tables reproduces its content digest; `exports.tsv` byte-identical; the 40 fixture
+rows derived independently from the expected exports; core 13 pass; consumers 8 pass and 5 unsupported, exit 0;
+checkouts clean. Export writer peak RSS 5.7 GB. Rulings the owner may overturn: the `all_rmsk` record BED for 14761's
+ATAC route in phase 6 (divergent H2, widens ADR 3's export matrix) and the `key_grammar` column (H4).
+
 ## Next session starts here
 
-1. Milestone 5: stamp the phase 5 commit hash into `prompts/m5_{codex,opus,divergent}.md` (drafted; `__HASH__`
-   placeholder), fan out the three reviewers in parallel (codex unit `te-tracks-m5-codex`, Opus agent reading
-   `prompts/m5_opus.md`, divergent agent writing `reviews/m5_divergent.md`), rule in `reviews/m5_rulings.md`, fix if
-   needed (fold in the two notes at the end of `reviews/p5_rulings.md`), commit, bump the umbrella pin.
-2. Phases 6 to 9 with `p6_impl.md` … `p9_impl.md`, each aligned with the rulings in its plan file before launch;
+1. Phase 6: `launch.sh --unit te-tracks-p6-impl --workdir <te-tracks> --effort xhigh --prompt
+   docs/_internal/redesign-2026-09/prompts/p6_impl.md` (aligned with the milestone 5 rulings: inventory written as a
+   union, the `all_rmsk` record BED, check 41's path-set assertion in the touch list); verify (stage 35 against the
+   build, `tests/run.sh core`, preflight exits); codex review then Opus; fix loop; commit "Phase 6: contig namespaces".
+2. Phases 7 to 9 with `p7_impl.md` … `p9_impl.md`, each aligned with the rulings in its plan file before launch;
    milestone reviews after 7 and 9; the owner runs the host build at phase 9 (`docs/RUNBOOK.md`; host floor 5.5 GB
    resident, about 9 GB disk per build), the orchestrator verifies the published bytes and records `BUILD_ID` and
    `CATALOG_ID` here; then the umbrella pin bumps and D2/D3 resume.

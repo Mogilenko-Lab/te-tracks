@@ -23,8 +23,13 @@ Deliverables under `exports/ucsc/interspersed/full/`
   alias and are namespace-invariant, so one registration serves the three namespaces; for `full`
   variants one block per record equal to the record bounds (milestone 2 ruling M5).
 - `tables/exports.tsv`: one row per export path with `namespace, universe_name, variant, feature_level,
-  format, rows, distinct_features, sha256`. Level `record` registers both id spellings (`rmsk_record_id`
-  for BED, the record alias for GTF); level `subfamily` registers `rmsk_name` once for BED, SAF and GTF.
+  format, rows, distinct_features, sha256`. Eight registration rows per selected record (milestone 5 ruling B1): level `record` registers
+  `rmsk_record_id` (BED), the record alias (GTF `locus`) and the TEsingle and TElocal tuple
+  `<alias>:<name>:<family_id>:<class_id>`; level `subfamily` registers `rmsk_name` (BED, SAF, GTF `locus`) and the
+  tuple `<name>:<name>:<family_id>:<class_id>`; levels `family` and `taxonomy_triple` register their bucket and
+  triple; level `instance` registers `I|mm39|<rmsk_instance_id>` for a Stellarscope instance run (mm39: 30,119,592
+  rows, 3,152,636 distinct instances; a mixed-name instance attributes to a subfamily only through an explicit
+  allocation). Uniqueness holds over the key plus `(block_start_1, block_end_1)`; `full` registers one block.
 - Name validation: every id component (`rmsk_name`, contig, canonical label, unresolved token) matches
   `[A-Za-z0-9_.+?()-]+`; emitted ids add the separators `|`, `:` and `/`; no emitted id contains `, # ~ % ; "`
   or whitespace; a violation fails the export (milestone 2 ruling L1). The build rejects `/` in `rmsk_name`

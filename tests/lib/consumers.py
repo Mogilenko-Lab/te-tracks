@@ -93,11 +93,13 @@ def checkout_import(checkout, module, subpackage=None):
 
 
 def checkout_version(checkout):
-    """Read the parser version from checkout metadata without executing setup code."""
+    """Read the declared parser version and checkout description without executing setup code."""
+    description = command(["git", "-C", CHECKOUTS / checkout,
+                           "describe", "--tags", "--always"]).strip()
     if checkout == "stellarscope":
-        return command(["git", "-C", CHECKOUTS / checkout,
-                        "describe", "--tags", "--always"]).strip()
-    if checkout == "irescue":
+        values = [command(["git", "-C", CHECKOUTS / checkout,
+                           "describe", "--tags", "--abbrev=0"]).strip()]
+    elif checkout == "irescue":
         _, tree = source_tree(checkout, "irescue/_version.py")
         values = [ast.literal_eval(node.value) for node in tree.body
                   if isinstance(node, ast.Assign)
@@ -110,7 +112,7 @@ def checkout_version(checkout):
                   and node.func.id == "setup" for keyword in node.keywords
                   if keyword.arg == "version"]
     assert len(values) == 1 and isinstance(values[0], str), (checkout, values)
-    return values[0]
+    return f"{values[0]} ({description})"
 
 
 def absent_external_module(error):
@@ -134,12 +136,14 @@ def run_check(tool, version, check):
             version = version() if callable(version) else version
             summary = check()
     except Unsupported as error:
-        print(f"unsupported: {error}")
+        provenance = f"; {tool} {version}" if isinstance(version, str) else ""
+        print(f"unsupported: {error}{provenance}")
         raise SystemExit(3)
     except BaseException as error:
         missing = absent_external_module(error)
         if missing:
-            print(f"unsupported: {tool} python module {missing} absent")
+            provenance = f"; {version}" if isinstance(version, str) else ""
+            print(f"unsupported: {tool} python module {missing} absent{provenance}")
             raise SystemExit(3)
         print(f"failed {tool}: {error}")
         print(output.getvalue(), end="")
@@ -164,6 +168,40 @@ def expected_tuples(level):
     """Derive identity expectations from the authored roster and canonical rank oracle."""
     return {f"{record_alias(row) if level == 'record' else row[4]}:{row[4]}:"
             + ":".join(EXPECTED["taxonomy"][row[4]]) for row in ROSTER}
+
+
+def assert_registered(keys, level, grammar):
+    """Join the reader's complete feature set to exact roster records and full blocks."""
+    expected = {}
+    for row in ROSTER:
+        name = row[4]
+        family, cls = EXPECTED["taxonomy"][name]
+        triple = f"{name}:{family}:{cls}"
+        feature = {
+            ("record", "rmsk_record_id"): record_key(row),
+            ("record", "record_alias"): record_alias(row),
+            ("record", "four_tuple"): f"{record_alias(row)}:{triple}",
+            ("subfamily", "rmsk_name"): name,
+            ("subfamily", "four_tuple"): f"{name}:{triple}",
+            ("family", "family_bucket"): f"{cls}/{family}",
+            ("taxonomy_triple", "taxonomy_triple"): triple,
+            ("instance", "instance_alias"): f"I|mm39|{row[6]}",
+        }[level, grammar]
+        expected.setdefault(feature, []).append((record_key(row), row[1], row[2]))
+    keys = set(keys)
+    assert keys == set(expected), (level, grammar, keys, set(expected))
+    joined = {key: [] for key in keys}
+    with gzip.open(FIXTURES / "tables/export_feature_members.tsv.gz", "rt") as handle:
+        for row in csv.DictReader(handle, delimiter="\t"):
+            if (row["universe_name"], row["variant"], row["feature_level"], row["key_grammar"]) == (
+                "interspersed", "full", level, grammar,
+            ) and row["emitted_feature_id"] in keys:
+                joined[row["emitted_feature_id"]].append((
+                    row["rmsk_record_id"], int(row["block_start_1"]), int(row["block_end_1"])))
+    assert {key: sorted(rows) for key, rows in joined.items()} == {
+        key: sorted(rows) for key, rows in expected.items()
+    }, (level, grammar, joined, expected)
+    return {key: {row[0] for row in rows} for key, rows in joined.items()}
 
 
 @contextmanager
@@ -482,16 +520,17 @@ def featurecounts_check():
     build_fixture()
     for annotation, bam, options, feature, expected in (
         (export_path("subfamily.saf"), "featurecounts_pe.bam", ["-p", "--countReadPairs"], "SubA", 2),
+        (export_path("taxonomy_triple.saf"), "featurecounts_pe.bam", ["-p", "--countReadPairs"], "SubA:L1:LINE", 2),
         (FIXTURES / "onebase.saf", "featurecounts_onebase.bam", [], "OneBase", 1),
     ):
-        output = FIXTURES / f"{bam}.counts.tsv"
+        output = FIXTURES / f"{annotation.stem}.{bam}.counts.tsv"
         command(["featureCounts", "-F", "SAF", "-a", annotation, "-o", output,
                  "-s", "0", *options, FIXTURES / bam])
         with output.open() as handle:
             rows = list(csv.DictReader((line for line in handle if not line.startswith("#")), delimiter="\t"))
         counts = {row["Geneid"]: float(list(row.values())[-1]) for row in rows}
         assert counts[feature] == expected and sum(counts.values()) == expected, counts
-    return "-s 0; two fragments per shared SAF feature; inclusive one-base overlap"
+    return "-s 0; two fragments per subfamily and triple SAF feature; inclusive one-base overlap"
 
 
 def irescue_check():
@@ -527,6 +566,8 @@ def irescue_check():
             x = float(counts[keys[0]] - left)
             assert -1e-6 <= x <= 3 + 1e-6, counts
             assert np.isclose(counts[keys[1]], right + (3 - x)) and np.isclose(sum(counts.values()), 9), counts
+            fixed_point = (6.0, 3.0) if (left, right) == (4, 2) else (4.5, 4.5)
+            assert np.allclose([counts[key] for key in keys], fixed_point, atol=0.05, rtol=0), counts
             allocation[f"{layout}_{left}_{right}"] = {"A": float(counts[keys[0]]),
                                                        "B": float(counts[keys[1]]), "EM_x": x}
     (FIXTURES / "irescue_allocation.json").write_text(json.dumps(allocation, indent=2) + "\n")

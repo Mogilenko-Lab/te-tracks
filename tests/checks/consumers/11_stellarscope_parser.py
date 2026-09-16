@@ -7,7 +7,8 @@ import sys
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
 from consumers import (EXPECTED, FIXTURES, ROSTER, Unsupported, build_fixture,
-                       checkout_import, checkout_version, export_path, record_alias, run_check)
+                       assert_registered, checkout_import, checkout_version, export_path,
+                       record_alias, record_key, run_check)
 
 
 def check():
@@ -32,8 +33,15 @@ def check():
     instances = intervaltree.IntervalTreeAnnotation(str(gtf), "instance_id", "exon")
     assert len(records.loci) == EXPECTED["records"]
     assert len(instances.loci) == EXPECTED["instances"]
+    assert_registered(records.loci, "record", "record_alias")
+    registered_instances = assert_registered(instances.loci, "instance", "instance_alias")
+    assert registered_instances["I|mm39|7"] == {
+        record_key(row) for row in ROSTER if row[4] in {"SubB", "SubB-int"}
+    }
     assert {f.attributes["gene_id"] for f in instances.loci["I|mm39|7"]} == {"SubB", "SubB-int"}
     assert len([iv for iv in instances.itree["chrA"] if iv.data == "I|mm39|7"]) == 2
+    subfamilies = intervaltree.IntervalTreeAnnotation(str(export_path("subfamily.gtf")), "locus", "exon")
+    assert_registered(subfamilies.loci, "subfamily", "rmsk_name")
     edge = record_alias(next(row for row in ROSTER if row[4] == "Edge"))
     with pysam.AlignmentFile(FIXTURES / "arc_3prime.bam") as bam:
         reads = {r.query_name: r for r in bam.fetch(until_eof=True)}
@@ -41,7 +49,7 @@ def check():
     observed = [int(bool(records.intersect_blocks("chrB", reads[f"edge_{start}_copy0"].get_blocks()).get(edge)))
                 for start in (99, 100, 109, 110)]
     if observed == [0, 1, 1, 1]:
-        raise Unsupported(f"stellarscope {checkout_version('stellarscope')} right-boundary overlap defect, "
+        raise Unsupported("stellarscope right-boundary overlap defect, "
                           "observed 0,1,1,1 expected 0,1,1,0")
     assert observed == EXPECTED["boundary"], (observed, EXPECTED["boundary"])
     return "locus=11, instance_id=10, boundary=0,1,1,0"

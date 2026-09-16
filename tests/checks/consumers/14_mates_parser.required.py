@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
-from consumers import (CHECKOUTS, FIXTURES, checkout_version,
+from consumers import (CHECKOUTS, FIXTURES, build_fixture, checkout_version,
                        execute_source_nodes, run_check, source_tree)
 
 
@@ -35,6 +35,7 @@ def resource_filename(package, relative):
 
 
 def check():
+    build_fixture()
     import pandas as pd
 
     namespace = {"os": os, "pd": pd, "pickle": pickle, "Path": Path}
@@ -57,7 +58,9 @@ def check():
     assert list(csv_rows[4]) == list(range(11)) and csv_rows[3].nunique() == 8
     assert (csv_rows[7] == csv_rows[2] - csv_rows[1]).all()
     scratch = FIXTURES.parent / "consumers_scratch/mates"
-    scratch.mkdir(parents=True)
+    if scratch.exists():
+        shutil.rmtree(scratch)
+    scratch.mkdir(parents=True, exist_ok=True)
     try:
         with chdir(scratch):
             exercise(namespace, csv_rows, pd, scratch)

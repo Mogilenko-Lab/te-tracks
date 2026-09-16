@@ -11,8 +11,11 @@ Deliverables
 - `exports/{ensembl,gencode}/interspersed/full/{record.bed, subfamily.bed, family.bed, record.gtf,
   subfamily.gtf, subfamily.saf, taxonomy_triple.saf}` and phase 8's SAF: same rows as the `ucsc` files, contig
   column renamed through the alias table; `rmsk_record_id` unchanged (UCSC names inside). Emitted ids are
-  namespace-invariant, so `export_feature_members` gains no rows; each renamed file gains one `exports.tsv`
+  namespace-invariant, so the renamed files add no registration rows; each renamed file gains one `exports.tsv`
   row (milestone 2 rulings M5, H2).
+- `exports/{ucsc,ensembl,gencode}/all_rmsk/full/record.bed` (milestone 5 ruling H2, subject to the owner): the
+  record BED over the complete catalog for 14761's ATAC route, registered under universe `all_rmsk`, level `record`,
+  grammar `rmsk_record_id` (5,320,771 rows); the inventory grows to 24 rows.
 - `tables/contig_coverage.tsv`: per contig: records, in `interspersed`, has alias, length agrees.
   `chr4_JH584295v1_random` and `chrM` carry zero records.
 - `bin/te-tracks-preflight <export> <bam|fai|sizes>`: reads contig names and lengths from a BAM header, a

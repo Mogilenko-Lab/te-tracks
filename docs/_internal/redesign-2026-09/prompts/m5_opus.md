@@ -1,5 +1,5 @@
 Milestone review after phase 5 of the te-tracks redesign: numbers and fixtures. Repository:
-/workspaces/Meta-Aging/01_modules/te-tracks (git branch redesign-2026-09, commit __HASH__). You are
+/workspaces/Meta-Aging/01_modules/te-tracks (git branch redesign-2026-09, commit 9ac66fb). You are
 read-only: no edits, no git writes anywhere (the checkouts under /workspaces/Meta-Aging/01_modules/.ref/ are git
 repositories too), no installs, no network. Scratch work goes under
 /workspaces/Meta-Aging/_scratch/te-tracks-audit/m5-opus/ (the /tmp filesystem is noexec) and is removed when
@@ -33,7 +33,7 @@ Do, with your own code (write it from the contracts; import nothing from src/ or
     and fixture; mutate one thing per check on scratch copies and confirm each check fails (tracked files unchanged;
     verify by md5 before and after).
 (f) Every number in README.md, docs/OUTPUTS.md and plan files 13 to 15: confirm against disk or mark unverifiable.
-(g) Confirm no git write happened: git reflog -3 shows __HASH__ as the latest entry and a clean tree; each checkout
+(g) Confirm no git write happened: git reflog -3 shows 9ac66fb as the latest entry and a clean tree; each checkout
     under .ref shows a clean status.
 
 Report as:

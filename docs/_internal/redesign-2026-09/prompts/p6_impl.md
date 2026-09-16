@@ -35,17 +35,23 @@ or `python3`; exit 0 pass, 3 unsupported, other fail; build dir `$TE_TRACKS_REFR
      taxonomy_triple.saf`) by renaming the contig column of the `ucsc` files through the alias table; rows
      otherwise byte-identical; `rmsk_record_id` and the GTF record alias keep UCSC names inside. Emitted ids are
      namespace-invariant, so `export_feature_members` gains no rows; each renamed file gains one row in
-     `tables/exports.tsv` (namespace, universe, variant, level, format, rows, distinct features, sha256) through
-     the existing writer. Sorted by the renamed contig in C-locale byte order, then start and end numerically,
+     `tables/exports.tsv` (namespace, universe, variant, level, format, rows, distinct features, sha256); the
+     inventory is written as the union of the seven existing rows and the fourteen new rows, sorted by
+     `export_path`, through an inventory function in `build_exports.py` that takes rows (the phase 4 writer
+     replaces the file, milestone 5 ruling A2). Sorted by the renamed contig in C-locale byte order, then start and end numerically,
      strand, name (consumers read sorted files).
-2. `bin/te-tracks-preflight <export> <bam|fai|sizes>` (executable python): reads contig names and lengths
+2. `exports/{ucsc,ensembl,gencode}/all_rmsk/full/record.bed`: the record BED over the complete catalog (5,320,771
+   rows, BED name `rmsk_record_id`, score clipped like the interspersed BED) for 14761's ATAC route; registration
+   rows appended under universe `all_rmsk`, level `record`, grammar `rmsk_record_id`, one block per record; three
+   inventory rows (milestone 5 ruling H2). The exporter takes universe and export set as explicit inputs for this.
+3. `bin/te-tracks-preflight <export> <bam|fai|sizes>` (executable python): reads contig names and lengths
    from a BAM header (pysam), a `.fai`, or a two-column sizes TSV; reads the export's contig set (column 1
    of BED/SAF/GTF, skipping the SAF header); reports `only_in_reference`, `only_in_export`,
    `length_disagreements` (export contigs' lengths come from `<build-dir>/tables/contig_aliases.tsv`, located by
    walking up from the export path to the directory containing `tables/`). Exit 0 when all three lists are
    empty; exit 2 when the contig sets differ with a non-empty agreeing intersection (both lists printed);
    exit 1 when a shared contig disagrees in length or the intersection is empty (ruling M1).
-3. Checks under `tests/checks/core/`:
+4. Checks under `tests/checks/core/`:
    - `60_contig_aliases.py`: 61 rows; injectivity; `chr1_GL456210v1_random` → ensembl `GL456210.1`,
      gencode `GL456210.1`; `chrM` → ensembl `MT`, gencode `chrM`; the gencode column equals the 61 FASTA
      names in `tests/fixtures/contigs/gencode_grcm39_fasta_contigs.tsv` (copy of the audit file) with equal
@@ -53,22 +59,25 @@ or `python3`; exit 0 pass, 3 unsupported, other fail; build dir `$TE_TRACKS_REFR
    - `61_namespace_exports.py`: for each of the seven exports, row counts equal across `ucsc`, `ensembl`,
      `gencode`; columns other than the contig column byte-identical row-for-row on a 10,000-row aligned
      sample (sort both by rmsk_record_id or by the GTF alias to align); the contig column maps through
-     the alias table; `exports.tsv` carries 21 rows whose sha256 values match the files and whose
-     `export_feature_members` level counts are unchanged from phase 4.
+     the alias table; `exports.tsv` carries 24 rows whose sha256 values match the files; the `all_rmsk` BED has
+     5,320,771 rows in each namespace and its registration rows equal that count; every other
+     `export_feature_members` level count is unchanged from milestone 5.
    - `62_preflight.sh`: preflight of `exports/gencode/.../record.gtf` against the FASTA contig list
      (sizes mode) exits 0; against `exports/ucsc/.../record.gtf` exits 2 listing exactly the 39 scaffolds
      as `only_in_export`/`only_in_reference` pairs; against `exports/ensembl/...` exits 2 listing the 22
      chromosomes; `exports/ensembl/...` against a 21-chromosome UCSC-named sizes file (`chr1`..`chr19`,
      `chrX`, `chrY`) exits 1 with an empty intersection; a synthetic BAM header (pysam, contig `chr1` with a
      wrong length) against the `ucsc` export exits 1 with one length disagreement.
-4. `docs/OUTPUTS.md`: the alias and coverage tables; the namespace rule (one sentence per namespace); the
+5. `docs/OUTPUTS.md`: the alias and coverage tables; the `all_rmsk` record BED and its consumer (14761 ATAC route); the namespace rule (one sentence per namespace); the
    preflight command. `docs/DECISIONS.md` entry 3: the release ships exports in the `ucsc`, `ensembl` and
    `gencode` contig namespaces (edit that one sentence). README truth table: `contig_aliases`,
    `contig_coverage`, the ensembl and gencode export rows, `bin/te-tracks-preflight` to `tested`, phase 6.
 
 ## Rules
 - Touch only: `src/lib/contigs.py`, `src/35_build_namespaces.sh`, `src/lib/build_exports.py` (only to reuse
-  its writers/registration), `bin/te-tracks-preflight`, `tests/checks/core/6*`, `tests/fixtures/contigs/**`,
+  its writers/registration), `bin/te-tracks-preflight`, `tests/checks/core/6*`,
+  `tests/checks/core/41_export_registration.py` (only its inventory path-set and namespace assertions, extended to
+  the three namespaces), `tests/fixtures/contigs/**`,
   `docs/OUTPUTS.md`, `docs/DECISIONS.md` (entry 3, one sentence), `README.md` (truth table).
 - No git writes. No installs. No network.
 - Report a deviation instead of editing a number or a plan file to fit.

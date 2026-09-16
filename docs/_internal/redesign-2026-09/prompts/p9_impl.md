@@ -23,7 +23,7 @@ milestone 2 rulings H1, H6 and L4 that land here) and `docs/_internal/redesign-2
    the development build under `$TE_TRACKS_REFROOT/te_mm39/build` when present (ruling H6: same image, same ids).
 2. `docs/RUNBOOK.md` (host runbook): the host build runs inside the same devcontainer image as the tests, with
    the refcache mounted writable (ruling H6); prerequisites and versions (python 3, pyarrow, pandas, numpy, pysam,
-   zlib, bash, coreutils; the exact versions the container has, read them and state them), the host floor (5.5 GB
+   zlib, bash, coreutils; the exact versions the container has, read them and state them), the host floor (5.7 GB
    resident for the export writer, about 9 GB disk per build), the writable host root
    `/data2/users/shared/refcache` versus the read-only container mount, the source cache seeded from the
    container's retained copy under `_scratch/te-tracks-audit/source/` with a checksum mismatch stopping for a
@@ -32,7 +32,10 @@ milestone 2 rulings H1, H6 and L4 that land here) and `docs/_internal/redesign-2
    verification (`src/release.py verify-current`; the orchestrator then compares the published digests,
    `CATALOG_ID` and `BUILD_ID` with the in-container build), transfer to the CRI root
    (`/gpfs/data/rathmell-lab/data/refdata`) via staging and `install`, interruption recovery, resolving
-   `current` once per consumer operation and pinning the id.
+   `current` once per consumer operation and pinning the id; a measured floor per consumer, projected from a
+   50,000-row head of `record.gtf` through Stellarscope's `IntervalTreeAnnotation` and TElocal's `TEindex` (state the
+   per-row cost and the projection); consumer installs pinned to the vendored checkout commits (`git describe`) or
+   the divergence recorded; the barcode-threshold audit named as the consumer's (milestone 5 rulings H3, M4, M6).
 3. `README.md` truth table updated to `delivered` and `tested` per artifact as observed by the acceptance
    run; `AGENTS.md` final (test commands including acceptance; the host-only steps named);
    `docs/OUTPUTS.md`, `docs/PROVENANCE.md` (rewritten: the sources, the qualification report summary, the
@@ -40,7 +43,8 @@ milestone 2 rulings H1, H6 and L4 that land here) and `docs/_internal/redesign-2
    bytes the acceptance build produced.
 4. A parking summary for the orchestrator (in your final message, the orchestrator writes the session record):
    what is published locally in `$TE_TRACKS_REFROOT/acceptance/` with both families' `BUILD_ID` and
-   `CATALOG_ID`, what is tested, what
+   `CATALOG_ID`, which oracles the builder did not produce confirmed what (the UCSC `rmsk` table, the Dfam snapshot,
+   the host legacy release or its absence in-container), what is tested, what
    is unsupported (tool executables), what is deferred (hg38, transcript context, ERV units, age tiers), and
    the next gates.
 

@@ -26,15 +26,24 @@ def main():
         connection.register("membership", membership)
         connection.register("counts", counts)
         connection.execute("""
-            CREATE TEMP TABLE edges AS
+            CREATE TEMP TABLE registered AS
             SELECT m.emitted_feature_id, r.rmsk_record_id,
-                   r.feature_level, r.emitted_feature_id AS target
+                   r.feature_level, r.key_grammar, r.emitted_feature_id AS target
             FROM read_csv(?, delim = '\t', header = true, quote = '', all_varchar = true) AS r
             JOIN membership AS m ON r.rmsk_record_id = m.rmsk_record_id
             WHERE r.universe_name = 'interspersed' AND r.variant = 'full'
-              AND r.feature_level IN ('record', 'subfamily', 'family')
-              AND (r.feature_level <> 'record' OR r.emitted_feature_id = r.rmsk_record_id)
         """, [str(BUILD / "tables/export_feature_members.tsv.gz")])
+        grammars = connection.execute("""
+            SELECT DISTINCT key_grammar FROM registered WHERE feature_level = 'record'
+        """).fetchall()
+        assert set(grammars) == {("rmsk_record_id",), ("record_alias",), ("four_tuple",)}, grammars
+        connection.execute("""
+            CREATE TEMP TABLE edges AS
+            SELECT emitted_feature_id, rmsk_record_id, feature_level, target FROM registered
+            WHERE (feature_level = 'record' AND key_grammar = 'rmsk_record_id')
+               OR (feature_level = 'subfamily' AND key_grammar = 'rmsk_name')
+               OR (feature_level = 'family' AND key_grammar = 'family_bucket')
+        """)
         observed_targets = connection.execute("""
             SELECT emitted_feature_id, rmsk_record_id, feature_level, target FROM edges
         """).fetchall()

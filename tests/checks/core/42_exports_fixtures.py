@@ -77,6 +77,10 @@ with TemporaryDirectory(prefix="te-tracks-exports-") as directory:
         assert (exports / filename).read_bytes() == (FIXTURES / "expected" / filename).read_bytes(), filename
     with gzip.open(tables / "export_feature_members.tsv.gz", "rb") as stream:
         assert stream.read() == (FIXTURES / "expected/export_feature_members.tsv").read_bytes()
+    registration = pd.read_csv(tables / "export_feature_members.tsv.gz", sep="\t", dtype=str)
+    assert len(registration) == 40
+    assert registration.groupby("rmsk_record_id").size().eq(8).all()
+    assert registration.loc[registration["feature_level"].eq("instance"), "emitted_feature_id"].nunique() == 4
     bed = pd.read_csv(exports / "record.bed", sep="\t", header=None)
     duplicates = bed.loc[bed[0].eq("chr2") & bed[1].eq(9) & bed[2].eq(20)]
     assert set(duplicates[3]) == {"A|chr2:10-20|+", "B|chr2:10-20|+"}
@@ -142,5 +146,5 @@ with TemporaryDirectory(prefix="te-tracks-exports-") as directory:
     malformed["default_universe"] = "satellites"
     (scratch / "universes.json").write_text(json.dumps(malformed))
     expect_failure(lambda: build_exports(scratch, "mm39"), "default universe")
-print("hand-authored export bytes, membership selection, unresolved ranks, coordinate duplicates, "
+print("hand-authored export bytes and 40 registration rows, membership selection, unresolved ranks, coordinate duplicates, "
       "shared instances, deterministic rebuild and identifier gates pass")

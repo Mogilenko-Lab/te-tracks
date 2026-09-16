@@ -10,7 +10,7 @@ from types import SimpleNamespace
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
 from consumers import (EXPECTED, FIXTURES, build_fixture, checkout_import,
-                       checkout_version, execute_source_nodes, expected_tuples, export_path,
+                       assert_registered, checkout_version, execute_source_nodes, expected_tuples, export_path,
                        run_check, source_tree)
 
 
@@ -38,6 +38,7 @@ def check():
         transcript_index.build(gtf)
         observed = transcript_index.getElements()
         assert len(observed) == EXPECTED["names"] and set(observed) == triples, observed
+        assert_registered(observed, "taxonomy_triple", "taxonomy_triple")
         grouped = transcript_index.groupByEle([1] * EXPECTED["records"])
         assert grouped["TwoLab:hAT-Tip100:DNA"] == 3 and sum(grouped.values()) == 11, grouped
         local_index = local.TEfeatures()
@@ -51,6 +52,7 @@ def check():
             tuple(name.split(":")) for name in local_index.getNames())
         assert len(restored.getElements()) == number
         assert set(restored.getElements()) == expected_tuples(level)
+        assert_registered(restored.getElements(), level, "four_tuple")
         assert restored.TE_annotation([("chrA", 1031, 1050, "+")]) == [0]
         assert restored.TE_annotation([("chrA", 3121, 3140, "+")]) == []
     return "TEtranscripts=8 groups; TElocal locInd record=11, subfamily=8"

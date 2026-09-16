@@ -9,7 +9,9 @@ Deliverables
   `parent_catalog_id` (milestone 2 ruling H5).
 - `exports/{ucsc,ensembl,gencode}/interspersed/exon_subtracted/{subfamily,taxonomy_triple}.saf`: mask = union of every
   `exon` row of the pinned GTF, both strands; pieces registered in `export_feature_members` with
-  `block_start_1`, `block_end_1`; per-record view status table `tables/exon_subtraction_status.tsv`
+  `block_start_1`, `block_end_1`, one row per retained block, so uniqueness holds over the registration key plus the
+  block columns (milestone 5 ruling A1); the child exporter takes universe, variant and block bounds as explicit
+  inputs and writes the child build's own `tables/exports.tsv` (ruling A2); per-record view status table `tables/exon_subtraction_status.tsv`
   (`unchanged`, `trimmed`, `split`, `fully_subtracted`, `retained_bp`, `removed_bp`).
 - Zero residual exon overlap asserted; `retained_bp + removed_bp = length_bp` per record.
 

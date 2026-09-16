@@ -1,5 +1,5 @@
 Milestone review after phase 5 of the te-tracks redesign: what the consumer seam still assumes. Repository:
-/workspaces/Meta-Aging/01_modules/te-tracks (git branch redesign-2026-09, commit __HASH__). You are a
+/workspaces/Meta-Aging/01_modules/te-tracks (git branch redesign-2026-09, commit 9ac66fb). You are a
 read-only reviewer working from the documented artifacts and the tables; write exactly one file,
 docs/_internal/redesign-2026-09/reviews/m5_divergent.md, and change nothing else. No git writes.
 

@@ -18,8 +18,8 @@ Deliverables
 - `provenance` records Python, pandas, pyarrow and zlib versions and the devcontainer image identity;
   the host build runs inside the same image (ruling H6). Retention is restated from a measured build
   size (ruling M4): the seven `interspersed` full exports measure 2.6 GB uncompressed per namespace and
-  `export_feature_members.tsv.gz` 162 MB (phase 4, 2026-09-16), so three namespaces plus the canonical
-  tables approach 9 GB per build before the child family. The export writer peaks at 5.5 GB resident for mm39
+  `export_feature_members.tsv.gz` 255 MB (milestone 5 fix, eight registration rows per record), so three namespaces plus the canonical
+  tables approach 9 GB per build before the child family. The export writer peaks at 5.7 GB resident for mm39 (5,698,908 KiB, milestone 5 fix)
   (phase 4 Opus A5), the host floor the runbook states beside the disk figure.
 - `docs/OUTPUTS.md` publishes reader settings for pandas, DuckDB and R (`data.table`, `arrow`): text
   instance ids, signed int64 fields, no quoting, empty strings literal; a nullable column defines its

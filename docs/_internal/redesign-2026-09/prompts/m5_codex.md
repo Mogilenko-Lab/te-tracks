@@ -1,7 +1,7 @@
 # te-tracks milestone review after phase 5: consumer seam (codex, read-only)
 
 You review the committed state of the te-tracks redesign after phases 0 to 5. Working directory:
-`/workspaces/Meta-Aging/01_modules/te-tracks`, git branch `redesign-2026-09`, commit `__HASH__`. You
+`/workspaces/Meta-Aging/01_modules/te-tracks`, git branch `redesign-2026-09`, commit `9ac66fb`. You
 write exactly one file: `docs/_internal/redesign-2026-09/reviews/m5_codex.md`. You change nothing else. No
 git writes anywhere (the consumer checkouts under `/workspaces/Meta-Aging/01_modules/.ref/` are git repositories
 too), no installs, no network. Scratch work goes under `/workspaces/Meta-Aging/_scratch/te-tracks-audit/m5-codex/`

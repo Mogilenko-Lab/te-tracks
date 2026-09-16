@@ -1,26 +1,41 @@
-universe_name	variant	feature_level	emitted_feature_id	rmsk_record_id	block_start_1	block_end_1
-interspersed	full	record	Mystery|chr10:1-1|+	Mystery|chr10:1-1|+	1	1
-interspersed	full	record	R|mm39|Mystery|chr10|1|1|+	Mystery|chr10:1-1|+	1	1
-interspersed	full	subfamily	Mystery	Mystery|chr10:1-1|+	1	1
-interspersed	full	family	DNA/unresolved_family_Mystery	Mystery|chr10:1-1|+	1	1
-interspersed	full	taxonomy_triple	Mystery:unresolved_family_Mystery:DNA	Mystery|chr10:1-1|+	1	1
-interspersed	full	record	Opaque|chr10:9-12|-	Opaque|chr10:9-12|-	9	12
-interspersed	full	record	R|mm39|Opaque|chr10|9|12|-	Opaque|chr10:9-12|-	9	12
-interspersed	full	subfamily	Opaque	Opaque|chr10:9-12|-	9	12
-interspersed	full	family	unresolved_class_Opaque/unresolved_family_Opaque	Opaque|chr10:9-12|-	9	12
-interspersed	full	taxonomy_triple	Opaque:unresolved_family_Opaque:unresolved_class_Opaque	Opaque|chr10:9-12|-	9	12
-interspersed	full	record	A|chr2:10-20|+	A|chr2:10-20|+	10	20
-interspersed	full	record	R|mm39|A|chr2|10|20|+	A|chr2:10-20|+	10	20
-interspersed	full	subfamily	A	A|chr2:10-20|+	10	20
-interspersed	full	family	LINE/L1	A|chr2:10-20|+	10	20
-interspersed	full	taxonomy_triple	A:L1:LINE	A|chr2:10-20|+	10	20
-interspersed	full	record	B|chr2:10-20|+	B|chr2:10-20|+	10	20
-interspersed	full	record	R|mm39|B|chr2|10|20|+	B|chr2:10-20|+	10	20
-interspersed	full	subfamily	B	B|chr2:10-20|+	10	20
-interspersed	full	family	LINE/L1	B|chr2:10-20|+	10	20
-interspersed	full	taxonomy_triple	B:L1:LINE	B|chr2:10-20|+	10	20
-interspersed	full	record	A|chr2:30-35|-	A|chr2:30-35|-	30	35
-interspersed	full	record	R|mm39|A|chr2|30|35|-	A|chr2:30-35|-	30	35
-interspersed	full	subfamily	A	A|chr2:30-35|-	30	35
-interspersed	full	family	LINE/L1	A|chr2:30-35|-	30	35
-interspersed	full	taxonomy_triple	A:L1:LINE	A|chr2:30-35|-	30	35
+universe_name	variant	feature_level	key_grammar	emitted_feature_id	rmsk_record_id	block_start_1	block_end_1
+interspersed	full	record	rmsk_record_id	Mystery|chr10:1-1|+	Mystery|chr10:1-1|+	1	1
+interspersed	full	record	record_alias	R|mm39|Mystery|chr10|1|1|+	Mystery|chr10:1-1|+	1	1
+interspersed	full	record	four_tuple	R|mm39|Mystery|chr10|1|1|+:Mystery:unresolved_family_Mystery:DNA	Mystery|chr10:1-1|+	1	1
+interspersed	full	subfamily	rmsk_name	Mystery	Mystery|chr10:1-1|+	1	1
+interspersed	full	subfamily	four_tuple	Mystery:Mystery:unresolved_family_Mystery:DNA	Mystery|chr10:1-1|+	1	1
+interspersed	full	family	family_bucket	DNA/unresolved_family_Mystery	Mystery|chr10:1-1|+	1	1
+interspersed	full	taxonomy_triple	taxonomy_triple	Mystery:unresolved_family_Mystery:DNA	Mystery|chr10:1-1|+	1	1
+interspersed	full	instance	instance_alias	I|mm39|0001	Mystery|chr10:1-1|+	1	1
+interspersed	full	record	rmsk_record_id	Opaque|chr10:9-12|-	Opaque|chr10:9-12|-	9	12
+interspersed	full	record	record_alias	R|mm39|Opaque|chr10|9|12|-	Opaque|chr10:9-12|-	9	12
+interspersed	full	record	four_tuple	R|mm39|Opaque|chr10|9|12|-:Opaque:unresolved_family_Opaque:unresolved_class_Opaque	Opaque|chr10:9-12|-	9	12
+interspersed	full	subfamily	rmsk_name	Opaque	Opaque|chr10:9-12|-	9	12
+interspersed	full	subfamily	four_tuple	Opaque:Opaque:unresolved_family_Opaque:unresolved_class_Opaque	Opaque|chr10:9-12|-	9	12
+interspersed	full	family	family_bucket	unresolved_class_Opaque/unresolved_family_Opaque	Opaque|chr10:9-12|-	9	12
+interspersed	full	taxonomy_triple	taxonomy_triple	Opaque:unresolved_family_Opaque:unresolved_class_Opaque	Opaque|chr10:9-12|-	9	12
+interspersed	full	instance	instance_alias	I|mm39|02	Opaque|chr10:9-12|-	9	12
+interspersed	full	record	rmsk_record_id	A|chr2:10-20|+	A|chr2:10-20|+	10	20
+interspersed	full	record	record_alias	R|mm39|A|chr2|10|20|+	A|chr2:10-20|+	10	20
+interspersed	full	record	four_tuple	R|mm39|A|chr2|10|20|+:A:L1:LINE	A|chr2:10-20|+	10	20
+interspersed	full	subfamily	rmsk_name	A	A|chr2:10-20|+	10	20
+interspersed	full	subfamily	four_tuple	A:A:L1:LINE	A|chr2:10-20|+	10	20
+interspersed	full	family	family_bucket	LINE/L1	A|chr2:10-20|+	10	20
+interspersed	full	taxonomy_triple	taxonomy_triple	A:L1:LINE	A|chr2:10-20|+	10	20
+interspersed	full	instance	instance_alias	I|mm39|007	A|chr2:10-20|+	10	20
+interspersed	full	record	rmsk_record_id	B|chr2:10-20|+	B|chr2:10-20|+	10	20
+interspersed	full	record	record_alias	R|mm39|B|chr2|10|20|+	B|chr2:10-20|+	10	20
+interspersed	full	record	four_tuple	R|mm39|B|chr2|10|20|+:B:L1:LINE	B|chr2:10-20|+	10	20
+interspersed	full	subfamily	rmsk_name	B	B|chr2:10-20|+	10	20
+interspersed	full	subfamily	four_tuple	B:B:L1:LINE	B|chr2:10-20|+	10	20
+interspersed	full	family	family_bucket	LINE/L1	B|chr2:10-20|+	10	20
+interspersed	full	taxonomy_triple	taxonomy_triple	B:L1:LINE	B|chr2:10-20|+	10	20
+interspersed	full	instance	instance_alias	I|mm39|009	B|chr2:10-20|+	10	20
+interspersed	full	record	rmsk_record_id	A|chr2:30-35|-	A|chr2:30-35|-	30	35
+interspersed	full	record	record_alias	R|mm39|A|chr2|30|35|-	A|chr2:30-35|-	30	35
+interspersed	full	record	four_tuple	R|mm39|A|chr2|30|35|-:A:L1:LINE	A|chr2:30-35|-	30	35
+interspersed	full	subfamily	rmsk_name	A	A|chr2:30-35|-	30	35
+interspersed	full	subfamily	four_tuple	A:A:L1:LINE	A|chr2:30-35|-	30	35
+interspersed	full	family	family_bucket	LINE/L1	A|chr2:30-35|-	30	35
+interspersed	full	taxonomy_triple	taxonomy_triple	A:L1:LINE	A|chr2:30-35|-	30	35
+interspersed	full	instance	instance_alias	I|mm39|007	A|chr2:30-35|-	30	35

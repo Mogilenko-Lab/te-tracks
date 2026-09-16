@@ -20,7 +20,7 @@ and one gene annotation.
 
 `./build.sh --genome mm39 --build-dir <dir>` runs the registered stages and writes four pinned
 sources under `source/`, `source/SOURCES.json`, `source/qualification.md`, the canonical tables
-under `tables/` and `universes.json`.
+under `tables/`, `universes.json` and the registered files under `exports/`.
 Set `TE_TRACKS_SOURCE_CACHE` to reuse checksum-matching cached sources; in-container builds use
 a scratch directory, and host publication lands in phase 7.
 
@@ -34,13 +34,14 @@ tests/run.sh acceptance --refroot /workspaces/Meta-Aging/_scratch/te-tracks-audi
 
 The default reference root is `/workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot`.
 Each mode reports `pass`, `fail` or `unsupported` per check. Core checks cover the parser fixtures,
-the qualification report, the record schema, instances, universes and the record fixtures.
+the qualification report, the record schema, instances, universes, the record fixtures,
+taxonomy (30 to 32) and exports (40 to 42).
 
 ## Outputs
 
 Published legacy releases in the reference cache carry `te_loci.tsv.gz`, `te_dim.tsv`,
-`MANIFEST.json` and `BUILD_ID`; the current build produces `source/`, `tables/` and `universes.json`,
-and phases 3 to 9 supply the remaining artifacts.
+`MANIFEST.json` and `BUILD_ID`; the current build produces `source/`, `tables/`, `universes.json`
+and `exports/`, and phases 6 to 9 supply the remaining artifacts.
 
 The truth table tracks the redesign artifacts: `delivered` means generated, `tested` means
 verified against their contract, and `deferred` names the phase that supplies them.
@@ -61,7 +62,7 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 | `tests/fixtures/taxonomy/rollup_counts.tsv` | delivered, tested | 3 |
 | `tests/fixtures/taxonomy/weighting_context.tsv` | delivered, tested | 3 |
 | `tests/fixtures/exports/` | delivered, tested | 4 |
-| `tests/fixtures/consumers/` | tested: IRescue identity, TEsingle, TEtranscripts and TElocal parsers; MATES adapter supported in isolation, installed package needs `pkg_resources` (setuptools below 82); Stellarscope parser exercised, unsupported on observed `0,1,1,1` right-boundary defect (expected `0,1,1,0`); IRescue `chrcat` unsupported (`gawk` absent); bedtools and samtools supported; executables `irescue`, `featureCounts`, `stellarscope`, `TEsingle`, `TEcount`, `TElocal` absent; DuckDB query unsupported (`duckdb` absent); `00_tool_inventory.py` reporting-only | 5 |
+| `tests/fixtures/consumers/` | tested: IRescue identity, TEsingle, TEtranscripts and TElocal parsers; MATES adapter supported in isolation, installed package needs `pkg_resources` (setuptools below 82); Stellarscope parser exercised, unsupported on observed `0,1,1,1` right-boundary defect (expected `0,1,1,0`); IRescue `chrcat` unsupported (`gawk` absent); bedtools and samtools supported; executables `irescue`, `featureCounts`, `stellarscope`, `TEsingle`, `TEcount`, `TElocal` absent; DuckDB query unsupported (`duckdb` absent); `00_tool_inventory.required.py` reporting-only | 5 |
 | `tests/lib/consumers.py` | delivered, tested | 5 |
 | `tests/lib/records.py` | delivered, tested | 2 |
 | `tests/fixtures/contigs/` | deferred | 6 |

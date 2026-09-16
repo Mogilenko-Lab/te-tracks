@@ -22,5 +22,13 @@ of the published legacy `te_subfamily.saf` (H1); published table digests, `CATAL
 equal the in-container `_scratch` build (H6); the runbook seeds the host `TE_TRACKS_SOURCE_CACHE` from
 the container's retained source copy, and a checksum mismatch stops for a re-pin decision (L4).
 
+Milestone 5 rulings landing here: the runbook states a measured floor per consumer, projected from a 50,000-row
+head of `record.gtf` through Stellarscope's `IntervalTreeAnnotation` and TElocal's `TEindex`, beside the producer's
+5.7 GB (H3); the runbook pins consumer installs to the vendored checkout commits or records the divergence (M4); the
+handoff names the barcode-threshold audit as the consumer's (M6); the acceptance record names the oracles the builder
+did not produce: the UCSC `rmsk` table (phase 1 qualification), the pinned Dfam snapshot (check 31) and the host
+legacy release for the compat count (L4, with H1 corrected: the in-container legacy directories were audit
+experiments, moved to `_scratch/te-tracks-audit/legacy_release_experiments/`).
+
 Final review: codex and Opus on the whole release plus a `divergent` pass on the handoff.
 Then the umbrella pin bumps and D2 and D3 resume.

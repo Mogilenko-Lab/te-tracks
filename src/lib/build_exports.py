@@ -25,7 +25,7 @@ EXPORTS = (
     ("taxonomy_triple.saf", "taxonomy_triple"),
 )
 MEMBER_COLUMNS = [
-    "universe_name", "variant", "feature_level", "emitted_feature_id",
+    "universe_name", "variant", "feature_level", "key_grammar", "emitted_feature_id",
     "rmsk_record_id", "block_start_1", "block_end_1",
 ]
 
@@ -138,6 +138,10 @@ def build_exports(build_dir, genome):
                              IDENTIFIER, export_dir / "record.gtf")
             instance = validate(f"I|{genome}|{record.rmsk_instance_id}", IDENTIFIER,
                                 export_dir / "record.gtf")
+            record_tuple = validate(f"{alias}:{name}:{family}:{cls}", IDENTIFIER,
+                                    export_dir / "record.gtf")
+            subfamily_tuple = validate(f"{name}:{name}:{family}:{cls}", IDENTIFIER,
+                                       export_dir / "subfamily.gtf")
             bed_prefix = f"{chrom}\t{start - 1}\t{end}\t"
             bed_suffix = f"\t{min(record.sw_score, 1000)}\t{strand}\n"
             for filename, feature in (("record.bed", key), ("subfamily.bed", name),
@@ -156,14 +160,22 @@ def build_exports(build_dir, genome):
             streams["subfamily.saf"].write(name + saf_suffix)
             streams["taxonomy_triple.saf"].write(triple + saf_suffix)
             registration.write("".join(
-                f"{universe}\tfull\t{level}\t{feature}\t{key}\t{start}\t{end}\n"
-                for level, feature in (("record", key), ("record", alias),
-                                       ("subfamily", name), ("family", family_id),
-                                       ("taxonomy_triple", triple))
+                f"{universe}\tfull\t{level}\t{grammar}\t{feature}\t{key}\t{start}\t{end}\n"
+                for level, grammar, feature in (
+                    ("record", "rmsk_record_id", key),
+                    ("record", "record_alias", alias),
+                    ("record", "four_tuple", record_tuple),
+                    ("subfamily", "rmsk_name", name),
+                    ("subfamily", "four_tuple", subfamily_tuple),
+                    ("family", "family_bucket", family_id),
+                    ("taxonomy_triple", "taxonomy_triple", triple),
+                    ("instance", "instance_alias", instance),
+                )
             ))
     distinct = {"record": len(records), "subfamily": len(labels),
                 "family": len({value[2] for value in labels.values()}),
-                "taxonomy_triple": len({value[3] for value in labels.values()})}
+                "taxonomy_triple": len({value[3] for value in labels.values()}),
+                "instance": records["rmsk_instance_id"].nunique()}
     inventory = []
     for filename, level in EXPORTS:
         path = export_dir / filename
@@ -178,7 +190,8 @@ def build_exports(build_dir, genome):
     write_tsv(pd.DataFrame(inventory).sort_values("export_path"), build_dir / "tables/exports.tsv")
     print(f"universe={universe} records={len(records)} subfamilies={distinct['subfamily']} "
           f"families={distinct['family']} taxonomy_triples={distinct['taxonomy_triple']} "
-          f"exports={len(EXPORTS)} registrations={len(records) * 5}", flush=True)
+          f"instances={distinct['instance']} exports={len(EXPORTS)} "
+          f"registrations={len(records) * 8} (eight rows per record)", flush=True)
 
 
 def main():
