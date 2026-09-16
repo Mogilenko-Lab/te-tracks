@@ -3,7 +3,8 @@
 Deliverables
 - `src/90_manifest.py`: two-section manifest. `identity`: schema_version, family, species, assembly,
   contig set digest, sources with url and observed digests, declared run identity, universe
-  predicates, export contracts, taxonomy rule version, parent build id (child family), complete file
+  predicates, export contracts (derived from the builder's `EXPORT_JOBS`: universe, level and key grammar per
+  export path across the 24 namespace copies), taxonomy rule version, parent build id (child family), complete file
   inventory with SHA-256. `provenance`: builder sha, tool versions, invocation, validation summary.
   `BUILD_ID = sha256("te-tracks-build-v1\n" + canonical_json(identity))`.
 - Catalog identity: `CATALOG_ID = sha256("te-tracks-catalog-v1\n" + canonical_json(catalog))` over
@@ -17,9 +18,10 @@ Deliverables
   `docs/OUTPUTS.md`; `schema_version` owns predicate semantics and a new key bumps it (rulings A2, A3).
 - `provenance` records Python, pandas, pyarrow and zlib versions and the devcontainer image identity;
   the host build runs inside the same image (ruling H6). Retention is restated from a measured build
-  size (ruling M4): the seven `interspersed` full exports measure 2.6 GB uncompressed per namespace and
-  `export_feature_members.tsv.gz` 255 MB (milestone 5 fix, eight registration rows per record), so three namespaces plus the canonical
-  tables approach 9 GB per build before the child family. The export writer peaks at 5.7 GB resident for mm39 (5,698,908 KiB, milestone 5 fix)
+  size (ruling M4): the eight full exports measure 3,021,713,838 bytes (`ucsc`), 2,926,268,559 (`ensembl`) and
+  3,021,138,299 (`gencode`) uncompressed, of which the `all_rmsk` record BED is 318 MB per namespace, and
+  `export_feature_members.tsv.gz` 348 MB (eight registration rows per interspersed record plus one per `all_rmsk` record), so three namespaces plus the canonical
+  tables measure 10,461,962,113 bytes per build before the child family (exports 8.97 GB, tables 1.2 GB, source 0.3 GB). The export writer peaks at 5.9 GB resident for mm39 (5,891,116 KiB at the phase 6 fix verification; 5,698,908 KiB at the milestone 5 fix) and stage 35 at 3.9 GB (3,853,776 KiB)
   (phase 4 Opus A5), the host floor the runbook states beside the disk figure.
 - `docs/OUTPUTS.md` publishes reader settings for pandas, DuckDB and R (`data.table`, `arrow`): text
   instance ids, signed int64 fields, no quoting, empty strings literal; a nullable column defines its

@@ -1,0 +1,108 @@
+#!/usr/bin/env python3
+"""Compare an export's contig names and source lengths with an alignment reference.
+
+Exit 0 when every export contig is present in the reference with an agreeing length;
+only_in_reference is informational. Exit 2 when the export names contigs the reference
+lacks and the shared set is nonempty. Exit 1 when a shared contig disagrees in length,
+the intersection is empty, or an input cannot be read.
+"""
+
+import argparse
+import csv
+import json
+from pathlib import Path
+import sys
+
+
+def reference_lengths(path):
+    """Read a BAM sequence dictionary, FASTA index or two-column sizes table."""
+    if path.suffix.lower() == ".bam":
+        import pysam
+
+        with pysam.AlignmentFile(str(path), "rb", check_sq=False) as alignment:
+            entries = list(zip(alignment.references, alignment.lengths))
+    else:
+        entries = []
+        expected = 5 if path.suffix.lower() == ".fai" else 2
+        with path.open(encoding="utf-8") as stream:
+            for number, line in enumerate(stream, 1):
+                fields = line.split()
+                if len(fields) != expected:
+                    raise ValueError(f"{path}:{number}: expected {expected} columns")
+                entries.append((fields[0], int(fields[1])))
+    lengths = {}
+    for name, length in entries:
+        if not name or name in lengths or length <= 0:
+            raise ValueError(f"invalid reference contig: {name!r}, length={length}")
+        lengths[name] = length
+    return lengths
+
+
+def export_lengths(path):
+    """Read observed contig lengths from the nearest alias table along the given path."""
+    path = path.absolute()
+    alias_table = next((parent / "tables/contig_aliases.tsv" for parent in path.parents
+                        if (parent / "tables/contig_aliases.tsv").is_file()), None)
+    if alias_table is None:
+        raise ValueError(f"export requires an enclosing tables/contig_aliases.tsv: {path}")
+    lengths = {}
+    with alias_table.open(encoding="utf-8") as stream:
+        for row in csv.DictReader(stream, delimiter="\t"):
+            length = int(row["length_bp"])
+            for column in ("chrom_ucsc", "chrom_ensembl", "chrom_gencode", "chrom_genbank", "chrom_refseq"):
+                name = row[column]
+                if name in lengths and lengths[name] != length:
+                    raise ValueError(f"ambiguous alias length: {name}")
+                lengths[name] = length
+    if path.suffix.lower() not in {".bed", ".gtf", ".saf"}:
+        raise ValueError(f"unsupported export format: {path.suffix}")
+    saf = path.suffix.lower() == ".saf"
+    column = 1 if saf else 0
+    observed = set()
+    with path.open(encoding="utf-8") as stream:
+        if saf and stream.readline() != "GeneID\tChr\tStart\tEnd\tStrand\n":
+            raise ValueError(f"invalid SAF header: {path}")
+        for line in stream:
+            if not line.strip() or line.startswith("#"):
+                continue
+            fields = line.rstrip("\n").split("\t", column + 1)
+            if len(fields) <= column + 1:
+                raise ValueError(f"invalid export row: {line.rstrip()!r}")
+            observed.add(fields[column])
+    missing = observed - lengths.keys()
+    if missing:
+        raise ValueError(f"export contigs absent from alias table: {', '.join(sorted(missing))}")
+    return {name: lengths[name] for name in observed}, alias_table
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("export", type=Path)
+    parser.add_argument("reference", type=Path, metavar="bam|fai|sizes")
+    args = parser.parse_args()
+    try:
+        exported, alias_table = export_lengths(args.export)
+        reference = reference_lengths(args.reference)
+        shared = exported.keys() & reference.keys()
+        only_reference = sorted(reference.keys() - exported.keys())
+        only_export = sorted(exported.keys() - reference.keys())
+        disagreements = [{"contig": name, "reference_length": reference[name],
+                          "export_length": exported[name]}
+                         for name in sorted(shared) if reference[name] != exported[name]]
+        for label, values in (("only_in_reference", only_reference), ("only_in_export", only_export),
+                              ("length_disagreements", disagreements),
+                              ("alias_table", str(alias_table))):
+            print(f"{label}\t{json.dumps(values, separators=(',', ':'))}")
+        if not shared:
+            print("te-tracks-preflight: export and reference contig intersection is empty", file=sys.stderr)
+            return 1
+        if disagreements:
+            return 1
+        return 2 if only_export else 0
+    except (ValueError, KeyError, OSError, ImportError) as error:
+        print(f"te-tracks-preflight: {error}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

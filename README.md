@@ -65,7 +65,7 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 | `tests/fixtures/consumers/` | tested: IRescue identity, TEsingle, TEtranscripts and TElocal parsers; MATES adapter supported in isolation, installed package needs `pkg_resources` (setuptools below 82); Stellarscope parser exercised, unsupported on observed `0,1,1,1` right-boundary defect (expected `0,1,1,0`); IRescue `chrcat` unsupported (`gawk` absent); bedtools and samtools supported; executables `irescue`, `featureCounts`, `stellarscope`, `TEsingle`, `TEcount`, `TElocal` absent; DuckDB query unsupported (`duckdb` absent); `00_tool_inventory.required.py` reporting-only | 5 |
 | `tests/lib/consumers.py` | delivered, tested | 5 |
 | `tests/lib/records.py` | delivered, tested | 2 |
-| `tests/fixtures/contigs/` | deferred | 6 |
+| `tests/fixtures/contigs/` | delivered, tested | 6 |
 | `tests/fixtures/publication/` | deferred | 7 |
 | `tables/rmsk_records.tsv.gz` | delivered, tested | 2 |
 | `tables/rmsk_records.parquet` | delivered, tested | 2 |
@@ -78,8 +78,8 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 | `tables/universe_summary.tsv` | delivered, tested | 2 |
 | `tables/export_feature_members.tsv.gz` | delivered, tested | 4 |
 | `tables/exports.tsv` | delivered, tested | 4 |
-| `tables/contig_aliases.tsv` | deferred | 6 |
-| `tables/contig_coverage.tsv` | deferred | 6 |
+| `tables/contig_aliases.tsv` | delivered, tested | 6 |
+| `tables/contig_coverage.tsv` | delivered, tested | 6 |
 | `exports/ucsc/interspersed/full/record.bed` | delivered, tested | 4 |
 | `exports/ucsc/interspersed/full/subfamily.bed` | delivered, tested | 4 |
 | `exports/ucsc/interspersed/full/family.bed` | delivered, tested | 4 |
@@ -87,20 +87,23 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 | `exports/ucsc/interspersed/full/subfamily.gtf` | delivered, tested | 4 |
 | `exports/ucsc/interspersed/full/subfamily.saf` | delivered, tested | 4 |
 | `exports/ucsc/interspersed/full/taxonomy_triple.saf` | delivered, tested | 4 |
-| `exports/ensembl/interspersed/full/record.bed` | deferred | 6 |
-| `exports/ensembl/interspersed/full/subfamily.bed` | deferred | 6 |
-| `exports/ensembl/interspersed/full/family.bed` | deferred | 6 |
-| `exports/ensembl/interspersed/full/record.gtf` | deferred | 6 |
-| `exports/ensembl/interspersed/full/subfamily.gtf` | deferred | 6 |
-| `exports/ensembl/interspersed/full/subfamily.saf` | deferred | 6 |
-| `exports/ensembl/interspersed/full/taxonomy_triple.saf` | deferred | 6 |
-| `exports/gencode/interspersed/full/record.bed` | deferred | 6 |
-| `exports/gencode/interspersed/full/subfamily.bed` | deferred | 6 |
-| `exports/gencode/interspersed/full/family.bed` | deferred | 6 |
-| `exports/gencode/interspersed/full/record.gtf` | deferred | 6 |
-| `exports/gencode/interspersed/full/subfamily.gtf` | deferred | 6 |
-| `exports/gencode/interspersed/full/subfamily.saf` | deferred | 6 |
-| `exports/gencode/interspersed/full/taxonomy_triple.saf` | deferred | 6 |
+| `exports/ensembl/interspersed/full/record.bed` | delivered, tested | 6 |
+| `exports/ensembl/interspersed/full/subfamily.bed` | delivered, tested | 6 |
+| `exports/ensembl/interspersed/full/family.bed` | delivered, tested | 6 |
+| `exports/ensembl/interspersed/full/record.gtf` | delivered, tested | 6 |
+| `exports/ensembl/interspersed/full/subfamily.gtf` | delivered, tested | 6 |
+| `exports/ensembl/interspersed/full/subfamily.saf` | delivered, tested | 6 |
+| `exports/ensembl/interspersed/full/taxonomy_triple.saf` | delivered, tested | 6 |
+| `exports/gencode/interspersed/full/record.bed` | delivered, tested | 6 |
+| `exports/gencode/interspersed/full/subfamily.bed` | delivered, tested | 6 |
+| `exports/gencode/interspersed/full/family.bed` | delivered, tested | 6 |
+| `exports/gencode/interspersed/full/record.gtf` | delivered, tested | 6 |
+| `exports/gencode/interspersed/full/subfamily.gtf` | delivered, tested | 6 |
+| `exports/gencode/interspersed/full/subfamily.saf` | delivered, tested | 6 |
+| `exports/gencode/interspersed/full/taxonomy_triple.saf` | delivered, tested | 6 |
+| `exports/ucsc/all_rmsk/full/record.bed` | delivered, tested | 6 |
+| `exports/ensembl/all_rmsk/full/record.bed` | delivered, tested | 6 |
+| `exports/gencode/all_rmsk/full/record.bed` | delivered, tested | 6 |
 | `te_mm39_gene`: `exports/ucsc/interspersed/exon_subtracted/subfamily.saf` | deferred | 8 |
 | `te_mm39_gene`: `exports/ensembl/interspersed/exon_subtracted/subfamily.saf` | deferred | 8 |
 | `te_mm39_gene`: `exports/gencode/interspersed/exon_subtracted/subfamily.saf` | deferred | 8 |
@@ -108,7 +111,7 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 | `te_mm39_gene`: `tables/exon_subtraction_status.tsv` | deferred | 8 |
 | `MANIFEST.json` | deferred | 7 |
 | `BUILD_ID` | deferred | 7 |
-| `bin/te-tracks-preflight` | deferred | 6 |
+| `bin/te-tracks-preflight` | delivered, tested | 6 |
 | `docs/RUNBOOK.md` | deferred | 9 |
 | `docs/RELEASES.md` | deferred | 7 |
 

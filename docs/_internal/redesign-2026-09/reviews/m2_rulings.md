@@ -66,7 +66,8 @@ named phase prompt.
 
 - **M1 preflight exits.** Exit 0 when contig sets agree and lengths match; exit 2 when the sets differ
   with a non-empty agreeing intersection, both lists printed; exit 1 when a shared contig disagrees in
-  length or the intersection is empty.
+  length or the intersection is empty. Amended by `p6_rulings.md` B2: exit 0 whenever every export contig is present
+  with an agreeing length; reference-only contigs are informational; exit 2 for export contigs the reference lacks.
 
 ## Phase 7
 

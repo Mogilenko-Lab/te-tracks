@@ -2,6 +2,14 @@
 
 Goal: the place where gene-dependent views live exists, with one view and no interpretation.
 
+Entry condition (owner, 2026-09-16): phase 8 opens with a design consult with codex on the child family's topology,
+architecture and approach (one child per gene annotation pin or one child with many views; how the exon mask, the
+piece registration and the transcript-context relation relate; what the consuming projects' combined-mode counting
+needs from the SAF; the child exporter's explicit universe, variant and block inputs and its own inventory; a
+pinned alias and length source for child preflight, since the parent's `contig_aliases.tsv` sits beside the parent
+build), recorded under `redesign-2026-09/consults/` and ruled by the owner, before any implementation
+prompt is written. The deliverables below are the current draft and the consult may reshape them.
+
 Deliverables
 - `config/mm39_gene.env`: `PARENT_FAMILY=te_mm39`, `GENE_GTF_URL` (GENCODE vM37 primary assembly),
   `GENE_GTF_MD5=702e27a8727db66cd23e9f66f5aa1d38`, `EXON_MASK_POLICY=all_exons_unstranded_union_v1`.

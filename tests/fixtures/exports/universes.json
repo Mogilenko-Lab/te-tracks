@@ -3,6 +3,7 @@
   "default_universe": "interspersed",
   "universes": [
     {"name": "interspersed", "predicate": {}, "provisional_classes": []},
-    {"name": "satellites", "predicate": {}, "provisional_classes": []}
+    {"name": "satellites", "predicate": {}, "provisional_classes": []},
+    {"name": "all_rmsk", "predicate": {}, "provisional_classes": []}
   ]
 }

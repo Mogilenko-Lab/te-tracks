@@ -171,16 +171,45 @@ rows derived independently from the expected exports; core 13 pass; consumers 8 
 checkouts clean. Export writer peak RSS 5.7 GB. Rulings the owner may overturn: the `all_rmsk` record BED for 14761's
 ATAC route in phase 6 (divergent H2, widens ADR 3's export matrix) and the `key_grammar` column (H4).
 
+**Phase 6** (contig namespaces, aliases, coverage, preflight, the `all_rmsk` record BED) is complete and committed on
+the branch. Loop: implemented by codex (`te-tracks-p6-impl`, 2,008 s) from `prompts/p6_impl.md`; the implementer
+reported three deviations instead of editing expectations (the two zero-interspersed contigs hold 2 and 4 catalog
+records; the interspersed exports name 59 of 61 contigs so the literal preflight exits 2 for `gencode`; the export
+fixture declared no `all_rmsk`). Codex review `reviews/p6_codex.md` (BLOCKING: those three plus a split builder entry,
+`build_exports()` writing the interspersed set while `main()` wrote both universes; three advisories) and Opus re-review
+`reviews/p6_opus.md` (FAIL: the same, four README rows claiming `tested` against failing checks; seven advisories, among
+them the `ucsc` `family.bed` ordered by the invisible `rmsk_name` behind check 61's exception, preflight resolving
+symlinks before locating the alias table, and check 61 sampling 0.27 % of rows). Rulings in `reviews/p6_rulings.md`:
+milestone 2 ruling M1 amended to the counting-gate contract (exit 0 when every export contig is present at an agreeing
+length, reference-only contigs informational, exit 2 for export contigs the reference lacks, exit 1 for a length
+disagreement, an empty intersection or an unreadable input); every export in every namespace sorted by contig bytes,
+numeric bounds, strand and its own name column; one builder entry `build_exports(build_dir, genome, jobs=EXPORT_JOBS)`;
+check 42's fixture gains the third universe, six hand-authored catalog BED rows and 46 registration rows; check 60 pins
+its FASTA fixture by digest; check 61 regenerates all sixteen renamed files; check 62 runs 82 cases over both universes,
+three namespaces, three readers and three reference kinds; ADR 3 names GTF at record and subfamily level and the
+`all_rmsk` record BED. Fix `te-tracks-p6-fix` from `prompts/p6_fix.md` (17 items). Orchestrator verification before and
+after the fix: 24 inventory digests and row counts recomputed; the interspersed registration digest equals the milestone
+5 value (`314098c5…`) with the 5,320,771 `all_rmsk` rows contiguous after it, one per record with the parquet bounds;
+the three `all_rmsk` BEDs regenerated from the parquet byte-identically under either tiebreak; every renamed file equal
+to its UCSC source as a row multiset after mapping the contig back, and sorted by the documented keys; the fixture's six
+catalog rows and six registration rows derived independently; preflight reads the alias table of the root named on the
+command line (symlink case); nine consumer checkouts clean; reflog at `c2a7a43`. Exports measure 3,021,713,838 /
+2,926,268,559 / 3,021,138,299 bytes per namespace and the registration 347,526,106 bytes; one build is 10,461,962,113
+bytes before the child family. Stage 30 peaks at 5,891,116 KiB resident and stage 35 at 3,853,776 KiB (per-stage `RUSAGE_CHILDREN`, this container, 200 s and 100 s); a rebuild of stages 30 and 35 reproduced all 24 inventory digests and the registration digest `0726aa7b…`; `tests/run.sh core` 16 pass, `tests/run.sh consumers` 8 pass and 5 unsupported, both exit 0. Only the `ucsc` `family.bed` digest changed in the fix (4 rows at 3 coordinate
+ties); the seven other UCSC interspersed digests equal the phase 4 inventory.
+
 ## Next session starts here
 
-1. Phase 6: `launch.sh --unit te-tracks-p6-impl --workdir <te-tracks> --effort xhigh --prompt
-   docs/_internal/redesign-2026-09/prompts/p6_impl.md` (aligned with the milestone 5 rulings: inventory written as a
-   union, the `all_rmsk` record BED, check 41's path-set assertion in the touch list); verify (stage 35 against the
-   build, `tests/run.sh core`, preflight exits); codex review then Opus; fix loop; commit "Phase 6: contig namespaces".
-2. Phases 7 to 9 with `p7_impl.md` … `p9_impl.md`, each aligned with the rulings in its plan file before launch;
-   milestone reviews after 7 and 9; the owner runs the host build at phase 9 (`docs/RUNBOOK.md`; host floor 5.5 GB
-   resident, about 9 GB disk per build), the orchestrator verifies the published bytes and records `BUILD_ID` and
-   `CATALOG_ID` here; then the umbrella pin bumps and D2/D3 resume.
+1. Phase 7: align `p7_impl.md` with `reviews/p6_rulings.md` once more (export contracts from `EXPORT_JOBS`, the
+   24-path inventory, the measured sizes), launch `te-tracks-p7-impl`, verify, codex review then Opus, fix loop, commit
+   "Phase 7: identity and publication"; then the milestone 7 review with three reviewers (prompts name the nine
+   consumer checkouts under `.ref` explicitly and set `PYTHONDONTWRITEBYTECODE=1`).
+2. Phases 8 and 9 with `p8_impl.md` and `p9_impl.md`, each aligned with the rulings in its plan file before launch;
+   phase 8 opens with a codex design consult on the child family's topology, architecture and approach, recorded under
+   `redesign-2026-09/consults/` and ruled by the owner before `p8_impl.md` is finalized (owner, 2026-09-16);
+   milestone review after 9; the owner runs the host build at phase 9 (`docs/RUNBOOK.md`; host floor 6 GB resident,
+   10.5 GB disk per build), the orchestrator verifies the published bytes and records `BUILD_ID` and `CATALOG_ID`
+   here; then the umbrella pin bumps and D2/D3 resume.
 
 Prompts p5 to p9 carry pre-measured acceptance numbers; the plan files are authoritative where a prompt and a plan
 file disagree, and the disagreement is a deviation to report. Rulings the owner may overturn: instance weighting

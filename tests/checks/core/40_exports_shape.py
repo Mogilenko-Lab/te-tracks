@@ -63,6 +63,8 @@ def main():
     features = {}
     for filename in FILES:
         path = BUILD / DIRECTORY / filename
+        ordered = (records.sort_values([*KEY[:-1], "family_feature"], kind="stable", ignore_index=True)
+                   if filename == "family.bed" else records)
         offset = 0
         distinct = set()
         if path.suffix == ".bed":
@@ -82,7 +84,7 @@ def main():
             skiprows=1 if path.suffix == ".saf" else 0, chunksize=100_000,
             dtype={column: "int64" if column in integers else str for column in columns},
         ):
-            expected = records.iloc[offset:offset + len(chunk)].reset_index(drop=True)
+            expected = ordered.iloc[offset:offset + len(chunk)].reset_index(drop=True)
             chunk = chunk.reset_index(drop=True)
             for column in ("chrom", "end_1", "strand"):
                 equal(chunk[column], expected[column], (filename, column, offset))

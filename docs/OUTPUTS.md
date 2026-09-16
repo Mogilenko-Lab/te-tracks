@@ -282,14 +282,15 @@ intervals in phase 8. Each emitted feature and block registers to source records
 
 ### Phase 4: UCSC full-interval exports
 
-All seven exports land under `exports/ucsc/interspersed/full/`.
-The builder reads the default universe from `universes.json` and selects its records through
-`tables/universe_members.tsv.gz`. Provisional status is a class property recoverable by joining
-names to `rmsk_taxonomy` or records to `universe_members`.
+Eight exports land under `exports/ucsc/`: seven interspersed files under
+`exports/ucsc/interspersed/full/` and the complete-catalog record BED under `exports/ucsc/all_rmsk/full/`.
+The builder accepts an explicit universe and export set, validates the universe in `universes.json`,
+and selects interspersed records through `tables/universe_members.tsv.gz`. Provisional status is a
+class property recoverable by joining names to `rmsk_taxonomy` or records to `universe_members`.
 
-Every file is uncompressed UTF-8 with LF endings, sorted by
-`(chrom, start_1, end_1, strand, rmsk_name)`, with text columns in C-locale byte order and
-coordinate columns ascending numerically. Each selected record supplies
+Every file is uncompressed UTF-8 with LF endings, sorted by its contig column in C-locale
+byte order, start and end numerically, strand, then its own name column in byte order
+(BED column 4, GTF column 9, SAF `GeneID`). Each selected record supplies
 one full interval in every export. Identifier components match `[A-Za-z0-9_.+?()-]+`; emitted
 identifiers additionally admit the separators `|`, `:` and `/`. The builder validates every
 BED name, GTF attribute value and SAF GeneID and reports the offending value and file on failure.
@@ -387,7 +388,7 @@ Columns appear in this order:
 
 | Column | Type | Contract |
 |---|---|---|
-| `universe_name` | text | Selected membership, `interspersed`. |
+| `universe_name` | text | Selected membership, `interspersed` or `all_rmsk`. |
 | `variant` | text | Interval support, `full`. |
 | `feature_level` | text | `record`, `subfamily`, `family`, `taxonomy_triple` or `instance`. |
 | `key_grammar` | text | `rmsk_record_id`, `record_alias`, `four_tuple`, `rmsk_name`, `family_bucket`, `taxonomy_triple` or `instance_alias`. |
@@ -398,7 +399,7 @@ Columns appear in this order:
 
 Uniqueness holds over `(universe_name, variant, feature_level, key_grammar, emitted_feature_id,
 rmsk_record_id, block_start_1, block_end_1)`. The `full` variant registers one block per member
-at each level and grammar, equal to the record bounds. Each selected record registers eight
+at each level and grammar, equal to the record bounds. Each interspersed record registers eight
 spellings in this order; `name` is `rmsk_name`, and `family_id` and `class_id` are the canonical
 or positional unresolved tokens emitted by the GTFs.
 
@@ -432,8 +433,8 @@ One row per export file, sorted by `export_path`, inventories these columns in o
 | Column | Type | Contract |
 |---|---|---|
 | `export_path` | text | Path relative to the build directory. |
-| `namespace` | text | Contig-column namespace, `ucsc` in phase 4. |
-| `universe_name` | text | Registered universe, `interspersed`. |
+| `namespace` | text | Contig-column namespace: `ucsc`, `ensembl` or `gencode`. |
+| `universe_name` | text | Registered universe, `interspersed` or `all_rmsk`. |
 | `variant` | text | Registered interval variant, `full`. |
 | `feature_level` | text | Export's default feature level. |
 | `format` | text | `bed`, `gtf` or `saf`. |
@@ -464,6 +465,7 @@ Checks 11, 15, 20, 21 and 30 report optional support.
 | MATES 0.1.8, `87c1218`, optional adapter | Fixture-only `record_mates.csv` and `record_mates.bed`, eight columns each | Column 5 fixture roster ordinal; column 4 `TE_Name` group; column 7 raw class/family model group | `TE_Name`: `(subfamily, rmsk_name)`; integer index maps through the fixture roster | `14_mates_parser.required.py`: isolated source functions, pair agreement, companion stem, `?`/`Unknown` model filters; minimal `pkg_resources.resource_filename` stand-in | Adapter supported in isolation; installed package depends on `pkg_resources` (setuptools below 82), absent here |
 | featureCounts | `subfamily.saf`, `taxonomy_triple.saf`; fixture `onebase.saf` | SAF `GeneID` | `(subfamily, rmsk_name)`, `(taxonomy_triple, taxonomy_triple)`; `OneBase` is fixture-only | `21_featurecounts_exec.sh`: `-s 0`, shared subfamily and triple features each count 2 fragments; one-base feature counts 1 read | Execution unsupported: `featureCounts` absent |
 | bedtools 2.31.1 | `record.bed`, `family.bed` | BED column 4 retained by `intersect -wa -wb` | `(record, rmsk_record_id)`, `(family, family_bucket)` | `22_bedtools_exec.required.sh`: equal-coordinate names, right-adjacent query, `-s`/`-S`; `16_family_triple_readers.required.py`: canonical buckets and registration joins | Execution supported |
+| 14761 ATAC route | `exports/<namespace>/all_rmsk/full/record.bed` | BED column 4, `rmsk_record_id` | `(record, rmsk_record_id)` under `all_rmsk` | Core checks 41 and 61: complete catalog, bounds, score clipping, one registered block per record and namespace identity | Export and registration supported |
 | SAF column reader | `taxonomy_triple.saf` | SAF `GeneID` | `(taxonomy_triple, taxonomy_triple)` | `16_family_triple_readers.required.py`: 8 GeneIDs, three `TwoLab` rows sharing one triple, registration joins | Reader supported |
 | samtools 1.21 | Fixture BAMs and their sequence dictionaries | BAM query name, strand and filter flags, `CB`/`UB`/`UR` tags | BAM integrity check | `23_samtools_fixture_integrity.required.sh`: sort order, indexes, alignment accounting, molecule counts by tag and flagged read names | Execution supported |
 
@@ -499,13 +501,58 @@ The existing registration query remains unsupported through the missing Python m
 
 ### Phase 6: contig namespaces and qualification
 
-The seven full-interval exports also land under `exports/ensembl/interspersed/full/` and
-`exports/gencode/interspersed/full/`. They carry the same rows as their UCSC counterparts,
-with contig columns renamed through `tables/contig_aliases.tsv`.
-Record ids retain their UCSC contig names. `tables/contig_coverage.tsv` reports per-contig record
-coverage, alias availability and length agreement. `bin/te-tracks-preflight <export> <bam|fai|sizes>`
-checks contig sets and lengths for the selected export against an alignment, a FASTA index or a
-chrom.sizes file.
+The release supplies eight files per namespace: seven under
+`exports/<namespace>/interspersed/full/` and `record.bed` under
+`exports/<namespace>/all_rmsk/full/`.
+The complete-catalog BED supplies 5,320,771 intervals to the 14761 ATAC route, with
+`rmsk_record_id` as its name and the same clipped display score as the interspersed BED.
+Stage 30 appends one `all_rmsk`, `record`, `rmsk_record_id` registration per catalog record
+after the 30,119,592 interspersed registration rows.
+
+The `ucsc` namespace uses the source `ucsc` alias column.
+The `ensembl` namespace uses the source `ensembl` alias column.
+The `gencode` namespace uses UCSC names without `_` and the GenBank alias for names containing `_`.
+The GENCODE rule reproduces all 61 measured GRCm39 FASTA names and lengths.
+
+#### Alias and coverage tables
+
+`tables/contig_aliases.tsv` has 61 rows, sorted by `chrom_ucsc`, with columns
+`chrom_ucsc`, `chrom_ensembl`, `chrom_gencode`, `chrom_genbank`, `chrom_refseq` and `length_bp`.
+Each name column is injective; lengths come from the pinned `chrom.sizes` list.
+Every catalog contig belongs to the alias table.
+
+`tables/contig_coverage.tsv` has one row per source contig, sorted by `chrom_ucsc`, with columns
+`chrom_ucsc`, `length_bp`, `records_all`, `records_interspersed`, `has_ensembl`, `has_gencode`
+and `length_agrees`.
+Counts include zero-record contigs; alias availability and length agreement are booleans.
+Length agreement checks each source record's `end_1 + query_left_bp` against `chrom.sizes`;
+zero-record contigs retain their source-list length.
+`chr4_JH584295v1_random` and `chrM` carry zero interspersed records and 2 and 4 catalog records,
+so the interspersed exports name 59 of the 61 contigs and the `all_rmsk` BED names all 61.
+
+Stage 35 renames the contig column of each UCSC export through the alias table and sorts by
+renamed contig in C-locale byte order, numeric start and end, strand and name.
+Every other field retains its bytes, including UCSC names inside record IDs and GTF aliases.
+The three namespaces share the same feature registrations.
+`tables/exports.tsv` contains the sorted union of all 24 export paths and their measured SHA-256 digests.
+
+#### Preflight
+
+```bash
+bin/te-tracks-preflight <export> <bam|fai|sizes>
+```
+
+Preflight reads contig names from BED/GTF column 1 or SAF column 2 and reference lengths from
+a BAM header through pysam, a FASTA index or a two-column sizes TSV.
+It locates the nearest `tables/contig_aliases.tsv` by walking up from the absolute export path
+as given, with symlinks unresolved.
+The report prints `only_in_reference`, `only_in_export` and `length_disagreements` as JSON lists,
+then `alias_table` as a JSON path string.
+Exit 0 means every export contig is present in the reference with an agreeing length;
+`only_in_reference` is informational. Exit 2 means the export names contigs the reference lacks
+and the shared set is nonempty. Exit 1 means a shared contig disagrees in length, the
+intersection is empty, or an input cannot be read.
+Export completeness against its inventory is the manifest's job.
 
 ### Phase 7: identity and publication
 

@@ -79,13 +79,36 @@ def main():
                "rmsk_record_id", "block_start_1", "block_end_1"]
     with gzip.open(BUILD / "tables/export_feature_members.tsv.gz", "rt") as stream:
         assert stream.readline().rstrip("\n").split("\t") == columns
-    rows = 0
+    catalog = pd.read_parquet(BUILD / "tables/rmsk_records.parquet",
+                              columns=["rmsk_record_id", "chrom", "start_1", "end_1", "strand", "sw_score"])
+    catalog_index = pd.Index(catalog["rmsk_record_id"])
+    assert catalog_index.is_unique and len(catalog) == 5_320_771
+    all_counts = np.zeros(len(catalog), dtype=np.uint32)
+    aliases = pd.read_csv(BUILD / "tables/contig_aliases.tsv", sep="\t", keep_default_na=False)
+    rows = all_rows = 0
     for chunk in pd.read_csv(
         BUILD / "tables/export_feature_members.tsv.gz", sep="\t", quoting=3, keep_default_na=False,
         dtype={column: "int64" if column.startswith("block_") else str for column in columns},
         chunksize=250_000,
     ):
-        assert chunk["universe_name"].eq("interspersed").all() and chunk["variant"].eq("full").all()
+        assert chunk["universe_name"].isin(["interspersed", "all_rmsk"]).all()
+        assert chunk["variant"].eq("full").all()
+        complete = chunk.loc[chunk["universe_name"].eq("all_rmsk")]
+        if not complete.empty:
+            assert rows + chunk["universe_name"].eq("interspersed").sum() == 30_119_592
+            assert complete["feature_level"].eq("record").all()
+            assert complete["key_grammar"].eq("rmsk_record_id").all()
+            shape.equal(complete["emitted_feature_id"], complete["rmsk_record_id"], "catalog IDs")
+            indices = catalog_index.get_indexer(complete["rmsk_record_id"])
+            assert (indices >= 0).all()
+            expected = catalog.iloc[indices]
+            shape.equal(complete["block_start_1"], expected["start_1"], "catalog block starts")
+            shape.equal(complete["block_end_1"], expected["end_1"], "catalog block ends")
+            np.add.at(all_counts, indices, 1)
+            all_rows += len(complete)
+        chunk = chunk.loc[chunk["universe_name"].eq("interspersed")]
+        if chunk.empty:
+            continue
         conservation_rows.append(chunk.loc[
             chunk["rmsk_record_id"].isin(conservation_members["rmsk_record_id"])])
         indices = record_index.get_indexer(chunk["rmsk_record_id"])
@@ -106,6 +129,7 @@ def main():
             np.add.at(counts[slot], indices[mask], 1)
         rows += len(chunk)
     assert rows == 8 * len(records) and (counts == 1).all(), "one row per record and ID spelling"
+    assert all_rows == 5_320_771 and (all_counts == 1).all(), "one block per complete catalog record"
     instance_count = len(instances)
     assert instance_count == records["rmsk_instance_id"].nunique(), "registered instance count"
     del instances
@@ -117,12 +141,20 @@ def main():
                     if path.is_file()}
     assert inventory["export_path"].is_unique
     assert set(inventory["export_path"]) == actual_paths
-    assert actual_paths == {f"{shape.DIRECTORY}/{name}" for name in shape.FILES}
+    assert actual_paths == {
+        f"exports/{namespace}/interspersed/full/{name}"
+        for namespace in ("ucsc", "ensembl", "gencode") for name in shape.FILES
+    } | {f"exports/{namespace}/all_rmsk/full/record.bed" for namespace in ("ucsc", "ensembl", "gencode")}
+    assert len(inventory) == 24
+    assert inventory.export_path.tolist() == sorted(actual_paths)
     for row in inventory.itertuples(index=False):
         path = BUILD / row.export_path
         level = path.stem
-        assert (row.namespace, row.universe_name, row.variant, row.feature_level, row.format) == (
-            "ucsc", "interspersed", "full", level, path.suffix[1:])
+        assert row.namespace in {"ucsc", "ensembl", "gencode"}
+        assert row.universe_name in {"interspersed", "all_rmsk"}
+        assert row.export_path == f"exports/{row.namespace}/{row.universe_name}/full/{path.name}"
+        assert (row.variant, row.feature_level, row.format) == ("full", level, path.suffix[1:])
+        to_ucsc = dict(zip(aliases[f"chrom_{row.namespace}"], aliases["chrom_ucsc"]))
         digest = hashlib.sha256()
         lines = 0
         last = b""
@@ -134,7 +166,25 @@ def main():
                 last = block[-1:]
         assert last == b"\n", path
         assert digest.hexdigest() == row.sha256, path
-        assert lines - (path.suffix == ".saf") == row.rows == len(records), path
+        count = len(catalog) if row.universe_name == "all_rmsk" else len(records)
+        assert lines - (path.suffix == ".saf") == row.rows == count, path
+        if row.universe_name == "all_rmsk":
+            assert level == "record" and path.suffix == ".bed" and row.distinct_features == len(catalog)
+            seen = np.zeros(len(catalog), dtype=np.uint8)
+            for chunk in pd.read_csv(path, sep="\t", header=None, keep_default_na=False,
+                                     dtype={0: str, 1: "int64", 2: "int64", 3: str, 4: "int64", 5: str},
+                                     chunksize=100_000):
+                indices = catalog_index.get_indexer(chunk[3])
+                assert (indices >= 0).all()
+                expected = catalog.iloc[indices]
+                for observed, wanted in ((chunk[0].map(to_ucsc), expected.chrom),
+                                         (chunk[1], expected.start_1 - 1), (chunk[2], expected.end_1),
+                                         (chunk[4], expected.sw_score.clip(upper=1000)),
+                                         (chunk[5], expected.strand)):
+                    shape.equal(observed, wanted, (path, "catalog BED"))
+                np.add.at(seen, indices, 1)
+            assert (seen == 1).all(), path
+            continue
         slot = (1 if path.suffix == ".gtf" else 0) if level == "record" else {
             "subfamily": 3, "family": 5, "taxonomy_triple": 6,
         }[level]
@@ -153,7 +203,7 @@ def main():
                                 *(["rmsk_record_id", "instance_id"] if level == "record" else []))}
                 assert all(value.notna().all() for value in attributes.values()), path
                 keys = (attributes["rmsk_record_id"] if level == "record" else
-                        attributes["gene_id"] + "|" + chunk[0] + ":" + chunk[3] + "-" + chunk[4] + "|" + chunk[6])
+                        attributes["gene_id"] + "|" + chunk[0].map(to_ucsc) + ":" + chunk[3] + "-" + chunk[4] + "|" + chunk[6])
                 members = record_index.get_indexer(keys)
                 assert (members >= 0).all(), (path, "GTF record membership")
                 composed = (attributes["transcript_id"] + ":" + attributes["gene_id"] + ":"
@@ -171,8 +221,8 @@ def main():
             seen[indices] = True
         assert seen.all() and seen.sum() == row.distinct_features, path
     conservation(pd.concat(conservation_rows, ignore_index=True))
-    print(f"registrations={rows}; eight ID spellings cover every record once; instances={instance_count}; "
-          "seven inventory hashes, feature sets and GTF tuple/instance joins pass; "
+    print(f"registrations: interspersed={rows} all_rmsk={all_rows}; eight interspersed ID spellings; instances={instance_count}; "
+          "24 inventory hashes, feature sets and GTF tuple/instance joins pass; "
           "three record grammars; count 7 stays 7 at record, subfamily and family levels")
 
 

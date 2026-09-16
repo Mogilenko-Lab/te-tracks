@@ -64,3 +64,9 @@ orchestrator reads reviews and diffs, never whole artifacts.
   shellcheck. Present: python3 (pyarrow 25, pandas 2.2, numpy, pysam 0.24, pytest), bedtools, samtools, jq.
 - **te-tracks git identity** is set repo-locally (Anton Zhelonkin, anton.bioinf.md@gmail.com), matching
   the umbrella and the earlier te-tracks commits.
+- **Phase 8 opens with a design consult.** Before any phase 8 implementation prompt, the orchestrator runs a
+  codex consult on the gene child family's topology, architecture and approach (one child per gene annotation
+  pin or many views in one child; exon mask, piece registration and transcript-context relation; what the
+  consuming projects' combined-mode counting needs), records it under `redesign-2026-09/consults/`, and the
+  owner rules on it; plan 18 is rewritten to the ruled design before `p8_impl.md` is finalized (owner,
+  2026-09-16).

@@ -8,6 +8,7 @@ import io
 import json
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 from tempfile import TemporaryDirectory
@@ -21,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tests/lib"))
 from records import SCHEMA, require
 sys.path.insert(0, str(ROOT / "src/lib"))
-from build_exports import build_exports
+from build_exports import EXPORTS, build_exports
 
 
 FIXTURES = ROOT / "tests/fixtures/exports"
@@ -75,11 +76,18 @@ with TemporaryDirectory(prefix="te-tracks-exports-") as directory:
     exports = scratch / "exports/ucsc/interspersed/full"
     for filename in FILES:
         assert (exports / filename).read_bytes() == (FIXTURES / "expected" / filename).read_bytes(), filename
+    catalog_bed = scratch / "exports/ucsc/all_rmsk/full/record.bed"
+    assert catalog_bed.read_bytes() == (FIXTURES / "expected/all_rmsk/record.bed").read_bytes()
     with gzip.open(tables / "export_feature_members.tsv.gz", "rb") as stream:
         assert stream.read() == (FIXTURES / "expected/export_feature_members.tsv").read_bytes()
     registration = pd.read_csv(tables / "export_feature_members.tsv.gz", sep="\t", dtype=str)
-    assert len(registration) == 40
-    assert registration.groupby("rmsk_record_id").size().eq(8).all()
+    assert len(registration) == 46
+    interspersed = registration.loc[registration.universe_name.eq("interspersed")]
+    catalog = registration.loc[registration.universe_name.eq("all_rmsk")]
+    assert len(interspersed) == 40 and interspersed.groupby("rmsk_record_id").size().eq(8).all()
+    assert len(catalog) == 6 and catalog.groupby("rmsk_record_id").size().eq(1).all()
+    assert set(catalog.rmsk_record_id) == set(records.rmsk_record_id)
+    assert catalog.feature_level.eq("record").all() and catalog.key_grammar.eq("rmsk_record_id").all()
     assert registration.loc[registration["feature_level"].eq("instance"), "emitted_feature_id"].nunique() == 4
     bed = pd.read_csv(exports / "record.bed", sep="\t", header=None)
     duplicates = bed.loc[bed[0].eq("chr2") & bed[1].eq(9) & bed[2].eq(20)]
@@ -92,17 +100,37 @@ with TemporaryDirectory(prefix="te-tracks-exports-") as directory:
     assert "DNA/unresolved_family_Mystery" in (exports / "family.bed").read_text()
     assert "Mystery:unresolved_family_Mystery:DNA" in (exports / "taxonomy_triple.saf").read_text()
     inventory = pd.read_csv(tables / "exports.tsv", sep="\t")
-    assert len(inventory) == 7
+    assert len(inventory) == 8
+    assert inventory.universe_name.value_counts().to_dict() == {"interspersed": 7, "all_rmsk": 1}
     for row in inventory.itertuples(index=False):
-        assert row.rows == 5
         assert hashlib.sha256((scratch / row.export_path).read_bytes()).hexdigest() == row.sha256
-        assert row.distinct_features == {"record": 5, "subfamily": 4, "family": 3,
-                                         "taxonomy_triple": 4}[row.feature_level]
-    before = {path: path.read_bytes() for path in [*exports.iterdir(), tables / "exports.tsv",
+        if row.universe_name == "all_rmsk":
+            assert (row.rows, row.distinct_features, row.feature_level, row.export_path) == (
+                6, 6, "record", "exports/ucsc/all_rmsk/full/record.bed")
+        else:
+            assert row.rows == 5
+            assert row.distinct_features == {"record": 5, "subfamily": 4, "family": 3,
+                                             "taxonomy_triple": 4}[row.feature_level]
+    before = {path: path.read_bytes() for path in [*exports.iterdir(), catalog_bed, tables / "exports.tsv",
                                                 tables / "export_feature_members.tsv.gz"]}
     with contextlib.redirect_stdout(io.StringIO()):
         build_exports(scratch, "mm39")
     assert all(path.read_bytes() == content for path, content in before.items())
+    with TemporaryDirectory(prefix="te-tracks-interspersed-") as selected_directory:
+        selected = Path(selected_directory)
+        shutil.copytree(tables, selected / "tables")
+        (selected / "universes.json").write_bytes(definitions)
+        with contextlib.redirect_stdout(io.StringIO()):
+            build_exports(selected, "mm39", jobs=(("interspersed", EXPORTS),))
+        selected_exports = [path for path in (selected / "exports").rglob("*") if path.is_file()]
+        assert len(selected_exports) == 7
+        for path in selected_exports:
+            assert path.read_bytes() == (FIXTURES / "expected" / path.name).read_bytes()
+        selected_inventory = pd.read_csv(selected / "tables/exports.tsv", sep="\t")
+        pd.testing.assert_frame_equal(selected_inventory, inventory.loc[
+            inventory.universe_name.eq("interspersed")].reset_index(drop=True))
+        selected_registration = pd.read_csv(selected / "tables/export_feature_members.tsv.gz", sep="\t", dtype=str)
+        pd.testing.assert_frame_equal(selected_registration, interspersed.reset_index(drop=True))
     for character in [" ", "\t", "\n", "\r", ",", "#", "~", "%", ";", '"', "'", "\\", "|", ":", "/"]:
         malformed = records.copy()
         offender = f"Bad{character}Name"
@@ -143,8 +171,14 @@ with TemporaryDirectory(prefix="te-tracks-exports-") as directory:
     expect_failure(lambda: build_exports(scratch, "mm39"), "absent from records", "Missing")
     write_members(membership)
     malformed = json.loads(definitions)
+    malformed["universes"] = [entry for entry in malformed["universes"] if entry["name"] != "all_rmsk"]
+    (scratch / "universes.json").write_text(json.dumps(malformed))
+    with contextlib.redirect_stdout(io.StringIO()):
+        expect_failure(lambda: build_exports(scratch, "mm39"), "undeclared export universe", "all_rmsk")
+    malformed = json.loads(definitions)
     malformed["default_universe"] = "satellites"
     (scratch / "universes.json").write_text(json.dumps(malformed))
     expect_failure(lambda: build_exports(scratch, "mm39"), "default universe")
-print("hand-authored export bytes and 40 registration rows, membership selection, unresolved ranks, coordinate duplicates, "
-      "shared instances, deterministic rebuild and identifier gates pass")
+print("eight hand-authored exports and 46 registration rows; seven-export/40-row interspersed job; "
+      "membership selection, unresolved ranks, coordinate duplicates, shared instances, deterministic rebuild, "
+      "universe and identifier gates pass")

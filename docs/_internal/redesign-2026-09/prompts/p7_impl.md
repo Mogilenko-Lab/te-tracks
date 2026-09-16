@@ -40,7 +40,8 @@ Two top-level sections. `identity` (hashed): `schema_version` ("te-tracks-manife
 `declared_assembly` (the `SOURCES.json` object: FASTA url, md5, status), `contig_set_sha256` (digest of the
 `chrom.sizes` bytes), `catalog` (see below), `universes` (the full `universes.json` object; its
 `schema_version` owns the predicate grammar), `taxonomy_rule_version` (read from
-`build_taxonomy.TAXONOMY_RULE_VERSION`), `export_contracts` (per export path: format, level, feature identity
+`build_taxonomy.TAXONOMY_RULE_VERSION`), `export_contracts` (derived from `build_exports.EXPORT_JOBS` and the
+inventory, one entry per export path across the 24 namespace copies: universe, format, level, feature identity
 field or attribute, the attribute-to-source-column mapping, the output key each named consumer constructs (BED
 name; GTF `locus` and `instance_id`; the TEsingle and TElocal `transcript_id:gene_id:family_id:class_id` tuple;
 the TEtranscripts `gene_id:family_id:class_id` triple; SAF `GeneID`), the selectable levels, coordinate
@@ -121,8 +122,9 @@ Prints one line per assertion and a final `verified <BUILD_ID>`.
      pointing at a corrupted archive makes `select` abort with the discrepancy; an empty directory at the
      archive target is refused; payload modes are 0444/0555 after install.
 4. README truth table: `MANIFEST.json`, `BUILD_ID`, `CATALOG_ID` to `tested`, phase 7; Build section states the
-   two modes. `docs/RELEASES.md` restates retention from the measured sizes (2.6 GB per namespace of exports,
-   162 MB registration, about 9 GB per build before the child) and names the host floor (5.5 GB resident for the
+   two modes. `docs/RELEASES.md` restates retention from the measured sizes (exports 3,021,713,838 / 2,926,268,559 /
+   3,021,138,299 bytes for `ucsc` / `ensembl` / `gencode`, registration 347,526,106 bytes, 10,461,962,113 bytes per
+   build before the child) and names the host floor (5.7 GB resident for the
    export writer) and the requirement that the host build runs inside the same devcontainer image. Recorded
    deferrals in `docs/DECISIONS.md`'s deferred list (one sentence each): cross-build record correspondence on
    `(chrom, start_1, end_1, strand)`; hg38 admission needs a source-wide instance numbering or a contig-scoped

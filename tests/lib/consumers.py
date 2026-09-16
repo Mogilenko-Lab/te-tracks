@@ -318,7 +318,7 @@ def build_fixture():
     import pysam
 
     sys.path.insert(0, str(ROOT / "src/lib"))
-    from build_exports import build_exports
+    from build_exports import EXPORTS, build_exports
     from build_taxonomy import build_taxonomy
     from records_io import RECORD_SCHEMA, write_tsv
     from records import SCHEMA, read_tsv
@@ -368,7 +368,7 @@ def build_fixture():
     assert (two.family_status, two.family_plurality_share, two.instance_count) == (
         "resolved_plurality", 0.667, 3)
     assert canonical.set_index("rmsk_name").loc["NoFam", "family_status"] == "unspecified"
-    build_exports(FIXTURES, "mm39")
+    build_exports(FIXTURES, "mm39", jobs=(("interspersed", EXPORTS),))
     write_mates_pair(records, FIXTURES)
 
     rng = random.Random(1729)

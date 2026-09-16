@@ -4,6 +4,9 @@
 five records, and `taxonomy.tsv` supplies their canonical rank labels and statuses.
 `universes.json` declares the default universe with an all-record predicate, so the selected
 five rows establish membership as the export authority.
+The third declared universe, `all_rmsk`, selects the complete six-record catalog.
+`expected/all_rmsk/record.bed` contains all six sorted records, including `Excluded`, with one
+registration per record appended after the forty interspersed registrations.
 
 `expected/` contains hand-authored export bytes and the decompressed feature registration.
 The rows cover C-locale contig order, score clipping, a one-base interval, two names at equal

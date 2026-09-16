@@ -43,7 +43,9 @@ or `python3`; exit 0 pass, 3 unsupported, other fail; build dir `$TE_TRACKS_REFR
 2. `exports/{ucsc,ensembl,gencode}/all_rmsk/full/record.bed`: the record BED over the complete catalog (5,320,771
    rows, BED name `rmsk_record_id`, score clipped like the interspersed BED) for 14761's ATAC route; registration
    rows appended under universe `all_rmsk`, level `record`, grammar `rmsk_record_id`, one block per record; three
-   inventory rows (milestone 5 ruling H2). The exporter takes universe and export set as explicit inputs for this.
+   inventory rows (milestone 5 ruling H2). The exporter takes universe and export set as explicit inputs for this;
+   stage 30 writes the `ucsc` copy and appends its registration rows after the interspersed rows, and stage 35 renames
+   it with the seven.
 3. `bin/te-tracks-preflight <export> <bam|fai|sizes>` (executable python): reads contig names and lengths
    from a BAM header (pysam), a `.fai`, or a two-column sizes TSV; reads the export's contig set (column 1
    of BED/SAF/GTF, skipping the SAF header); reports `only_in_reference`, `only_in_export`,
@@ -74,10 +76,13 @@ or `python3`; exit 0 pass, 3 unsupported, other fail; build dir `$TE_TRACKS_REFR
    `contig_coverage`, the ensembl and gencode export rows, `bin/te-tracks-preflight` to `tested`, phase 6.
 
 ## Rules
-- Touch only: `src/lib/contigs.py`, `src/35_build_namespaces.sh`, `src/lib/build_exports.py` (only to reuse
-  its writers/registration), `bin/te-tracks-preflight`, `tests/checks/core/6*`,
-  `tests/checks/core/41_export_registration.py` (only its inventory path-set and namespace assertions, extended to
-  the three namespaces), `tests/fixtures/contigs/**`,
+- Touch only: `src/lib/contigs.py`, `src/35_build_namespaces.sh`, `src/lib/build_exports.py` and
+  `src/30_build_exports.sh` (universe and export set as explicit inputs; an inventory function that takes rows; the
+  registration writer reused), `bin/te-tracks-preflight`, `tests/checks/core/6*`,
+  `tests/checks/core/41_export_registration.py` (its inventory path-set and namespace assertions extended to the
+  three namespaces and the `all_rmsk` BED; its interspersed registration assertions scoped to
+  `universe_name == interspersed`, with the `all_rmsk` rows asserted separately: 5,320,771 rows, level `record`,
+  grammar `rmsk_record_id`, one per catalog record), `tests/fixtures/contigs/**`,
   `docs/OUTPUTS.md`, `docs/DECISIONS.md` (entry 3, one sentence), `README.md` (truth table).
 - No git writes. No installs. No network.
 - Report a deviation instead of editing a number or a plan file to fit.
@@ -88,11 +93,13 @@ or `python3`; exit 0 pass, 3 unsupported, other fail; build dir `$TE_TRACKS_REFR
 cd /workspaces/Meta-Aging/01_modules/te-tracks
 export TE_TRACKS_REFROOT=/workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot
 for f in build.sh lib/common.sh src/*.sh tests/run.sh; do bash -n "$f" && echo "syntax ok $f"; done
+time bash src/30_build_exports.sh "$TE_TRACKS_REFROOT/te_mm39/build" config/mm39.env; echo "exit=$?"
 time bash src/35_build_namespaces.sh "$TE_TRACKS_REFROOT/te_mm39/build" config/mm39.env; echo "exit=$?"
 B="$TE_TRACKS_REFROOT/te_mm39/build"
 head -3 "$B/tables/contig_aliases.tsv"; grep -E "^chr1_GL456210v1_random|^chrM" "$B/tables/contig_aliases.tsv"
 awk -F'\t' '$3==0 || $4==0' "$B/tables/contig_coverage.tsv"
-for ns in ucsc ensembl gencode; do wc -l "$B/exports/$ns/interspersed/full/"*; done
+for ns in ucsc ensembl gencode; do wc -l "$B/exports/$ns/interspersed/full/"* "$B/exports/$ns/all_rmsk/full/"*; done
+zcat "$B/tables/export_feature_members.tsv.gz" | awk -F'\t' 'NR>1{n[$1]++} END{for(k in n) print k, n[k]}'   # interspersed 30119592, all_rmsk 5320771
 head -1 "$B/exports/ensembl/interspersed/full/record.gtf"; head -1 "$B/exports/gencode/interspersed/full/record.gtf"
 bin/te-tracks-preflight "$B/exports/gencode/interspersed/full/record.gtf" tests/fixtures/contigs/gencode_grcm39_fasta_contigs.tsv; echo "exit=$?"
 bin/te-tracks-preflight "$B/exports/ucsc/interspersed/full/record.gtf" tests/fixtures/contigs/gencode_grcm39_fasta_contigs.tsv | tail -3; echo "exit=${PIPESTATUS[0]}"

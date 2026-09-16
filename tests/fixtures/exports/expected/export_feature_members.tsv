@@ -39,3 +39,9 @@ interspersed	full	subfamily	four_tuple	A:A:L1:LINE	A|chr2:30-35|-	30	35
 interspersed	full	family	family_bucket	LINE/L1	A|chr2:30-35|-	30	35
 interspersed	full	taxonomy_triple	taxonomy_triple	A:L1:LINE	A|chr2:30-35|-	30	35
 interspersed	full	instance	instance_alias	I|mm39|007	A|chr2:30-35|-	30	35
+all_rmsk	full	record	rmsk_record_id	Excluded|chr1:5-9|+	Excluded|chr1:5-9|+	5	9
+all_rmsk	full	record	rmsk_record_id	Mystery|chr10:1-1|+	Mystery|chr10:1-1|+	1	1
+all_rmsk	full	record	rmsk_record_id	Opaque|chr10:9-12|-	Opaque|chr10:9-12|-	9	12
+all_rmsk	full	record	rmsk_record_id	A|chr2:10-20|+	A|chr2:10-20|+	10	20
+all_rmsk	full	record	rmsk_record_id	B|chr2:10-20|+	B|chr2:10-20|+	10	20
+all_rmsk	full	record	rmsk_record_id	A|chr2:30-35|-	A|chr2:30-35|-	30	35

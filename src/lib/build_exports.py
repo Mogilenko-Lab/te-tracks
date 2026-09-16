@@ -4,9 +4,12 @@ import argparse
 from contextlib import ExitStack
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
+import subprocess
 import sys
+from tempfile import TemporaryDirectory
 
 import pandas as pd
 import pyarrow as pa
@@ -24,6 +27,7 @@ EXPORTS = (
     ("subfamily.gtf", "subfamily"), ("subfamily.saf", "subfamily"),
     ("taxonomy_triple.saf", "taxonomy_triple"),
 )
+EXPORT_JOBS = (("interspersed", EXPORTS), ("all_rmsk", (("record.bed", "record"),)))
 MEMBER_COLUMNS = [
     "universe_name", "variant", "feature_level", "key_grammar", "emitted_feature_id",
     "rmsk_record_id", "block_start_1", "block_end_1",
@@ -37,35 +41,34 @@ def validate(value, pattern, path):
     return value
 
 
-def load_members(build_dir):
-    """Select the declared default universe through its recorded membership."""
+def load_members(build_dir, universe):
+    """Select a declared universe through recorded or implicit catalog membership."""
     definitions = json.loads((build_dir / "universes.json").read_text(encoding="utf-8"))
-    universe = definitions["default_universe"]
-    if universe != "interspersed" or universe not in {
-        entry["name"] for entry in definitions["universes"]
-    }:
-        raise ValueError("UCSC full exports require the declared interspersed default universe")
-    chunks = []
-    for chunk in pd.read_csv(
-        build_dir / "tables/universe_members.tsv.gz", sep="\t", dtype=str,
-        keep_default_na=False, quoting=3, usecols=["universe_name", "rmsk_record_id"],
-        chunksize=500_000,
-    ):
-        chunks.append(chunk.loc[chunk["universe_name"].eq(universe), "rmsk_record_id"])
-    members = pd.concat(chunks, ignore_index=True)
-    if members.empty or members.duplicated().any():
-        raise ValueError("interspersed membership requires nonempty, unique record IDs")
+    if universe not in {entry["name"] for entry in definitions["universes"]}:
+        raise ValueError(f"undeclared export universe: {universe!r}")
     columns = ["rmsk_record_id", *RECORD_KEY, "rmsk_family", "rmsk_class",
                "rmsk_instance_id", "sw_score"]
     records = pq.read_table(build_dir / "tables/rmsk_records.parquet",
                             columns=columns).to_pandas()
-    selected = records.loc[records["rmsk_record_id"].isin(members)]
-    missing = members.loc[~members.isin(selected["rmsk_record_id"])]
-    if not missing.empty:
-        raise ValueError(f"universe member absent from records: {missing.iloc[0]!r}")
+    selected = records
+    if universe != "all_rmsk":
+        chunks = []
+        for chunk in pd.read_csv(
+            build_dir / "tables/universe_members.tsv.gz", sep="\t", dtype=str,
+            keep_default_na=False, quoting=3, usecols=["universe_name", "rmsk_record_id"],
+            chunksize=500_000,
+        ):
+            chunks.append(chunk.loc[chunk["universe_name"].eq(universe), "rmsk_record_id"])
+        members = pd.concat(chunks, ignore_index=True)
+        if members.empty or members.duplicated().any():
+            raise ValueError(f"{universe} membership requires nonempty, unique record IDs")
+        selected = records.loc[records["rmsk_record_id"].isin(members)]
+        missing = members.loc[~members.isin(selected["rmsk_record_id"])]
+        if not missing.empty:
+            raise ValueError(f"universe member absent from records: {missing.iloc[0]!r}")
     if selected["rmsk_record_id"].duplicated().any() or selected.duplicated(RECORD_KEY).any():
         raise ValueError("export membership requires unique record identities")
-    return universe, selected.sort_values(RECORD_KEY, ignore_index=True)
+    return selected.sort_values(RECORD_KEY, ignore_index=True)
 
 
 def taxonomy_labels(build_dir, records, export_dir):
@@ -99,19 +102,61 @@ def taxonomy_labels(build_dir, records, export_dir):
     return labels
 
 
-def build_exports(build_dir, genome):
-    """Write seven sorted exports, namespace-invariant membership and their inventory."""
+def write_inventory(build_dir, rows):
+    """Replace the inventory with unique export paths in byte order."""
+    inventory = pd.DataFrame(rows)
+    if inventory.empty or inventory["export_path"].duplicated().any():
+        raise ValueError("export inventory requires nonempty, unique paths")
+    write_tsv(inventory.sort_values("export_path"), Path(build_dir) / "tables/exports.tsv")
+
+
+def write_registration(stream, universe, key, start, end, features):
+    """Register each emitted spelling against its source record and full block."""
+    stream.write("".join(
+        f"{universe}\tfull\t{level}\t{grammar}\t{feature}\t{key}\t{start}\t{end}\n"
+        for level, grammar, feature in features
+    ))
+
+
+def sort_export(path):
+    """Sort each file by contig, numeric bounds, strand and its emitted name column."""
+    keys = {".bed": ["-k1,1", "-k2,2n", "-k3,3n", "-k6,6", "-k4,4"],
+            ".gtf": ["-k1,1", "-k4,4n", "-k5,5n", "-k7,7", "-k9,9"],
+            ".saf": ["-k2,2", "-k3,3n", "-k4,4n", "-k5,5", "-k1,1"]}
+    with TemporaryDirectory(prefix=".exports-", dir=path.parent) as temporary:
+        pending = Path(temporary) / path.name
+        with path.open("rb", buffering=0) as incoming, pending.open("wb") as outgoing:
+            if path.suffix == ".saf":
+                outgoing.write(incoming.readline())
+                outgoing.flush()
+            result = subprocess.run(
+                ["sort", "--stable", "--buffer-size=512M", "--parallel=2", "-T", temporary,
+                 "-t", "\t", *keys[path.suffix]], stdin=incoming, stdout=outgoing,
+                env={**os.environ, "LC_ALL": "C"},
+            )
+            if result.returncode:
+                raise ValueError(f"export sorting failed for {path}")
+        pending.replace(path)
+
+
+def export_universe(build_dir, genome, universe, export_set, registration):
+    """Emit an explicit export set and return its measured inventory rows."""
     build_dir = Path(build_dir)
-    universe, records = load_members(build_dir)
+    record_only = export_set == (("record.bed", "record"),)
+    if export_set != EXPORTS and not record_only:
+        raise ValueError(f"unsupported export set: {export_set!r}")
+    records = load_members(build_dir, universe)
     export_dir = build_dir / "exports/ucsc" / universe / "full"
     validate(genome, COMPONENT, export_dir / "record.gtf")
-    labels = taxonomy_labels(build_dir, records, export_dir)
+    labels = {} if record_only else taxonomy_labels(build_dir, records, export_dir)
     for column, filename, pattern in (
         ("chrom", "record.bed", COMPONENT),
         ("rmsk_record_id", "record.bed", IDENTIFIER),
-        ("rmsk_family", "record.gtf", COMPONENT),
-        ("rmsk_class", "record.gtf", COMPONENT),
-        ("rmsk_instance_id", "record.gtf", COMPONENT),
+        *([] if record_only else [
+            ("rmsk_family", "record.gtf", COMPONENT),
+            ("rmsk_class", "record.gtf", COMPONENT),
+            ("rmsk_instance_id", "record.gtf", COMPONENT),
+        ]),
     ):
         for value in records[column].unique():
             validate(value, pattern, export_dir / filename)
@@ -122,17 +167,20 @@ def build_exports(build_dir, genome):
         streams = {
             filename: stack.enter_context(open(export_dir / filename, "w", encoding="utf-8",
                                                 newline="", buffering=1024 * 1024))
-            for filename, _ in EXPORTS
+            for filename, _ in export_set
         }
-        registration = stack.enter_context(tsv_stream(
-            build_dir / "tables/export_feature_members.tsv.gz"))
-        registration.write("\t".join(MEMBER_COLUMNS) + "\n")
-        for filename in ("subfamily.saf", "taxonomy_triple.saf"):
+        for filename in (name for name in streams if name.endswith(".saf")):
             streams[filename].write("GeneID\tChr\tStart\tEnd\tStrand\n")
         for record in records.itertuples(index=False):
             name, chrom = record.rmsk_name, record.chrom
             start, end, strand = record.start_1, record.end_1, record.strand
             key = record.rmsk_record_id
+            if record_only:
+                streams["record.bed"].write(
+                    f"{chrom}\t{start - 1}\t{end}\t{key}\t{min(record.sw_score, 1000)}\t{strand}\n")
+                write_registration(registration, universe, key, start, end,
+                                   [("record", "rmsk_record_id", key)])
+                continue
             cls, family, family_id, triple = labels[name]
             alias = validate(f"R|{genome}|{name}|{chrom}|{start}|{end}|{strand}",
                              IDENTIFIER, export_dir / "record.gtf")
@@ -159,26 +207,24 @@ def build_exports(build_dir, genome):
             saf_suffix = f"\t{chrom}\t{start}\t{end}\t{strand}\n"
             streams["subfamily.saf"].write(name + saf_suffix)
             streams["taxonomy_triple.saf"].write(triple + saf_suffix)
-            registration.write("".join(
-                f"{universe}\tfull\t{level}\t{grammar}\t{feature}\t{key}\t{start}\t{end}\n"
-                for level, grammar, feature in (
-                    ("record", "rmsk_record_id", key),
-                    ("record", "record_alias", alias),
-                    ("record", "four_tuple", record_tuple),
-                    ("subfamily", "rmsk_name", name),
-                    ("subfamily", "four_tuple", subfamily_tuple),
-                    ("family", "family_bucket", family_id),
-                    ("taxonomy_triple", "taxonomy_triple", triple),
-                    ("instance", "instance_alias", instance),
-                )
+            write_registration(registration, universe, key, start, end, (
+                ("record", "rmsk_record_id", key),
+                ("record", "record_alias", alias),
+                ("record", "four_tuple", record_tuple),
+                ("subfamily", "rmsk_name", name),
+                ("subfamily", "four_tuple", subfamily_tuple),
+                ("family", "family_bucket", family_id),
+                ("taxonomy_triple", "taxonomy_triple", triple),
+                ("instance", "instance_alias", instance),
             ))
     distinct = {"record": len(records), "subfamily": len(labels),
                 "family": len({value[2] for value in labels.values()}),
                 "taxonomy_triple": len({value[3] for value in labels.values()}),
                 "instance": records["rmsk_instance_id"].nunique()}
     inventory = []
-    for filename, level in EXPORTS:
+    for filename, level in export_set:
         path = export_dir / filename
+        sort_export(path)
         with path.open("rb") as stream:
             digest = hashlib.file_digest(stream, "sha256").hexdigest()
         inventory.append({
@@ -187,11 +233,26 @@ def build_exports(build_dir, genome):
             "format": path.suffix[1:], "rows": len(records),
             "distinct_features": distinct[level], "sha256": digest,
         })
-    write_tsv(pd.DataFrame(inventory).sort_values("export_path"), build_dir / "tables/exports.tsv")
-    print(f"universe={universe} records={len(records)} subfamilies={distinct['subfamily']} "
-          f"families={distinct['family']} taxonomy_triples={distinct['taxonomy_triple']} "
-          f"instances={distinct['instance']} exports={len(EXPORTS)} "
-          f"registrations={len(records) * 8} (eight rows per record)", flush=True)
+    ranks = ("" if record_only else f"subfamilies={distinct['subfamily']} "
+             f"families={distinct['family']} taxonomy_triples={distinct['taxonomy_triple']} "
+             f"instances={distinct['instance']} ")
+    print(f"universe={universe} records={len(records)} {ranks}exports={len(export_set)} "
+          f"registrations={len(records) * (1 if record_only else 8)}", flush=True)
+    return inventory
+
+
+def build_exports(build_dir, genome, jobs=EXPORT_JOBS):
+    """Build ordered universe jobs with one registration stream and complete inventory."""
+    build_dir = Path(build_dir)
+    definitions = json.loads((build_dir / "universes.json").read_text(encoding="utf-8"))
+    if definitions["default_universe"] != "interspersed":
+        raise ValueError("full exports require the interspersed default universe")
+    with tsv_stream(build_dir / "tables/export_feature_members.tsv.gz") as registration:
+        registration.write("\t".join(MEMBER_COLUMNS) + "\n")
+        rows = []
+        for universe, export_set in jobs:
+            rows.extend(export_universe(build_dir, genome, universe, export_set, registration))
+    write_inventory(build_dir, rows)
 
 
 def main():

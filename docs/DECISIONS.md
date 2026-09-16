@@ -24,9 +24,9 @@ The observed class set matches the reviewed disposition file (`config/<genome>.c
 
 The parked mm39 release contains the canonical tables, instance membership, raw and canonical
 taxonomy, universe definitions, and the `interspersed` full-interval exports: BED at record,
-subfamily and family level, GTF at record level, SAF at subfamily level and at the legacy
-taxonomy-triple grouping, each in the `ucsc`, `ensembl` and `gencode` contig namespaces, with an
-alias table and a coverage report.
+subfamily and family level, GTF at record and subfamily level, SAF at subfamily level and at the
+legacy taxonomy-triple grouping, plus the complete-catalog record BED under `all_rmsk`, each in
+the `ucsc`, `ensembl` and `gencode` contig namespaces with an alias table and a coverage report.
 Every export ships with a known-answer consumer fixture, a local test runner, a preflight command,
 a host-build runbook and `AGENTS.md`.
 Additional adapters enter a release together with a named consumer and a passing fixture.
