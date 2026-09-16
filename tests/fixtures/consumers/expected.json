@@ -1,0 +1,204 @@
+{
+  "records": 11,
+  "names": 8,
+  "instances": 10,
+  "taxonomy": {
+    "SubA": [
+      "L1",
+      "LINE"
+    ],
+    "SubB": [
+      "ERV1",
+      "LTR"
+    ],
+    "SubB-int": [
+      "ERV1",
+      "LTR"
+    ],
+    "NoFam": [
+      "DNA",
+      "DNA"
+    ],
+    "TwoLab": [
+      "hAT-Tip100",
+      "DNA"
+    ],
+    "Edge": [
+      "hAT",
+      "DNA"
+    ],
+    "DupX": [
+      "L1",
+      "LINE"
+    ],
+    "DupY": [
+      "L1",
+      "LINE"
+    ]
+  },
+  "boundary": [
+    0,
+    1,
+    1,
+    0
+  ],
+  "bams": {
+    "arc_3prime.bam": {
+      "alignments": 13,
+      "templates": 12,
+      "molecules": 11,
+      "molecules_by_tag": {
+        "UB": 11,
+        "UR": 12
+      },
+      "flagged_reads": {
+        "duplicate": [
+          "flag_duplicate_copy0"
+        ],
+        "qcfail": [
+          "flag_qcfail_copy0"
+        ]
+      }
+    },
+    "ocm_5prime_pe.bam": {
+      "alignments": 26,
+      "templates": 12,
+      "molecules": 11,
+      "molecules_by_tag": {
+        "UB": 11,
+        "UR": 12
+      },
+      "flagged_reads": {
+        "duplicate": [
+          "flag_duplicate_copy0"
+        ],
+        "qcfail": [
+          "flag_qcfail_copy0"
+        ]
+      }
+    },
+    "bulk_pe.bam": {
+      "alignments": 26,
+      "templates": 12,
+      "molecules": 11,
+      "molecules_by_tag": {
+        "UB": null,
+        "UR": null
+      },
+      "flagged_reads": {
+        "duplicate": [
+          "flag_duplicate_copy0"
+        ],
+        "qcfail": [
+          "flag_qcfail_copy0"
+        ]
+      }
+    },
+    "irescue_simple_arc.bam": {
+      "alignments": 4,
+      "templates": 4,
+      "molecules": 3,
+      "molecules_by_tag": {
+        "UB": 3,
+        "UR": 4
+      },
+      "flagged_reads": {
+        "duplicate": [],
+        "qcfail": []
+      }
+    },
+    "irescue_simple_ocm.bam": {
+      "alignments": 8,
+      "templates": 4,
+      "molecules": 3,
+      "molecules_by_tag": {
+        "UB": 3,
+        "UR": 4
+      },
+      "flagged_reads": {
+        "duplicate": [],
+        "qcfail": []
+      }
+    },
+    "allocation_4_2_arc.bam": {
+      "alignments": 12,
+      "templates": 9,
+      "molecules": 9,
+      "molecules_by_tag": {
+        "UB": 9,
+        "UR": 9
+      },
+      "flagged_reads": {
+        "duplicate": [],
+        "qcfail": []
+      }
+    },
+    "allocation_4_2_ocm.bam": {
+      "alignments": 24,
+      "templates": 9,
+      "molecules": 9,
+      "molecules_by_tag": {
+        "UB": 9,
+        "UR": 9
+      },
+      "flagged_reads": {
+        "duplicate": [],
+        "qcfail": []
+      }
+    },
+    "allocation_3_3_arc.bam": {
+      "alignments": 12,
+      "templates": 9,
+      "molecules": 9,
+      "molecules_by_tag": {
+        "UB": 9,
+        "UR": 9
+      },
+      "flagged_reads": {
+        "duplicate": [],
+        "qcfail": []
+      }
+    },
+    "allocation_3_3_ocm.bam": {
+      "alignments": 24,
+      "templates": 9,
+      "molecules": 9,
+      "molecules_by_tag": {
+        "UB": 9,
+        "UR": 9
+      },
+      "flagged_reads": {
+        "duplicate": [],
+        "qcfail": []
+      }
+    },
+    "featurecounts_pe.bam": {
+      "alignments": 6,
+      "templates": 3,
+      "molecules": 3,
+      "molecules_by_tag": {
+        "UB": null,
+        "UR": null
+      },
+      "flagged_reads": {
+        "duplicate": [],
+        "qcfail": []
+      }
+    },
+    "featurecounts_onebase.bam": {
+      "alignments": 1,
+      "templates": 1,
+      "molecules": 1,
+      "molecules_by_tag": {
+        "UB": null,
+        "UR": null
+      },
+      "flagged_reads": {
+        "duplicate": [],
+        "qcfail": []
+      }
+    }
+  },
+  "umi_contract": "Molecules use (CB, tag); null marks untagged BAMs. unique_a copy 0 and duplicate_b copy 1 carry a one-base UR error. Both duplicate_b copies share UB.",
+  "flag_contract": "Main BAMs add minus_twolab, flag_duplicate and flag_qcfail; each has one UB. Flagged query names identify both mates in paired BAMs."
+}

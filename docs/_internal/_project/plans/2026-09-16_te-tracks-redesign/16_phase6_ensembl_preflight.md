@@ -9,9 +9,10 @@ Deliverables
 - `tables/contig_aliases.tsv`: `chrom_ucsc, chrom_ensembl, chrom_genbank, chrom_refseq, length_bp`
   from `chromAlias.txt` and `chrom.sizes`, plus `chrom_gencode`; injectivity asserted per column; 61 rows.
 - `exports/{ensembl,gencode}/interspersed/full/{record.bed, subfamily.bed, family.bed, record.gtf,
-  subfamily.saf, taxonomy_triple.saf}` and phase 8's SAF: same rows as the `ucsc` files, contig column
-  renamed through the alias table; `rmsk_record_id` unchanged (UCSC names inside); registered in
-  `export_feature_members` under their own paths.
+  subfamily.gtf, subfamily.saf, taxonomy_triple.saf}` and phase 8's SAF: same rows as the `ucsc` files, contig
+  column renamed through the alias table; `rmsk_record_id` unchanged (UCSC names inside). Emitted ids are
+  namespace-invariant, so `export_feature_members` gains no rows; each renamed file gains one `exports.tsv`
+  row (milestone 2 rulings M5, H2).
 - `tables/contig_coverage.tsv`: per contig: records, in `interspersed`, has alias, length agrees.
   `chr4_JH584295v1_random` and `chrM` carry zero records.
 - `bin/te-tracks-preflight <export> <bam|fai|sizes>`: reads contig names and lengths from a BAM header, a

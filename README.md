@@ -61,8 +61,8 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 | `tests/fixtures/taxonomy/rollup_counts.tsv` | delivered, tested | 3 |
 | `tests/fixtures/taxonomy/weighting_context.tsv` | delivered, tested | 3 |
 | `tests/fixtures/exports/` | delivered, tested | 4 |
-| `tests/fixtures/consumers/` | deferred | 5 |
-| `tests/lib/consumers.py` | deferred | 5 |
+| `tests/fixtures/consumers/` | tested: IRescue identity, TEsingle, TEtranscripts and TElocal parsers; MATES adapter supported in isolation, installed package needs `pkg_resources` (setuptools below 82); Stellarscope parser exercised, unsupported on observed `0,1,1,1` right-boundary defect (expected `0,1,1,0`); IRescue `chrcat` unsupported (`gawk` absent); bedtools and samtools supported; executables `irescue`, `featureCounts`, `stellarscope`, `TEsingle`, `TEcount`, `TElocal` absent; DuckDB query unsupported (`duckdb` absent); `00_tool_inventory.py` reporting-only | 5 |
+| `tests/lib/consumers.py` | delivered, tested | 5 |
 | `tests/lib/records.py` | delivered, tested | 2 |
 | `tests/fixtures/contigs/` | deferred | 6 |
 | `tests/fixtures/publication/` | deferred | 7 |

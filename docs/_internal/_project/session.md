@@ -120,17 +120,39 @@ names, clipped scores, 49 family buckets, 1,220 triple GeneIDs, GTF attribute or
 two spellings per record, no character outside the alphabet); every export digest unchanged by the fix; the seven
 exports measure 2.6 GB per namespace.
 
+**Phase 5** (consumer fixtures) is complete and committed on the branch. Loop: implemented by codex
+(`te-tracks-p5-impl`) from `prompts/p5_impl.md`; codex review `reviews/p5_codex.md` (BLOCKING: Stellarscope reported
+unsupported on its top-level `setuptools_scm` import before its parser ran; the IRescue check asserted counts alone at
+record grain; MATES unsupported on `pkg_resources` with `pyranges` misnamed as the dependency; two advisories) and Opus
+re-review `reviews/p5_opus.md` (FAIL: the same three; every `ImportError` classed as unsupported; the acceptance
+sentence contradicting the observed boundary; eight advisories on gzip nondeterminism, versions, `UB` equal to `UR`,
+absent reverse and flagged reads, MATES scratch, the inventory oracle, contract wording, scope). Rulings in
+`reviews/p5_rulings.md`; plan 15 gained the system-tool dependency clause and the amended acceptance sentence (a parser
+test passes, or reports the documented upstream defect or a named system dependency as `unsupported`; the runner exits
+0 in every case). Fix `te-tracks-p5-fix` from `prompts/p5_fix.md` (eight items): the Stellarscope `annotation`
+subpackage loads in isolation and the check reaches the boundary gate, observes `0,1,1,1` and reports the documented
+right-boundary defect; MATES functions execute from source with a `resource_filename`-only `pkg_resources` stand-in in
+their own scratch directory; the IRescue identity check compares every BED row to the roster and
+`15_irescue_chrcat.py` names `gawk` as the absent system tool; a `ModuleNotFoundError` outside the checkouts is
+unsupported and every other import failure fails, with a self-test in the inventory check; deterministic gzip headers
+and semantic `.locInd` comparison; versions read from the checkouts; the main BAMs carry raw `UR` one base from `UB`
+on two copies (11 molecules by `UB`, 12 by `UR`), reverse-strand reads on both minus-strand records and one
+duplicate-flagged and one QC-fail-flagged molecule; contract rows corrected. Orchestrator re-verification:
+`consumers` 7 pass, 5 unsupported (Stellarscope defect, `gawk`, `irescue`, `featureCounts`, `duckdb`), exit 0; core 13
+pass; an independent pysam recount over all eleven BAMs reproduces every alignment, template, molecule-by-tag and
+flagged-read entry in `expected.json`; two fixture builds into fresh roots agree byte-for-byte on 51 of 53 files, the
+two TElocal pickles differing only in the embedded GTF path; six checkouts clean at their clone commits; one stale
+bytecode cache from the first round removed. Support matrix: parsers supported for IRescue identity, TEsingle,
+TEtranscripts, TElocal and the MATES adapter; Stellarscope exercised to its defect; executables `irescue`,
+`featureCounts`, `stellarscope`, `TEsingle`, `TEcount`, `TElocal`, `duckdb`, `gawk` absent in-container.
+
 ## Next session starts here
 
-1. Phase 5: `launch.sh --unit te-tracks-p5-impl --workdir <te-tracks> --effort xhigh --prompt
-   docs/_internal/redesign-2026-09/prompts/p5_impl.md` (aligned: TElocal index built by its own indexer, TEsingle
-   grain from both GTFs, eleven-record fixture roster); verify (`tests/run.sh consumers` against the fixture refroot);
-   codex review (`prompts/p5_review.md`, paste the implementer report) then Opus (`prompts/p5_opus.md`); fix loop;
-   commit "Phase 5: consumer fixtures".
-2. Milestone 5: stamp the commit hash into `prompts/m5_{codex,opus,divergent}.md` (drafted; `__HASH__`
-   placeholder), fan out the three reviewers in parallel, rule in `reviews/m5_rulings.md`, fix if needed, commit,
-   bump the umbrella pin.
-3. Phases 6 to 9 with `p6_impl.md` … `p9_impl.md`, each aligned with the rulings in its plan file before launch;
+1. Milestone 5: stamp the phase 5 commit hash into `prompts/m5_{codex,opus,divergent}.md` (drafted; `__HASH__`
+   placeholder), fan out the three reviewers in parallel (codex unit `te-tracks-m5-codex`, Opus agent reading
+   `prompts/m5_opus.md`, divergent agent writing `reviews/m5_divergent.md`), rule in `reviews/m5_rulings.md`, fix if
+   needed (fold in the two notes at the end of `reviews/p5_rulings.md`), commit, bump the umbrella pin.
+2. Phases 6 to 9 with `p6_impl.md` … `p9_impl.md`, each aligned with the rulings in its plan file before launch;
    milestone reviews after 7 and 9; the owner runs the host build at phase 9 (`docs/RUNBOOK.md`; host floor 5.5 GB
    resident, about 9 GB disk per build), the orchestrator verifies the published bytes and records `BUILD_ID` and
    `CATALOG_ID` here; then the umbrella pin bumps and D2/D3 resume.

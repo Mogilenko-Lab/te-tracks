@@ -417,10 +417,53 @@ One row per export file, sorted by `export_path`, inventories these columns in o
 | `distinct_features` | int64 | Distinct BED names, GTF `locus` values or SAF GeneIDs. |
 | `sha256` | text | SHA-256 of the complete emitted file bytes. |
 
-### Phase 5: consumer fixtures
+### Consumer contracts (phase 5)
 
-Known-answer parser and execution fixtures establish each consumer contract. Additional adapters
-enter a release with a named consumer and a passing fixture.
+`tests/run.sh consumers` reports parser and executable support separately. The local checkout
+parsers establish feature identity; executable fixtures establish the stated counting and overlap
+behavior. Generated inputs live under `$TE_TRACKS_REFROOT/fixtures/consumers/`.
+`00_tool_inventory.py` is reporting-only for executable availability; its in-process import
+self-test verifies exit 1 for a missing symbol and exit 3 for an absent external module.
+Parser versions are read from the checkouts on each run.
+
+| Consumer | Export read | Feature identity | Fixture in `tests/checks/consumers/` | Support in-container |
+|---|---|---|---|---|
+| IRescue 1.2.0 | `record.bed`, `subfamily.bed` | BED column 4 | `10_irescue_parser.py`: roster identities and coordinates, 11 record features, 8 names, comma splitting and exporter rejection; `15_irescue_chrcat.py`: real `chrcat` serialization; `20_irescue_exec.sh`: 2 molecules versus 1+1, 4/2 and 3/3 allocation | Identity parser supported; `chrcat` unsupported: system tool `gawk` absent; execution unsupported: `irescue` absent |
+| Stellarscope 1.5 | `record.gtf` | `locus` for records; `instance_id` for instances | `11_stellarscope_parser.py`: isolated annotation package, 11 records, 10 instances, attributes, endpoint gate | Parser exercised; unsupported: right-boundary overlap defect, observed `0,1,1,1`, expected `0,1,1,0`; executable `stellarscope` absent |
+| TEsingle 1.0 | `record.gtf`, `subfamily.gtf` | `transcript_id:gene_id:family_id:class_id` | `12_tesingle_parser.py`: 11 record tuples, 8 subfamily tuples, BAM `UR` cutoff at 1,000, reverse-strand annotation and duplicate/QC-fail read filtering | Parser supported; executable `TEsingle` absent |
+| TEtranscripts 2.2.4 | `record.gtf`, `subfamily.gtf` | `gene_id:family_id:class_id` | `13_tetranscripts_telocal_parser.py`: 8 groups through either GTF | Parser supported; executable `TEcount` absent |
+| TElocal 1.1.3 | `.locInd` built from `record.gtf` by TElocal's own indexer; `subfamily.gtf` supplies subfamily grain | `transcript_id:gene_id:family_id:class_id` | `13_tetranscripts_telocal_parser.py`: index construction and the checkout's pickle loader, semantic feature-tuple comparison, 11 record or 8 subfamily features; the pickle embeds the GTF path | Parser and index round trip supported; executable `TElocal` absent |
+| MATES 0.1.8, optional adapter | Fixture-only `record_mates.csv` and `record_mates.bed`, eight columns each | Column 5 integer index; column 4 `TE_Name` group; column 7 raw class/family model group | `14_mates_parser.py`: isolated source functions, pair agreement, companion stem, `?`/`Unknown` model filters; minimal `pkg_resources.resource_filename` stand-in | Adapter supported in isolation; installed package depends on `pkg_resources` (setuptools below 82), absent here |
+| featureCounts | `subfamily.saf`; fixture `onebase.saf` | SAF `GeneID` | `21_featurecounts_exec.sh`: `-s 0`, shared feature counts 2 fragments; one-base feature counts 1 read | Execution unsupported: `featureCounts` absent |
+| bedtools 2.31.1 | `record.bed` | BED column 4 retained by `intersect -wa -wb` | `22_bedtools_exec.sh`: equal-coordinate names, right-adjacent query, `-s`/`-S` | Execution supported |
+| samtools 1.21 | Fixture BAMs and their sequence dictionaries | BAM query name, strand and filter flags, `CB`/`UB`/`UR` tags | `23_samtools_fixture_integrity.sh`: sort order, indexes, alignment accounting, molecule counts by tag and flagged read names | Execution supported |
+
+The authored oracle in `tests/fixtures/consumers/expected.json` specifies 11 records, 8 names and
+10 instances. The production taxonomy resolver elects `TwoLab`'s `hAT-Tip100` family by 2:1
+instance plurality; both GTFs retain its raw family labels. The production exporter writes all
+seven exports from those tables. TElocal's loader branch is executed directly from its checkout.
+
+The FASTA has seed 1729 and contigs `chrA` (5,000 bp) and `chrB` (3,000 bp). The ARC, OCM and
+bulk BAMs each encode eleven molecules: one unique, one repeated, one multimapping, one in the
+instance gap, four at the `Edge` boundaries, one on minus-strand `TwoLab` and two carrying
+duplicate/QC-fail flags. They contain 13, 26 and 26 alignment records, respectively. Both
+minus-strand roster records have reverse-strand reads. The ARC and OCM layouts carry `CB`, `UB`
+and raw `UR`: `unique_a` copy 0 and `duplicate_b` copy 1 have one-base raw errors, yielding
+11 corrected `UB` identities and 12 raw `UR` identities. The oracle includes flagged molecules
+in these totals and records flagged query names per BAM. Bulk carries query and mate identities.
+Separate counting fixtures preserve each assay layout and report IRescue's fitted
+allocation in `irescue_allocation.json` when its executable is available.
+
+Stellarscope's endpoint gate expects `0,1,1,0` for the four reads against GTF `101..110`.
+The checkout observes `0,1,1,1` and reports the right-boundary defect as unsupported. The gate
+passes on `0,1,1,0` and fails on every other result. Its annotation dependency is `intervaltree`.
+MATES resolves
+`record_mates.csv` to its companion correctly; a dotted stem resolves to `record.bed`.
+Its preparation fixture supplies coverage vectors and executes the upstream model-group filter.
+MATES works in `$TE_TRACKS_REFROOT/fixtures/consumers_scratch/mates/` and removes that directory.
+IRescue's five parser `.tsv.gz` files have mtime 0 and an empty gzip filename. TElocal indexes
+are compared by feature tuples across GTF paths.
+The existing registration query remains unsupported through the missing Python module `duckdb`.
 
 ### Phase 6: contig namespaces and qualification
 

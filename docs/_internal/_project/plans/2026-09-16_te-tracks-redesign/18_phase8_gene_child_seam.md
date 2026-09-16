@@ -5,8 +5,8 @@ Goal: the place where gene-dependent views live exists, with one view and no int
 Deliverables
 - `config/mm39_gene.env`: `PARENT_FAMILY=te_mm39`, `GENE_GTF_URL` (GENCODE vM37 primary assembly),
   `GENE_GTF_MD5=702e27a8727db66cd23e9f66f5aa1d38`, `EXON_MASK_POLICY=all_exons_unstranded_union_v1`.
-- Family `te_mm39_gene` built by the same `build.sh`, manifest identity pins
-  `parent_core_build_id`.
+- Family `te_mm39_gene` built by the same `build.sh`, manifest identity pins `parent_build_id` and
+  `parent_catalog_id` (milestone 2 ruling H5).
 - `exports/{ucsc,ensembl,gencode}/interspersed/exon_subtracted/{subfamily,taxonomy_triple}.saf`: mask = union of every
   `exon` row of the pinned GTF, both strands; pieces registered in `export_feature_members` with
   `block_start_1`, `block_end_1`; per-record view status table `tables/exon_subtraction_status.tsv`

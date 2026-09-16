@@ -8,7 +8,7 @@ universes, taxonomy, exports, contigs, manifest), `src/90_manifest.py`, `src/99_
 
 ## Read first
 1. `docs/_internal/_project/plans/2026-09-16_te-tracks-redesign/18_phase8_gene_child_seam.md` (your phase,
-   including the deferred list that this phase must leave untouched)
+   including the deferred list that this phase must leave untouched, and ruling H3 on `gene_context`)
 2. `docs/_internal/_project/plans/2026-09-16_te-tracks-redesign/01_decisions.md` entries 4, 5, 7
 3. `docs/_internal/redesign-2026-09/consults/ADR4_consult.md` (exon subtraction semantics; registration of
    pieces) and `A_consumer_contracts.md` featureCounts section (the lab's exon-subtraction recipe)
@@ -35,17 +35,19 @@ universes, taxonomy, exports, contigs, manifest), `src/90_manifest.py`, `src/99_
 2. `build.sh` accepts `--genome mm39 --family gene` (or reads `FAMILY` from `config/mm39_gene.env` given as
    `--config`); a child build requires `--parent <dir-or-archive>`: in `--build-dir` mode the parent is the
    core build dir; in `--root` mode the parent is `<root>/te_mm39/current` resolved to its archive, and the
-   manifest pins `parent_core_build_id` to the parent's `BUILD_ID`. Child stages: `00_fetch_sources.sh`
+   manifest pins `parent_build_id` and `parent_catalog_id` to the parent's two ids. Child stages: `00_fetch_sources.sh`
    (GTF only, for the child config), `50_build_exon_subtracted.sh`, then manifest and verify as for the core.
    The child build dir holds `source/` (the GTF), `tables/`, `exports/`, `MANIFEST.json`, `BUILD_ID`, plus
-   `parent/BUILD_ID` (copy of the parent id) — nothing from the parent is copied otherwise.
+   `parent/BUILD_ID` and `parent/CATALOG_ID` (copies of the parent ids); nothing else from the parent is copied.
 3. `src/50_build_exon_subtracted.sh <build-dir> <config.env>` calling `src/lib/exon_subtract.py`:
    - mask = union of every `exon` row of the GTF, both strands merged, contigs renamed to UCSC;
    - for every record in the parent's `interspersed` universe: subtract the mask from
      `[start_1, end_1]`; emit surviving pieces;
    - `exports/{ucsc,ensembl,gencode}/interspersed/exon_subtracted/subfamily.saf` (GeneID = rmsk_name, one
      row per piece) and `taxonomy_triple.saf`, sorted like the parent's exports;
-   - `tables/export_feature_members.tsv.gz` for these exports with `block_start_1`, `block_end_1` per piece;
+   - `tables/export_feature_members.tsv.gz` for these exports keyed `(universe_name, variant =
+     exon_subtracted, feature_level)` with `block_start_1`, `block_end_1` per piece, namespace-invariant like the
+     parent's; `tables/exports.tsv` with one row per export file;
    - `tables/exon_subtraction_status.tsv`: `rmsk_record_id, status (unchanged|trimmed|split|fully_subtracted),
      pieces, retained_bp, removed_bp`; assert `retained_bp + removed_bp = length_bp` for every record and zero
      residual overlap between any piece and the mask (interval check, vectorised);
@@ -64,13 +66,16 @@ universes, taxonomy, exports, contigs, manifest), `src/90_manifest.py`, `src/99_
      `tests/fixtures/gene/`: central exon splits a record into two pieces with the parent id; exon covering
      the record fully subtracts it; exon on the opposite strand still masks (unstranded union); adjacent
      exons merge; a GENCODE scaffold name maps through the alias table; expected outputs authored by hand.
-   - `82_child_manifest.py`: the child `MANIFEST.json` identity carries `parent_core_build_id` equal to the
-     parent's `BUILD_ID`, `gene_annotation` with url and md5, `exon_mask_policy`; changing the parent id in a
-     copy changes the child id.
+   - `82_child_manifest.py`: the child `MANIFEST.json` identity carries `parent_build_id` and `parent_catalog_id`
+     equal to the parent's ids, `gene_annotation` with url and md5, `exon_mask_policy`; changing either parent id
+     in a copy changes the child `BUILD_ID`.
 5. `docs/OUTPUTS.md`: the child family section (exports, status and summary tables, the mask definition in
-   one sentence, the conservation guarantee). `docs/RELEASES.md`: child build procedure (parent first,
-   then child; the child pins the parent id). README truth table rows for phase 8 to `tested`. Leave the
-   deferred list in the phase file untouched and add nothing that interprets gene context.
+   one sentence, the conservation guarantee) and, per ruling H3, two sentences: `exon_subtraction_status`
+   describes counting-support geometry under the exon mask, and `unchanged` covers intronic and intergenic
+   records alike; a gene-context relation waits for the transcript-context design session. `docs/RELEASES.md`:
+   child build procedure (parent first, then child; the child pins both parent ids). README truth table rows for
+   phase 8 to `tested`. Leave the deferred list in the phase file untouched and add nothing that interprets gene
+   context.
 
 ## Rules
 - Touch only: `config/mm39_gene.env`, `build.sh`, `src/00_fetch_sources.sh` (child GTF handling),
@@ -89,8 +94,8 @@ export TE_TRACKS_REFROOT=/workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot
 for f in build.sh lib/common.sh src/*.sh tests/run.sh; do bash -n "$f" && echo "syntax ok $f"; done
 time ./build.sh --genome mm39 --config config/mm39_gene.env --build-dir "$TE_TRACKS_REFROOT/te_mm39_gene/build" --parent "$TE_TRACKS_REFROOT/te_mm39/build"; echo "exit=$?"
 C="$TE_TRACKS_REFROOT/te_mm39_gene/build"
-cat "$C/tables/exon_subtraction_summary.tsv"; cat "$C/BUILD_ID"; cat "$C/parent/BUILD_ID"
-python3 -c "import json;m=json.load(open('$C/MANIFEST.json'));print(m['identity']['parent_core_build_id'], m['identity'].get('exon_mask_policy'))"
+cat "$C/tables/exon_subtraction_summary.tsv"; cat "$C/BUILD_ID" "$C/CATALOG_ID"; cat "$C/parent/BUILD_ID" "$C/parent/CATALOG_ID"
+python3 -c "import json;m=json.load(open('$C/MANIFEST.json'));print(m['identity']['parent_build_id'], m['identity']['parent_catalog_id'], m['identity'].get('exon_mask_policy'))"
 for ns in ucsc ensembl gencode; do wc -l "$C/exports/$ns/interspersed/exon_subtracted/"*; done
 python3 src/99_verify.py "$C"; echo "exit=$?"
 tests/run.sh core; echo "exit=$?"
