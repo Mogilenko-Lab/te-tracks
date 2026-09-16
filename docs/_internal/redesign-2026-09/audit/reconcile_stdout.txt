@@ -1,0 +1,57 @@
+packaged records 3799629  unmapped contigs: 0 []
+packaged strand values: {'+': 1906551, '-': 1893078}
+packaged transcript_id grammar sample: ['Lx2B2', 'B3', 'Lx7']
+join: {'both': 3799635, 'left_only': 0, 'right_only': 0}
+records with any label difference: 36108
+--- subfamily: 9 distinct label pairs, 26029 records
+pk_subfamily    repName  n_records
+       ID4_.      ID4_v      25263
+    LTR33A_.   LTR33A_v        432
+    MER34C_.   MER34C_v        328
+         B1F ORR1B1-int          1
+     B1_Mur3      ID_B1          1
+       ID_B1    B1_Mur3          1
+     B1_Mus1 ORR1B1-int          1
+  ORR1B1-int        B1F          1
+  ORR1B1-int    B1_Mus1          1
+--- family: 62 distinct label pairs, 10085 records
+ pk_family repFamily  n_records
+  RTE-Bo.B  RTE-BovB       4239
+MurSatRep1   Unknown       2851
+   YREP_Mm   Unknown        961
+     UCON1   Unknown        187
+UCON80_AMi   Unknown        124
+ MamRep564   Unknown        113
+    UCON41   Unknown        113
+   UCON28a   Unknown         87
+    UCON47   Unknown         84
+    UCON31   Unknown         76
+    UCON76   Unknown         69
+  EUTREP14   Unknown         61
+--- class: 2 distinct label pairs, 4 records
+pk_class repClass  n_records
+     LTR     SINE          2
+    SINE      LTR          2
+class conflicts:
+chrom    start      end strand    repName repFamily repClass pk_subfamily pk_family pk_class
+chr11 67327101 67327210      -        B1F       Alu     SINE   ORR1B1-int ERVL-MaLR      LTR
+chr11 67327101 67327210      - ORR1B1-int ERVL-MaLR      LTR          B1F       Alu     SINE
+chr13 58658238 58658287      - ORR1B1-int ERVL-MaLR      LTR      B1_Mus1       Alu     SINE
+chr13 58658238 58658287      -    B1_Mus1       Alu     SINE   ORR1B1-int ERVL-MaLR      LTR
+family differences beyond Unknown-relabel and v->. : 60
+repName     repFamily    pk_family 
+B1F         Alu          ERVL-MaLR      1
+B1_Mur3     Alu          B4             1
+B1_Mus1     Alu          ERVL-MaLR      1
+Eulor5B     DNA?         DNA            1
+Eulor6A     DNA?         DNA            1
+Eulor8      TcMar?       TcMar          2
+Eutr15      hAT-Tip100?  hAT-Tip100     2
+Eutr16      hAT-Tip100?  hAT-Tip100     2
+ID_B1       B4           Alu            1
+MER121      hAT?         hAT            6
+MER124      DNA?         DNA            2
+MER131      DNA?         DNA            1
+MER99       hAT?         hAT           35
+ORR1B1-int  ERVL-MaLR    Alu            2
+UCON2       DNA?         DNA            2

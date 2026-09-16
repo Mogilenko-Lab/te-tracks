@@ -1,0 +1,21 @@
+rmsk_name	dfam_accession	dfam_version	dfam_title	dfam_classification	dfam_repeat_type	dfam_repeat_subtype	dfam_total_hits
+Eulor5B	DF000000131	4	Eulor5B (Euteleostomi-conserved low frequency repeat 5B)	root;Interspersed_Repeat;Transposable_Element;Class_II_DNA_Transposition;Tyrosine_Recombinase;Crypton;Crypton-A	DNA	Crypton-A	1
+Eulor6A	DF000000132	4	Eulor6A (Euteleostomi-conserved low frequency repeat 6A)	root;Interspersed_Repeat;Transposable_Element;Class_II_DNA_Transposition;Tyrosine_Recombinase;Crypton	DNA	Crypton	1
+Eulor8	DF000000138	4	Eulor8 (Euteleostomi-conserved low frequency repeat 8)	root;Interspersed_Repeat;Transposable_Element;Class_II_DNA_Transposition;Transposase;Tc1-Mariner	DNA	TcMar	1
+Eutr15	DF000001262	2	Ancient interspersed repetitive sequence from eutherian mammals.	root;Interspersed_Repeat;Transposable_Element;Class_II_DNA_Transposition;Transposase;hAT;Tip100	DNA	hAT-Tip100	1
+Eutr16	DF000001243	2	Ancient interspersed repetitive sequence from eutherian mammals.	root;Interspersed_Repeat;Transposable_Element;Class_II_DNA_Transposition;Transposase;hAT;Tip100	DNA	hAT-Tip100	1
+Eutr2	DF000001206	2	Ancient interspersed repetitive sequence from eutherian mammals.	root;Interspersed_Repeat;Transposable_Element;Class_II_DNA_Transposition;Transposase;Mutator-like;MuDR	DNA	MULE-MuDR	2
+Eutr2B	DF000001264	2	Eutr2B subfamily	root;Interspersed_Repeat;Transposable_Element;Class_II_DNA_Transposition;Transposase;Mutator-like;MuDR	DNA	MULE-MuDR	1
+MER121	DF000000719	4	Possible hAT DNA transposon, MER121 subfamily	root;Interspersed_Repeat;Transposable_Element;Class_II_DNA_Transposition;Transposase;hAT	DNA	hAT	2
+MER124	DF000000721	4	Unclassified, largely palindromic DNA transposon, MER124 subfamily	root;Interspersed_Repeat;Transposable_Element;Class_II_DNA_Transposition;Transposase	DNA		1
+MER131	DF000000727	4	Putative SINE of unknown origin, MER131	root;Interspersed_Repeat;Transposable_Element;Class_II_DNA_Transposition;Transposase	DNA		1
+MER136	DF000000733	4	Unclassified, putative DNA transposon, MER136 subfamily	root;Interspersed_Repeat;Transposable_Element;Class_II_DNA_Transposition;Transposase;Merlin	DNA	Merlin	1
+MER53	DF000000859	4	hAT DNA transposon, MER53 subfamily	root;Interspersed_Repeat;Transposable_Element;Class_II_DNA_Transposition;Transposase;hAT;Blackjack	DNA	hAT-Blackjack	1
+MER63A	DF000000893	4	hAT-Blackjack DNA transposon, MER63A subfamily	root;Interspersed_Repeat;Transposable_Element;Class_II_DNA_Transposition;Transposase;hAT;Tip100	DNA	hAT-Tip100	1
+MER63B	DF000000894	4	hAT-Blackjack DNA transposon, MER63B subfamily	root;Interspersed_Repeat;Transposable_Element;Class_II_DNA_Transposition;Transposase;hAT;Tip100	DNA	hAT-Tip100	1
+MER63C	DF000000895	4	hAT-Blackjack DNA transposon, MER63C subfamily	root;Interspersed_Repeat;Transposable_Element;Class_II_DNA_Transposition;Transposase;hAT;Tip100	DNA	hAT-Tip100	1
+MER63D	DF000000896	4	hAT-Blackjack DNA transposon, MER63D subfamily	root;Interspersed_Repeat;Transposable_Element;Class_II_DNA_Transposition;Transposase;hAT;Tip100	DNA	hAT-Tip100	1
+MER99	DF000000968	4	Putative hAT DNA transposon, MER99 subfamily	root;Interspersed_Repeat;Transposable_Element;Class_II_DNA_Transposition;Transposase;hAT	DNA	hAT	1
+UCON2	DF000001095	4	Interspersed repeats conserved in mammals and birds, UCON2 subfamily	root;Interspersed_Repeat;Transposable_Element;Class_II_DNA_Transposition;Transposase	DNA		12
+UCON44	DF000001259	2	Repetitive element conserved in all mammals.	root;Interspersed_Repeat;Transposable_Element;Class_II_DNA_Transposition;Transposase;Tc1-Mariner;Tc2-group;Tigger	DNA	TcMar-Tigger	1
+X4b_DNA	DF000001309	2	Conserved repeat present in placental mammals and marsupials.	root;Interspersed_Repeat;Transposable_Element;Class_II_DNA_Transposition;Transposase;Tc1-Mariner;Tc2-group;Tigger	DNA	TcMar-Tigger	1

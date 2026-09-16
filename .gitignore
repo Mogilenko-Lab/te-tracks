@@ -10,3 +10,6 @@ work/
 
 # Expectations are part of the contract and stay tracked.
 !tests/expectations/*.tsv
+
+# Internal memory carries its tables and worksheets.
+!docs/_internal/**/*.tsv

@@ -1,0 +1,105 @@
+# ADR-2 consult: annotation selections and assignment references
+
+**Ruling: AMEND.** The missing contract is what happens between selecting annotation records and reporting counts. The six sets are useful catalog selections, but their names currently conceal choices about competing features, detectable sequence and normalization. Those choices can change the biological answer while leaving the matrix's reported row names unchanged.
+
+Scope: ADR-2 only. This consult trusts the supplied measurements and verifies software claims by reading local source; it runs no quantifier. Citation prefixes are relative to `/workspaces/Meta-Aging`: **I** = `01_modules/.ref/irescue`; **M** = `01_modules/.ref/MATES`; **S** = `01_modules/.ref/stellarscope`; **T** = `01_modules/.ref/TEsingle`; **R** = `_scratch/te-tracks-audit/report`; **C** = `_scratch/te-tracks-audit/consult`. Species examples below are biological interpretation and proposed acceptance cases. Pinned hg38 and dm6 class inventories were absent from the inspected audit inputs, so this consult does not certify their complete inventories.
+
+## 1. Split the overloaded abstraction
+
+Use **annotation selection** for a predicate over source records. Use **assignment reference** for the actual features and intervals supplied to a quantifier, including their grouping and any gene/background features. Use **reported selection** for the features retained from its output. An EM competition set is the subset of assignment features compatible with a particular molecule; it also depends on retained alignments, strand, overlap rules and model filtering. This vocabulary covers direct overlap counters and MATES as well as EM tools.
+
+The distinction is observable in the checked code:
+
+| Consumer | Verified behavior | Consequence for ADR-2 |
+|---|---|---|
+| IRescue | Custom BED returns before automatic annotation (`I/irescue/map.py:61–84`). Intersections supply feature names, which are grouped into read/UMI candidate sets (`I/irescue/map.py:325–332,366–377`). Singleton candidates receive a whole count; ambiguous candidates enter EM, with optional support filtering (`I/irescue/count.py:203–208,249–295`). | Deleting annotation rows can change both UMI processing and assignment. Filtering the resulting matrix represents a different operation. |
+| TEsingle | Each alignment receives both gene and TE annotations (`T/TEtools/AlignmentIO.py:65–76`); counting resolves categories and invokes EM with concatenated gene/TE feature space (`T/TEtools/Counters.py:184–201`). | Matching TE records alone leaves the gene side of the assignment problem unspecified. |
+| Stellarscope | GTF rows sharing the selected attribute become one feature (`S/stellarscope/annotation/_intervaltree.py:41–60`); threshold assignment chooses the greatest-overlap feature for an alignment pair (`S/stellarscope/utils/model.py:520–537`). | Annotation selection and grouping affect candidates before EM; adding records can change an overlap winner. |
+| MATES | Model preparation removes keys ending in `?`, the exact key `Unknown`, and groups at or below its support cutoff (`M/MATES/scripts/calculate_MU.py:278–295`). Prediction selects indices through the surviving model groups (`M/MATES/scripts/generatePrediction.py:65–70`). | Presence in an export does not guarantee modeled support. The exact model-group encoding also matters. |
+
+Preserve a missing/filtered status for features outside a tool's effective support; converting them to measured zeros would manufacture disagreement in a method comparison.
+
+A minimal counterexample: one molecule is compatible with an interspersed feature and a satellite feature. With both candidates and symmetric evidence, an equal split is possible; removing the satellite before assignment leaves a singleton. Removing its row afterward preserves the original interspersed estimate. IRescue's equal initialization and proportional update make the symmetric case explicit (`I/irescue/em.py:4–20,60–79`). This is a logical example, not a measured frequency of cross-class ambiguity in these data.
+
+Consequently, the synthesis's suggestion that excluding uncertain records is “one filter away” describes a **reporting sensitivity analysis**; an **assignment sensitivity analysis** requires a new run (`C/SYNTHESIS.md:114–115`). Running satellites and interspersed repeats independently can assign the same ambiguous molecule in both runs. Their totals then lack a shared accounting basis.
+
+Keep te-tracks responsible for selection definitions, exported intervals and feature membership. A consuming run records the exported file checksums, feature level, gene/background reference, assignment settings, reported selection and normalization basis. These are ordinary run metadata; a second catalog identity or an EM registry adds no value here. The default applies to annotation export. Each analysis chooses its assignment reference explicitly.
+
+The selections overlap and nest. Treating their totals as additive categories double-counts shared records. Filtering must also precede grouping: an instance/subfamily export contains selected member intervals, with its membership registered. A partial instance needs selected/total member counts; expanding it back to all members silently reverses the selection. Conversely, a jointly inferred instance spanning two reporting classes cannot be divided into class counts using annotation lengths or copy frequencies. Report that feature as mixed, or quantify a resolution that supports the requested attribution.
+
+## 2. Settle the biological boundaries explicitly
+
+| Boundary | Amended decision and the question it preserves |
+|---|---|
+| `Unknown`, `Unspecified` | Keep them as **unclassified repeat candidates** in the default, and expose their contribution separately. Their labels establish neither a transposition mechanism nor interspersed organization. Calling the selection `interspersed_candidates` makes its inclusive scope visible. A TE-mechanism claim needs a classified sensitivity result. |
+| `DNA?` | Keep with explicit classification uncertainty; distinguish it from wholly unclassified records. Preserve the raw label. Onboarding another source must also consider any observed `LINE?`, `LTR?`, `SINE?` or other tentative classes, rather than generalizing a special case for `DNA?`. |
+| `RC` | Include in interspersed candidates; exclude from the RNA-mediated selection. Helitrons use rolling-circle DNA transposition. Their small mm39 representation gives no basis for dropping a mechanism that can matter in another lineage. |
+| `Retroposon` | Include in both interspersed candidates and retrotransposon-derived repeats. Human SVA is the essential acceptance case: an implementation limited to LINE/SINE/LTR can lose a biologically central nonautonomous retroelement category. |
+| LTR records, including solo LTRs | Include all source `LTR` records in the RNA-mediated ancestry selection. A solo LTR can be regulatory or transcribed and remains retrotransposon-derived. Rename the selection accordingly. Source class or an LTR-like name alone cannot establish a solo LTR, an intact provirus or autonomous transcription; those questions require the later structural/context stage. |
+| The three `tRNA*` SINE families | Include `LFSINE_Vert` (`tRNA`), `AmnSINE2` (`tRNA-Deu`) and `MamSINE1` (`tRNA-RTE`) in every applicable biological selection. Those are the exact name/family pairs in `R/trna_prefix_dropped.tsv:2–4`. Apply the historical exclusion only to its verified compatibility selection. Family spelling describes ancestry and must not become an RNA-gene filter. |
+| `snRNA` and the other structural-RNA classes | Retain in the complete catalog; exclude from the biological interspersed/retro selections. `snRNA` here means **small nuclear RNA**, whereas snRNA-seq means **single-nucleus RNA-seq**. A quantifier may include these records as explicit assignment/QC features. IRescue auto retains `snRNA` because its six-class exclusion list omits it (`I/irescue/map.py:115–133`); this establishes software behavior only. |
+
+One biological correction matters for future readers: the synthesis groups B1 with tRNA-derived SINEs (`C/SYNTHESIS.md:116–117`). **B1 and Alu are 7SL-derived SINEs.** Membership should follow the pinned annotation classification, independently of whether the ancestral RNA was tRNA or 7SL. Also distinguish `repClass=Unknown` from `repFamily=Unknown`: a known TE class can have an unresolved family, and that uncertainty should not remove the record from a class-based selection.
+
+Use raw record classifications for these reproducible selection predicates. Canonical taxonomy supports interpretation and rollup; a later curation decision must produce an explicit changed selection/build if it changes membership. Otherwise the same selection label changes meaning when a taxonomy table is edited.
+
+## 3. Satellites: retain the class and provide its selection
+
+`Satellite` remains a source taxonomy class. `satellite_repeats` is the selection of its records. Both are necessary. Keeping satellites outside the default reporting selection is reasonable; automatically removing them from every assignment reference is an additional analytical choice. The combined selection has a contemporary purpose: jointly account for repeat-associated signal, then report interspersed and satellite contributions separately. Its value extends beyond historical compatibility.
+
+The important failure modes are different:
+
+- **Only a separate satellite quantification:** a satellite-only candidate set can absorb reads whose alternatives belong elsewhere; its count total cannot automatically be added to a separately fitted TE total. It also cannot answer whether a change is redistribution between the two classes under one assignment model.
+- **Only a pooled repeat total:** a satellite change can dominate the total or its normalization, obscuring stable interspersed signal. Preserve class/subfamily summaries alongside any pooled result.
+- **Interpreting reference satellite rows as complete arrays:** given mm39 array under-representation, short reads can pile onto the few represented homologous intervals. EM distributes evidence among available candidates; it cannot recover missing array coordinates. Locus estimates therefore require particular scrutiny, and even subfamily abundance remains conditional on reference representation and the mapper's treatment of excessive multimapping.
+
+The denominator argument decides **separation of normalization from membership**, not satellite exclusion. Suppose interspersed assigned molecules remain 100 while satellite molecules rise from 100 to 300 under a common sampling basis: interspersed share of the combined repeat total falls from 50% to 25%. Satellite-only size factors can likewise normalize away a uniform satellite increase. A fixed, justified host-gene/control normalization basis can preserve the relative change being studied; absolute global RNA increases require an external scale or explicit assumptions about invariant material. Independent gene and repeat counters may count the same molecule, so adding their library totals requires a conservation contract.
+
+Dividing by annotated satellite rows, summed RepeatMasker lengths, or assembled genome size does not estimate expression per true array copy. For interval-density analyses, use the union of measured intervals and document the callable/mappability background. The audit's `total_bp` is a record-length summary (`R/policy_universes.tsv:1–6`); overlaps and missing arrays prevent it from automatically serving as effective sequence exposure. Preserve reference-associated satellite signal as a useful result while keeping whole-array abundance, chromosome-specific origin and per-copy activity as separate questions.
+
+## 4. The same selection has different assay limits
+
+| Modality | What a reviewer can otherwise mistake | Required consuming-analysis contract |
+|---|---|---|
+| 3′ nuclear RNA | Intronic host pre-mRNA, internal priming and transcript ends overlapping repeats can generate repeat-associated counts. High nuclear abundance of small/satellite RNAs does not imply efficient capture by a poly(A)-primed protocol. | Retain host transcript context and strand; distinguish repeat-associated RNA from autonomous initiation. Pin the assignment reference, capture protocol and normalization basis. A broader class list alone cannot identify transcript origin. |
+| 5′ whole-cell RNA, PE OCM | A 5′ gene-expression library samples transcript ends according to its actual read layout; a RepeatMasker interval's 5′ edge is not automatically a transcription start site. The two read ends are evidence about one molecule. | Verify which ends contain usable transcript sequence, barcode/UMI processing and strand with the actual layout. Record locus/subfamily identifiability; compare autonomous-initiation claims against transcript/structural evidence. |
+| Paired-end ATAC | A fragment spanning a repeat may have both cuts outside it; overlapping repeat records can multiply one fragment's apparent signal. A poorly represented satellite array can look like a uniquely active locus. | Keep fragment overlap and Tn5-cut measurements distinct, preserve molecular counts across joins, and define the callable background. Independent interval counts can be filtered afterward without refitting when their assignment is unchanged; enrichment backgrounds and ambiguous allocation still need explicit definitions. |
+| Bulk RNA | Poly(A)-selected and depleted total-RNA libraries expose different RNA populations. Exon subtraction changes available sequence and can leave intronic pre-mRNA support. | Pin library preparation, paired-fragment/multimapper rules, the gene annotation and any interval transformation. Use a justified sample normalization basis; equal selection names do not establish comparable abundance across protocols. |
+
+This exposes an ADR-3 dependency: `subfamily.noExon.saf` and a full-interval BED can share a selection while measuring different sequence support. Record the interval transformation separately. The catalog should permit all these analyses without embedding their biological hypotheses into the default selection.
+
+## 5. Portability and names
+
+Use the following machine names, with readable titles in matrix metadata. A title alone cannot identify a count matrix: also show assembly/build, feature level, assignment reference and reported selection. These are annotation selections; only the analysis owns the count matrix.
+
+| Current name → proposed name | Reader-facing title | hg38 / dm6 interpretation |
+|---|---|---|
+| `all_rmsk` → `repeatmasker_all` | All RepeatMasker annotations | Every record in that pinned source, including its actual contig scope and repeat inventory. Assembly gaps remain outside the catalog. |
+| `interspersed` → `interspersed_candidates` | Interspersed-repeat candidates | Same operational class policy after inventory review. hg38 cases include Alu and SVA; dm6 cases include LTR, non-LTR and DNA lineages plus any represented RC and unclassified records. |
+| `interspersed_plus_satellite` → `interspersed_candidates_plus_satellites` | Interspersed candidates + satellite repeats | Previous selection union the source's Satellite records. Its interpretation remains valid for both species. |
+| `retrotransposons` → `retrotransposon_derived` | Retrotransposon-derived repeats | LINE, SINE, LTR and Retroposon for the current vocabulary. Human acceptance cases include Alu and SVA; fly cases include gypsy/copia LTR elements and jockey/I/R1/R2-type non-LTR lineages where present in the pinned source. Any separately named RNA-mediated class requires an explicit mapping. |
+| `satellites` → `satellite_repeats` | RepeatMasker satellite repeats | Exactly the records classified Satellite. Other tandem sequences can reside under Simple_repeat or other labels; this selection has no completeness claim for centromeres or tandem repeats. |
+| `legacy_tetranscripts_<genome>` → `compat_tetranscripts_mm39` for the verified artifact | TEtranscripts mm39 packaged intervals | Source-specific compatibility. Add an hg38 or dm6 counterpart only after reconciling its actual pinned package. |
+
+The first five names survive species changes. The sixth survives as a **naming pattern for evidenced compatibility**, with each assembly/package supplying its own definition. A mouse family-prefix rule provides no evidence about a human or fly package. Define the mm39 selection's promise as interval membership and bind it to `GRCm39_Ensembl_rmsk_TE.gtf.gz`, md5 `1d6770be131fc1b47402a633f4401cbd` (`01_modules/te-tracks/docs/PROVENANCE.md:31–33`). Label reproduction belongs to a compatibility profile using the existing reconciled mappings (`C/SYNTHESIS.md:128–133`).
+
+The hg38 acceptance cases should include Alu/SINE and SVA/Retroposon, with mouse B1 subfamilies absent. An additional trap is that mouse B1 records already carry the RepeatMasker family label `Alu` (`R/conflict_class.tsv:2–5`); a family-only join across species would imply equivalence at the wrong resolution. Preserve species/source-scoped identities. For dm6, expect a markedly different balance of LTR, LINE/non-LTR and DNA lineages, and accept a sparse or empty SINE category if the pinned inventory establishes it. Mammalian Alu/B1/SVA examples supply no fly membership rule; fly subfamilies and validation counts come from its own source.
+
+Onboarding therefore requires a census of **every observed class label**, a reviewed disposition for each, and an explicit outcome for previously unseen labels. Keep those records in the complete catalog and stop publication of a biological selection pending classification review. Distinguish a verified empty category from an unsupported or unbuilt category. Pin the contig set as well: alternate/unplaced sequence can change represented copies and alignment alternatives. This is stronger than adding another `config/<genome>.env` with URLs.
+
+## 6. Tool comparability belongs in profiles
+
+Reject a generic seventh `auto_tool_comparability` selection: it denotes no reproducible set. For a requested native-workflow benchmark, define separate, versioned **compatibility profiles** recording tool revision, source artifact, contig policy, grouping and interval transformations. Materialize only the required exports through the same selection machinery.
+
+IRescue's automatic filter is a six-class blacklist with no family exclusion (`I/irescue/map.py:115–135`), and its hg38/dm6 source URLs are explicitly configured (`I/irescue/_genomes.py:6–19`). MATES explicit `TE` mode is a six-class whitelist (`M/MATES/scripts/Ref2csv.py:75–79`), with automatic mouse and human references tied to particular older sources (`M/MATES/scripts/Ref2csv.py:7–22`). Furthermore, its argparse default is a list rather than the string `TE` (`M/build_reference.py:20`), so a profile must distinguish an explicit TE-mode invocation from the actual default. Its builder filters contigs against gene annotation, removes gene-overlapping records for the exclusive output, and clips long intervals (`M/build_reference.py:108–120,127–164`). A class predicate alone cannot reproduce that reference.
+
+For a **controlled quantifier comparison**, supply the same pinned intervals, compatible feature grouping, cells and input alignment policy to each consumer; record its remaining assignment/model differences. For a **native-workflow comparison**, preserve each native profile and attribute differences to the whole workflow. Applying MATES's class rule to mm39 is a useful policy experiment; its name should say that, since the checked automatic mouse source is mm10. Neither an intersection nor a union of IRescue and MATES selections supplies both meanings.
+
+## Public decision — AMEND
+
+te-tracks publishes named annotation selections over the complete RepeatMasker catalog, with `interspersed_candidates` as the default export selection and exact membership pinned per source. The default includes SINE, LINE, LTR, DNA, RC and Retroposon plus flagged Unknown, Unspecified and DNA? records; companion selections cover all annotations, retrotransposon-derived repeats, satellites, the interspersed–satellite union and verified assembly-specific compatibility, while Satellite retains its source taxonomy class. Analysis runs record their assignment reference, reported selection and normalization basis separately, and tool compatibility profiles pin their software, inputs and transformations.
+
+## Open items before implementation
+
+1. Freeze the selection predicates, uncertainty handling and partial-group export rule; specify boundary fixtures covering all disputed labels and an instance crossing a selection boundary. Require a reviewed class inventory when each new assembly is onboarded.
+2. Assign ownership of assignment-reference, report-selection, interval-transformation and normalization metadata in the consumer run contract; specify the shared-candidate fixture that distinguishes refitting from output filtering.

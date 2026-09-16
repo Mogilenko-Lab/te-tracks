@@ -1,0 +1,10 @@
+.out records 5320771
+.out distinct id 4696900  max id 4696900
+fragments per (chrom,id): 1 -> 4251251  2 -> 338697  3+ -> 106952
+records with '*' overlap flag: 0
+id min per chrom sample: {'chr1': 1, 'chr10': 332427, 'chr11': 559632, 'chr12': 806762, 'chr13': 1011908}
+rmsk.txt records 5320771  .out records 5320771
+in both 5320771  rmsk-only 0  out-only 0
+ucsc char(1) id == last digit of .out id: 0.1
+TE-class (chrom,id) groups: 3186920  multi-fragment: 437463  fragments in multi: 1052720
+multi-fragment ids with >1 repName: 30569

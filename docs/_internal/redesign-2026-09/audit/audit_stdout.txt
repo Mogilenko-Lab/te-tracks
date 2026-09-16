@@ -1,0 +1,27 @@
+rows total 5320771
+rule loci 3799629 expect 3799629
+rule contigs 59 expect 59
+rule subfamilies 1225 expect 1225
+rule triples 1245 expect 1245
+repNames with >1 triple under rule: 20 affecting 6517 loci
+repNames with >1 triple in full source: 20
+id distinct values: 9
+id value sample: {'1': 1259657, '2': 1254529, '3': 1252266, '4': 931793, '5': 126388, '8': 125880, '9': 124529, '6': 124101, '7': 121628}
+id max strlen: 1
+repStart <0 fraction: 0.2873  repLeft <0 fraction: 0.2907
+strand values: {'+': 3415491, '-': 1905280}
+                        policy  n_loci  n_subfamilies  n_triples   total_bp
+        legacy_bulk_compatible 3799629           1225       1245 1121476301
+interspersed_te_with_satellite 3802177           1228       1248 1121742599
+  interspersed_te_no_satellite 3764949           1220       1240 1116605808
+          retrotransposon_only 3593857            868        868 1084886912
+                satellite_only   37228              8          8    5136791
+        structural_rna_classes   21715             71         71    1793299
+         simple_low_complexity 1496879          17185      17185   78037106
+repClass repFamily     repName    n
+    SINE      tRNA LFSINE_Vert 1235
+    SINE  tRNA-Deu    AmnSINE2  388
+    SINE  tRNA-RTE    MamSINE1  925
+selfdesc locus_id unique: 3799629 of 3799629
+coordinate-only key unique: 3799626 of 3799629
+records whose start lies inside an earlier record's span (same contig): 216232

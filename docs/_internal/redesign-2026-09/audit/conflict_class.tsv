@@ -1,0 +1,5 @@
+chrom	start	end	strand	repName	repFamily	repClass	pk_subfamily	pk_family	pk_class
+chr11	67327101	67327210	-	B1F	Alu	SINE	ORR1B1-int	ERVL-MaLR	LTR
+chr11	67327101	67327210	-	ORR1B1-int	ERVL-MaLR	LTR	B1F	Alu	SINE
+chr13	58658238	58658287	-	ORR1B1-int	ERVL-MaLR	LTR	B1_Mus1	Alu	SINE
+chr13	58658238	58658287	-	B1_Mus1	Alu	SINE	ORR1B1-int	ERVL-MaLR	LTR
