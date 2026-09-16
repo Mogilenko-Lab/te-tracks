@@ -1,0 +1,32 @@
+case	labels	canonical_class	canonical_family	class_status	family_status
+concordant	DNA/hAT=7	DNA	hAT	concordant	concordant
+family_uncertainty	DNA/hAT=7;DNA/hAT?=2	DNA	hAT	concordant	resolved_uncertainty_suffix
+class_uncertainty	DNA/hAT=7;DNA?/hAT=2	DNA	hAT	resolved_uncertainty_suffix	concordant
+single_uncertainty	DNA?/hAT?=1	DNA	hAT	resolved_uncertainty_suffix	resolved_uncertainty_suffix
+resolved_unspecified	DNA/DNA=4;DNA/MULE-MuDR=40	DNA	MULE-MuDR	concordant	resolved_unspecified
+empty_family	DNA/=7;DNA/hAT=2	DNA	hAT	concordant	resolved_unspecified
+family_plurality	DNA/hAT-Tip100=246;DNA/hAT-Blackjack=47	DNA	hAT-Tip100	concordant	resolved_plurality
+class_competition	DNA/hAT=7;LINE/L1=3	DNA	hAT	resolved_plurality	concordant
+family_tie	DNA/hAT=2;DNA/TcMar=2	DNA		concordant	unresolved
+family_tie_other	DNA/hAT=3;DNA/TcMar=3	DNA		concordant	unresolved
+class_tie	DNA/hAT=2;LINE/L1=2			unresolved	unresolved
+eulor5b	DNA/Crypton-A=34;DNA?/DNA?=1	DNA	Crypton-A	resolved_uncertainty_suffix	resolved_unspecified
+mer124	DNA/DNA=246;DNA?/DNA?=1	DNA	DNA	resolved_uncertainty_suffix	unspecified
+mer53	DNA/hAT=7;DNA/hAT-Blackjack=1633	DNA	hAT-Blackjack	concordant	resolved_plurality
+coarse_plurality	DNA/hAT=7;DNA/hAT-Blackjack=3	DNA	hAT	concordant	resolved_plurality
+unspecified	DNA/DNA=7	DNA	DNA	concordant	unspecified
+empty_unspecified	DNA/=7	DNA	DNA	concordant	unspecified
+literal_unknown	Unknown/Unknown=1	Unknown	Unknown	concordant	unspecified
+plurality_precedence	DNA?/hAT?=7;DNA/TcMar=3;DNA/DNA=20	DNA	hAT	resolved_uncertainty_suffix	resolved_plurality
+class_plurality_precedence	DNA?/hAT=7;DNA/hAT=1;LINE/L1=3	DNA	hAT	resolved_plurality	concordant
+suffix_aggregation	DNA/hAT=3;DNA?/hAT?=3;LINE/L1=5	DNA	hAT	resolved_plurality	resolved_uncertainty_suffix
+winning_class_only	DNA/hAT=4;DNA/TcMar=3;LINE/L1=6	DNA	hAT	resolved_plurality	resolved_plurality
+winning_class_abstains	DNA/DNA=7;LINE/L1=3	DNA	DNA	resolved_plurality	unspecified
+all_classes_abstain	DNA/DNA=7;LINE/LINE=3	DNA	DNA	resolved_plurality	unspecified
+plurality	DNA/hAT=4;LINE/L1=3;LTR/ERVK=2	DNA	hAT	resolved_plurality	concordant
+rollup_two_labels	DNA/hAT=1;DNA/hAT?=1	DNA	hAT	concordant	resolved_uncertainty_suffix
+empty_input				unresolved	unresolved
+zero_votes	DNA/hAT=0			unresolved	unresolved
+negative_votes	DNA/hAT=-1			unresolved	unresolved
+empty_class	/hAT=1			unresolved	unresolved
+instance_weighting	DNA/hAT=7;DNA/TcMar=3	DNA	hAT	concordant	resolved_plurality

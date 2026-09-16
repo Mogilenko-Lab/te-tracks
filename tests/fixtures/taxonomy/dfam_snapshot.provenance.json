@@ -1,0 +1,10 @@
+{
+  "endpoint_pattern": "https://dfam.org/api/families?name=<name>&format=summary",
+  "fetched_on": "2026-09-16",
+  "source": "docs/_internal/redesign-2026-09/taxonomy/dfam_lookup_20names.tsv",
+  "role": "Pinned test evidence for canonical taxonomy agreement.",
+  "build_reads_snapshot": false,
+  "version_evidence": "per-family dfam_version column of the snapshot",
+  "release_endpoint_response": null,
+  "release_endpoint_response_status": "unrecorded at the 2026-09-16 fetch; the next snapshot refresh records it"
+}

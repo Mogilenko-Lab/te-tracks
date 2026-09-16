@@ -14,7 +14,7 @@ import pyarrow.parquet as pq
 sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tests/lib"))
-from records import SCHEMA, read_tsv, require
+from records import SCHEMA, TAXONOMY_SCHEMA, read_tsv, require
 sys.path.insert(0, str(ROOT / "src/lib"))
 from build_records import build_records, validate_records
 from build_universes import build_universes, check_class_set
@@ -69,6 +69,9 @@ with TemporaryDirectory(prefix="te-tracks-records-") as directory:
     expected = read_tsv(FIXTURES / "expected_records.tsv", SCHEMA)
     assert read_tsv(tables / "rmsk_records.tsv.gz", SCHEMA).equals(expected)
     assert pq.read_table(tables / "rmsk_records.parquet").cast(SCHEMA).equals(expected)
+    assert read_tsv(tables / "rmsk_taxonomy.tsv", TAXONOMY_SCHEMA).equals(
+        read_tsv(FIXTURES / "expected_taxonomy.tsv", TAXONOMY_SCHEMA))
+    assert (tables / "rmsk_taxonomy.tsv").read_bytes() == (FIXTURES / "expected_taxonomy.tsv").read_bytes()
     with gzip.open(tables / "rmsk_records.tsv.gz", "rb") as stream:
         assert stream.read() == (FIXTURES / "expected_records.tsv").read_bytes()
     with gzip.open(tables / "rmsk_instance_members.tsv.gz", "rb") as stream:

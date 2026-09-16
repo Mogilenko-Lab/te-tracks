@@ -64,8 +64,104 @@ Keep the file under 200 lines. Facts over opinions; every finding cites a path a
   Dfam join one at a time; name the check that fails each time and quote its message. Confirm check 31 fails when
   one snapshot name is removed (set equality) and when one `dfam_repeat_subtype` is altered.
 - The build reads no Dfam data and no network: confirm by reading `src/lib/build_taxonomy.py` imports and file opens.
+- Orchestrator ruling to judge against: rule step 3 in the phase file now reads that a name whose winning class
+  carries no specified family publishes `canonical_family = canonical_class` with `family_status = unspecified`,
+  and specified families under losing classes take no part in the family vote. The implementation's
+  `winning_class_abstains` fixture case (`DNA/DNA=7;LINE/L1=3`) and the matching `docs/OUTPUTS.md` sentence
+  publish an unresolved family instead; treat that as a finding and state what changes (`resolve`, the fixture
+  row, the sentence). mm39 has no such name, so no number moves.
 - Wording: every sentence and comment in `src/lib/build_taxonomy.py`, `src/20_build_taxonomy.sh`, the three checks,
   the `docs/OUTPUTS.md` diff and the README diff.
 
 ## Implementer report
-__REPORT__
+Implemented phase 3. All 10 core checks pass.
+
+Changed:
+
+- [README.md](/workspaces/Meta-Aging/01_modules/te-tracks/README.md)
+- [docs/OUTPUTS.md](/workspaces/Meta-Aging/01_modules/te-tracks/docs/OUTPUTS.md)
+
+Created:
+
+- [src/20_build_taxonomy.sh](/workspaces/Meta-Aging/01_modules/te-tracks/src/20_build_taxonomy.sh)
+- [src/lib/build_taxonomy.py](/workspaces/Meta-Aging/01_modules/te-tracks/src/lib/build_taxonomy.py)
+- [30_taxonomy_canonical.py](/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/core/30_taxonomy_canonical.py)
+- [31_taxonomy_dfam_agreement.py](/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/core/31_taxonomy_dfam_agreement.py)
+- [32_taxonomy_rule_fixtures.py](/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/core/32_taxonomy_rule_fixtures.py)
+- [dfam_snapshot.tsv](/workspaces/Meta-Aging/01_modules/te-tracks/tests/fixtures/taxonomy/dfam_snapshot.tsv)
+- [dfam_snapshot.provenance.json](/workspaces/Meta-Aging/01_modules/te-tracks/tests/fixtures/taxonomy/dfam_snapshot.provenance.json)
+- [rule_cases.tsv](/workspaces/Meta-Aging/01_modules/te-tracks/tests/fixtures/taxonomy/rule_cases.tsv)
+- [rollup_counts.tsv](/workspaces/Meta-Aging/01_modules/te-tracks/tests/fixtures/taxonomy/rollup_counts.tsv)
+
+Generated [taxonomy_canonical.tsv](/workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot/te_mm39/build/tables/taxonomy_canonical.tsv) and [taxonomy_resolution_report.tsv](/workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot/te_mm39/build/tables/taxonomy_resolution_report.tsv) in the scratch build.
+
+Acceptance scope clarification: the 7/5/5/3 family-status expectation holds for the 20 multi-label names. The full table has 17,372 `unspecified` rows. No other deviations; no git writes, installs, or network access.
+
+Acceptance outputs verbatim:
+
+```text
+syntax ok build.sh
+syntax ok lib/common.sh
+syntax ok src/00_fetch_sources.sh
+syntax ok src/05_qualify_source.sh
+syntax ok src/10_build_records.sh
+syntax ok src/15_build_universes.sh
+syntax ok src/20_build_taxonomy.sh
+syntax ok tests/run.sh
+names=18484 multi_label_names=20 taxonomy_rule_version=taxonomy_rule_v1
+[20_build_taxonomy] canonical taxonomy ready in /workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot/te_mm39/build/tables
+exit=0
+  18485 /workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot/te_mm39/build/tables/taxonomy_canonical.tsv
+     21 /workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot/te_mm39/build/tables/taxonomy_resolution_report.tsv
+  18506 total
+   1095 concordant
+      1 family_status
+      7 resolved_majority
+      5 resolved_uncertainty_suffix
+      5 resolved_unspecified
+  17372 unspecified
+      1 class_status
+  18478 concordant
+      6 resolved_uncertainty_suffix
+rmsk_name	rmsk_labels	rule_fired	canonical_class	canonical_family	class_status	family_status
+Eulor5B	DNA/Crypton-A=34;DNA?/DNA?=1	taxonomy_rule_v1	DNA	Crypton-A	resolved_uncertainty_suffix	resolved_unspecified
+Eulor6A	DNA/Crypton=19;DNA?/DNA?=1	taxonomy_rule_v1	DNA	Crypton	resolved_uncertainty_suffix	resolved_unspecified
+Eulor8	DNA/TcMar=104;DNA/TcMar?=2	taxonomy_rule_v1	DNA	TcMar	concordant	resolved_uncertainty_suffix
+Eutr15	DNA/hAT-Tip100=109;DNA/hAT-Tip100?=2	taxonomy_rule_v1	DNA	hAT-Tip100	concordant	resolved_uncertainty_suffix
+Eutr16	DNA/hAT-Tip100=98;DNA?/hAT-Tip100?=2	taxonomy_rule_v1	DNA	hAT-Tip100	resolved_uncertainty_suffix	resolved_uncertainty_suffix
+Eutr2	DNA/MULE-MuDR=40;DNA/DNA=7	taxonomy_rule_v1	DNA	MULE-MuDR	concordant	resolved_unspecified
+Eutr2B	DNA/MULE-MuDR=68;DNA/DNA=7	taxonomy_rule_v1	DNA	MULE-MuDR	concordant	resolved_unspecified
+MER121	DNA/hAT=555;DNA/hAT?=6	taxonomy_rule_v1	DNA	hAT	concordant	resolved_uncertainty_suffix
+MER124	DNA/DNA=247;DNA?/DNA?=2	taxonomy_rule_v1	DNA	DNA	resolved_uncertainty_suffix	unspecified
+MER131	DNA/DNA=474;DNA?/DNA?=1	taxonomy_rule_v1	DNA	DNA	resolved_uncertainty_suffix	unspecified
+MER136	DNA/Merlin=21;DNA/DNA=2	taxonomy_rule_v1	DNA	Merlin	concordant	resolved_unspecified
+MER53	DNA/hAT-Blackjack=1633;DNA/hAT=7	taxonomy_rule_v1	DNA	hAT-Blackjack	concordant	resolved_majority
+MER63A	DNA/hAT-Tip100=714;DNA/hAT-Blackjack=1	taxonomy_rule_v1	DNA	hAT-Tip100	concordant	resolved_majority
+MER63B	DNA/hAT-Tip100=417;DNA/hAT-Blackjack=21	taxonomy_rule_v1	DNA	hAT-Tip100	concordant	resolved_majority
+MER63C	DNA/hAT-Tip100=273;DNA/hAT-Blackjack=99	taxonomy_rule_v1	DNA	hAT-Tip100	concordant	resolved_majority
+MER63D	DNA/hAT-Tip100=935;DNA/hAT-Blackjack=111	taxonomy_rule_v1	DNA	hAT-Tip100	concordant	resolved_majority
+MER99	DNA/hAT=148;DNA/hAT?=35	taxonomy_rule_v1	DNA	hAT	concordant	resolved_uncertainty_suffix
+UCON2	DNA/DNA=99;DNA?/DNA?=2	taxonomy_rule_v1	DNA	DNA	resolved_uncertainty_suffix	unspecified
+UCON44	DNA/TcMar-Tigger=87;DNA/TcMar=3	taxonomy_rule_v1	DNA	TcMar-Tigger	concordant	resolved_majority
+X4b_DNA	DNA/TcMar-Tigger=125;DNA/TcMar=5	taxonomy_rule_v1	DNA	TcMar-Tigger	concordant	resolved_majority
+pass  01_runner_selftest.sh  runner statuses, required checks, diagnostics, dangling symlinks and usage exits pass
+pass  10_rmsk_out_parser.py  6 expected records; plain/gzip, signed consensus, ID tokens, malformed/unreadable input and ID statistics pass
+pass  11_source_qualification.sh  13 summary metrics and 10 field disagreements verified; reports identical; four source md5s and declared assembly match config pins
+pass  20_records_schema.py  5320771 records; 24 typed columns; all typed rows equal; identities and bounds pass
+pass  21_instances.py  4696900 instances; one instance per record; single contig; sizes 1=4251251 2=338697 3+=106952
+pass  22_universes.py  six universe summaries and every membership match; 17 classes; 3 collision pairs; 20 multi-label names / 6517 records
+pass  23_records_fixtures.py  hand-authored records, collisions, text IDs, signed fields, instances, bounds, joins, class sets and tRNA-family rules pass
+pass  30_taxonomy_canonical.py  18484 names; 20 multi-label DNA names; family statuses 7/5/5/3; minimum majority share 0.734; summaries pass
+pass  31_taxonomy_dfam_agreement.py  20 of 20 canonical labels agree with Dfam; snapshot and resolution name sets are equal
+pass  32_taxonomy_rule_fixtures.py  30 rule cases; permutations, rank shares, median, deterministic builds and canonical rollups pass
+checks=10 pass=10 fail=0 unsupported=0
+exit=0
+ M README.md
+ M docs/OUTPUTS.md
+?? src/20_build_taxonomy.sh
+?? src/lib/build_taxonomy.py
+?? tests/checks/core/30_taxonomy_canonical.py
+?? tests/checks/core/31_taxonomy_dfam_agreement.py
+?? tests/checks/core/32_taxonomy_rule_fixtures.py
+?? tests/fixtures/taxonomy/
+```

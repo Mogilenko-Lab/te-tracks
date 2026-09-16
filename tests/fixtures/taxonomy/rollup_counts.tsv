@@ -1,0 +1,7 @@
+rmsk_name	count	family_bucket	class_bucket
+rollup_two_labels	1	DNA/hAT	DNA
+family_tie	2	unresolved_family_family_tie	DNA
+family_tie_other	3	unresolved_family_family_tie_other	DNA
+class_tie	5	unresolved_family_class_tie	unresolved_class_class_tie
+literal_unknown	4	Unknown/Unknown	Unknown
+instance_weighting	6	DNA/hAT	DNA

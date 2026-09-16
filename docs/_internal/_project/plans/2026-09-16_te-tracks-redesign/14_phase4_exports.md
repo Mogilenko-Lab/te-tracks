@@ -6,7 +6,8 @@ Deliverables under `exports/ucsc/interspersed/full/`
 - `record.bed` (BED6; name = `rmsk_record_id`; score = min(sw_score, 1000)).
 - `subfamily.bed` (BED6; name = `rmsk_name`).
 - `family.bed` (BED6; name = `<canonical_class>/<canonical_family>`; a rank unresolved for the name
-  reads `unresolved/<rmsk_name>` in every rollup label, one bucket per name).
+  reads `unresolved_class_<rmsk_name>` or `unresolved_family_<rmsk_name>` in that position, one bucket
+  per name per rank; phase 3 review H5).
 - `record.gtf` (exon rows; `gene_id`=rmsk_name, `transcript_id` and `locus` = colon-free record
   alias `R|mm39|<name>|<chrom>|<start_1>|<end_1>|<strand>`, `family_id`/`class_id` = canonical,
   `rmsk_family`/`rmsk_class` = raw, `instance_id` = `I|mm39|<id>`).
@@ -22,10 +23,12 @@ Deliverables under `exports/ucsc/interspersed/full/`
   alias and are namespace-invariant, so one registration serves the three namespaces; for `full`
   variants one block per record equal to the record bounds (milestone 2 ruling M5).
 - `tables/exports.tsv`: one row per export path with `namespace, universe_name, variant, feature_level,
-  format`.
-- Name validation: every id component (`rmsk_name`, contig, canonical label) matches
-  `[A-Za-z0-9_.+/?()-]+`; emitted ids add the separators `|` and `:`; no emitted id contains `, # ~ % ; "`
-  or whitespace; a violation fails the export (milestone 2 ruling L1).
+  format, rows, distinct_features, sha256`. Level `record` registers both id spellings (`rmsk_record_id`
+  for BED, the record alias for GTF); level `subfamily` registers `rmsk_name` once for BED, SAF and GTF.
+- Name validation: every id component (`rmsk_name`, contig, canonical label, unresolved token) matches
+  `[A-Za-z0-9_.+?()-]+`; emitted ids add the separators `|`, `:` and `/`; no emitted id contains `, # ~ % ; "`
+  or whitespace; a violation fails the export (milestone 2 ruling L1). The build rejects `/` in `rmsk_name`
+  beside `|`, `:` and whitespace, so unresolved tokens are separator-free by construction (phase 3 re-review A3).
 - Export builders read `universes.json` and `universe_members.tsv.gz` from the build and never
   re-evaluate predicates (ruling A2). Exports carry no provisional flag; the status is a class property
   recoverable by joining names to `rmsk_taxonomy` (ruling L2). The `compat_tetranscripts_mm39` universe

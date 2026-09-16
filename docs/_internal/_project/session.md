@@ -80,20 +80,44 @@ TEsingle and TElocal key features on `transcript_id` (H2); the compat universe s
 the legacy comparison is a phase 9 reconciliation (H1); `gene_context` for 14761 waits for the transcript-context
 design session (H3).
 
+**Phase 3** (canonical taxonomy by rule) is complete and committed on the branch. Loop: implemented by codex
+(`te-tracks-p3-impl`); three reviews in parallel per ruling M7: codex `reviews/p3_codex.md` (BLOCKING: the
+family fallback scoped across all classes, the Dfam release response absent from the provenance, the manifest
+requirement belonging to phase 7), Opus `reviews/p3_opus.md` (FAIL: the same fallback defect; check 30 blind to
+single-label corruption; provenance residue; independent re-derivation of every row otherwise exact) and divergent
+`reviews/p3_divergent.md` (five High: record-count weighting rewards fragmentation, the admission gate's literals,
+the one-class-wide oracle, float noise in the median, one unresolved token for two ranks). Rulings in
+`reviews/p3_rulings.md`; the phase file was rewritten to the corrected contract before the fix: votes weight by
+RepeatMasker instance (`rmsk_taxonomy` gains `instance_count`; every mm39 winner unchanged; minimum contested share
+0.840 on `MER63C`, measured independently by the orchestrator, the divergent reviewer and the implementer),
+`resolved_plurality` naming with `class_plurality_share`, `family_plurality_share` and `family_support_share`,
+two-decimal medians, rank tokens `unresolved_class_<name>` / `unresolved_family_<name>`, the census in
+`tests/expectations/mm39/taxonomy_census.tsv`, check 30 recomputing all 15 columns on every row, check 31 as a subset
+gate reading count and date from evidence, the snapshot provenance recording the release response as the next
+refresh's addition. Fix `te-tracks-p3-fix` from `prompts/p3_fix.md`; orchestrator re-verification (ten core checks;
+every table outside the taxonomy trio byte-identical to the milestone build; an independent instance-weighted
+implementation reproduces all 15 columns on all 18,484 rows); codex re-review of the fix `reviews/p3_codex2.md`
+(PASS WITH ADVISORIES; every earlier finding closed; two phase 4 integration notes folded into `p4_impl.md`).
+Digests: `rmsk_taxonomy.tsv` 26a9110f…, `taxonomy_canonical.tsv` a3663b64…, `taxonomy_resolution_report.tsv`
+1f8c068f….
+
 ## Next session starts here
 
-1. Phase 3: `launch.sh --unit te-tracks-p3-impl --workdir <te-tracks> --effort xhigh --prompt
-   docs/_internal/redesign-2026-09/prompts/p3_impl.md`; verify (the taxonomy stage runs on the existing build dir
-   in about a minute); reviews in parallel: codex (`prompts/p3_review.md`, paste the implementer report), Opus
-   (`prompts/p3_opus.md`, `opus-reviewer` agent), divergent (`prompts/p3_divergent.md`, `divergent` agent, per
-   ruling M7); fix loop; commit "Phase 3: canonical taxonomy by rule".
-2. Phases 4 to 9 follow with `p4_impl.md` … `p9_impl.md`, each aligned with the milestone 2 rulings in its plan
-   file before launch; milestone reviews after 5, 7, 9; the owner runs the host build at phase 9
-   (`docs/RUNBOOK.md`), the orchestrator verifies the published bytes and records the `BUILD_ID` and
-   `CATALOG_ID` here; then the umbrella pin bumps and D2/D3 resume.
+1. Phase 4: `launch.sh --unit te-tracks-p4-impl --workdir <te-tracks> --effort xhigh --prompt
+   docs/_internal/redesign-2026-09/prompts/p4_impl.md` (aligned with milestone 2 and phase 3 rulings: seven exports
+   including `subfamily.gtf`, registration keyed by level, `exports.tsv`, component alphabet without `/`, rank
+   tokens, `/` rejected in names); verify (export stage on the existing build dir); codex review
+   (`prompts/p4_review.md`, paste the implementer report) then Opus (`prompts/p4_opus.md`); fix loop; commit
+   "Phase 4: interspersed exports in the UCSC namespace".
+2. Phase 5 with `p5_impl.md` after aligning it with the rulings (TElocal index built by its own indexer; TEsingle grain
+   fixtures from both GTFs); milestone review m5 (codex, Opus, divergent). Phases 6 to 9 follow; milestone reviews
+   after 7 and 9; the owner runs the host build at phase 9 (`docs/RUNBOOK.md`), the orchestrator verifies the
+   published bytes and records `BUILD_ID` and `CATALOG_ID` here; then the umbrella pin bumps and D2/D3 resume.
 
-Prompts p1 to p9 carry pre-measured acceptance numbers; the plan files are authoritative where a prompt
-and a plan file disagree, and the disagreement is a deviation to report.
+Prompts p4 to p9 carry pre-measured acceptance numbers; the plan files are authoritative where a prompt and a plan
+file disagree, and the disagreement is a deviation to report. Rulings the owner may overturn: instance weighting
+(`p3_rulings.md` H1), `CATALOG_ID` (`m2_rulings.md` H5), `subfamily.gtf` (H2), compat as membership (H1),
+`gene_context` deferred (H3).
 
 ## Open at handoff
 

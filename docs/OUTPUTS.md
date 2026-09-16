@@ -63,9 +63,11 @@ members of an instance share one contig. Instance text sorts lexically, preservi
 ### `tables/rmsk_taxonomy.tsv`
 
 Columns are `rmsk_name` (text), `rmsk_family` (text), `rmsk_class` (text), `record_count`
-(int64) and `record_length_sum_bp` (int64). Each distinct source triple has one row, sorted by
-name, family and class. The length sum retains overlapping records. A name may carry several
-source labels; canonical rollups arrive in phase 3.
+(int64), `instance_count` (int64) and `record_length_sum_bp` (int64), in that order.
+Each distinct source triple has one row, sorted by name, family and class. `instance_count`
+counts distinct `rmsk_instance_id` values among the triple's records. The length sum retains
+overlapping records. A name may carry several source labels; canonical rollups join through
+`taxonomy_canonical`.
 
 ### `universes.json`
 
@@ -122,6 +124,91 @@ Gzip files have `mtime=0` and an empty embedded filename. Parquet uses an explic
 schema with int64, float64, bool and UTF-8 string types. Both record serializations load to equal
 typed rows. Identical input produces byte-identical tables and universe definitions under the
 same builder and serialization libraries.
+
+## Canonical taxonomy (phase 3)
+
+### `tables/taxonomy_canonical.tsv`
+
+One row per `rmsk_name`, sorted by name, derives canonical labels and rank statuses from the raw
+taxonomy. The 15 columns appear in this order. `canonical_family` is unique within `canonical_class`.
+
+| Column | Type | Contract |
+|---|---|---|
+| `rmsk_name` | text | Unique source repeat name within the build. |
+| `canonical_class` | text | Winning normalized class; empty for an unresolved class. |
+| `canonical_family` | text | Winning normalized family, class token for an unspecified family, or empty for an unresolved family. |
+| `class_status` | text | Class resolution status under `taxonomy_rule_v1`. |
+| `family_status` | text | Family resolution status under `taxonomy_rule_v1`. |
+| `class_plurality_share` | float64 | Largest normalized class instance count divided by every label instance of the name, rounded to three decimals. |
+| `family_plurality_share` | float64 | Largest specified family instance count divided by specified-family instances within the winning class, rounded to three decimals. |
+| `family_support_share` | float64 | Largest specified family instance count within the winning class divided by every label instance of the name, rounded to three decimals. |
+| `label_count` | int64 | Number of distinct raw class/family labels for the name. |
+| `record_count` | int64 | Sum of raw label record counts for the name. |
+| `instance_count` | int64 | Sum of raw label instance counts for the name. |
+| `record_length_sum_bp` | int64 | Sum of raw label record lengths for the name, retaining overlaps. |
+| `median_divergence_pct` | float64 | Median of `divergence_pct` across the name's records, rounded to two decimals. |
+| `has_uncertain_source` | bool | Any raw class or family token carries a trailing `?`. |
+| `has_multiple_labels` | bool | `label_count > 1`. |
+
+The versioned rule `taxonomy_rule_v1` weights each raw label by `instance_count` and resolves
+class first, then family within the winning class. Record counts and lengths supply context.
+
+1. Strip a trailing `?` from every class and family token and set `has_uncertain_source = true` when any raw token carries that suffix.
+2. Treat an empty family or a normalized family equal to its normalized class as unspecified, contributing its instance count to the class vote and abstaining from the family vote.
+3. Select the class with the most instances and the specified family with the most instances within that class; a winning class with zero specified-family votes publishes `canonical_family = canonical_class` and `family_status = unspecified`.
+4. Publish `unresolved` at a tied rank and below, with empty canonical fields at those ranks; ties use integer instance counts, and shares supply display values.
+
+Class statuses are `concordant`, `resolved_uncertainty_suffix`, `resolved_plurality` and
+`unresolved`. Family statuses are `concordant`, `resolved_uncertainty_suffix`,
+`resolved_unspecified`, `resolved_plurality`, `unspecified` and `unresolved`.
+Status precedence per rank is plurality over unspecified abstentions over uncertainty suffix
+over concordant. `resolved_plurality` identifies a contested vote's winner;
+`resolved_unspecified` identifies a specified family chosen alongside abstentions;
+`unspecified` identifies the class-token family convention.
+
+Family votes come exclusively from specified families within the winning class. A rank with zero
+available votes publishes share `0`; tied ranks retain their tied shares. Both family shares are
+`0` when class is unresolved or the winning class has zero specified-family votes.
+The pure `resolve` function is total over typed votes: empty inputs, empty normalized classes
+and nonpositive counts return both ranks unresolved. The build validates distinct raw triples,
+names, normalized classes, positive counts and lengths, instance counts bounded by record counts,
+and agreement with parquet name sets and record counts.
+
+### `tables/taxonomy_resolution_report.tsv`
+
+One row per name with `label_count > 1`, sorted by name, records its raw votes and canonical decision.
+Membership counts distinct raw labels, so a `?` variant alone places a name in the report and
+exposes its suffix decision. Columns appear in this order:
+
+| Column | Type | Contract |
+|---|---|---|
+| `rmsk_name` | text | Source repeat name with multiple distinct raw labels. |
+| `rmsk_labels` | text | Raw `class/family=<instances>;...` labels sorted by descending instance count, then class and family. |
+| `rmsk_label_records` | text | Raw `class/family=<records>;...` labels in the same order as `rmsk_labels`. |
+| `rule_version` | text | Applied rule version, `taxonomy_rule_v1`. |
+| `canonical_class` | text | Canonical class from `taxonomy_canonical`. |
+| `canonical_family` | text | Canonical family from `taxonomy_canonical`. |
+| `class_status` | text | Class status from `taxonomy_canonical`. |
+| `family_status` | text | Family status from `taxonomy_canonical`. |
+
+Family and class rollups join each name once through `taxonomy_canonical` and conserve each
+name's count. Resolved family buckets use `<canonical_class>/<canonical_family>`; resolved class
+buckets use `<canonical_class>`. Unresolved ranks retain empty canonical fields, and rollups use
+`unresolved_class_<rmsk_name>` or `unresolved_family_<rmsk_name>`, one bucket per name per rank.
+These tokens are free of `/`, `:` and `|` and occupy the corresponding rank's export field.
+
+The four spellings of "no family" are `<class>/<class>` under the abstention convention,
+`Unknown/Unknown`, `Unspecified/Unspecified` and `unresolved_family_<name>` for a tied family
+rank. `Unknown` and `Unspecified` retain their literal source classification.
+
+The pinned Dfam snapshot under `tests/fixtures/taxonomy/` supplies test evidence; the build derives
+labels from the two source tables under `tables/`. Every report name requires a snapshot row,
+and every snapshot name belongs to the canonical table. Agreement compares each type and subtype
+that Dfam names. Snapshot rows may also cover concordant names. The current snapshot covers class
+`DNA`; `Unknown` and `Unspecified` have their evidence in the raw source labels.
+`tests/expectations/mm39/taxonomy_census.tsv` records the measured acceptance census, including
+snapshot row count. The snapshot provenance records its fetch date, endpoint pattern, source,
+role and per-family version evidence; the next refresh adds the release endpoint response.
 
 ## Published legacy release
 
@@ -188,14 +275,6 @@ intervals in phase 8. Each emitted feature and block registers to source records
 | Legacy `BUILD_ID` | `BUILD_ID` computed from the manifest `identity` section (phase 7) |
 | `ensembl_named/` | `exports/ensembl/` (phase 6) |
 
-### Phase 3: canonical taxonomy
-
-`tables/taxonomy_canonical.tsv` supplies one row per name with canonical class and family,
-rank-specific resolution statuses and median record divergence under `taxonomy_rule_v1`.
-`tables/taxonomy_resolution_report.tsv` records names with multiple raw labels and the rule used.
-Family and class rollups join through `taxonomy_canonical`; unresolved names enter an explicit
-`unresolved` bucket, distinct from RepeatMasker's literal `Unknown`.
-
 ### Phase 4: UCSC full-interval exports
 
 All six exports land under `exports/ucsc/interspersed/full/`.
@@ -205,7 +284,7 @@ Exports carry no provisional flag; the status is a class property recoverable by
 |---|---|---|
 | `record.bed` | 0-based half-open | BED6 name = `rmsk_record_id` |
 | `subfamily.bed` | 0-based half-open | BED6 name = `rmsk_name` |
-| `family.bed` | 0-based half-open | BED6 name = `<canonical_class>/<canonical_family>` or `unresolved/<rmsk_name>` |
+| `family.bed` | 0-based half-open | BED6 name = `<canonical_class>/<canonical_family>` or `unresolved_family_<rmsk_name>` |
 | `record.gtf` | 1-based inclusive | Exon rows; `gene_id` = `rmsk_name`; `transcript_id` and `locus` = record alias |
 | `subfamily.saf` | 1-based inclusive | `GeneID` = `rmsk_name` |
 | `taxonomy_triple.saf` | 1-based inclusive | Canonical taxonomy-triple grouping; `GeneID` = `<rmsk_name>:<canonical_family>:<canonical_class>` |
@@ -218,7 +297,9 @@ BED6 columns are `chrom`, `start`, `end`, `name`, `score` and `strand`;
 `score = min(sw_score, 1000)`. The GTF record alias is
 `R|mm39|<name>|<chrom>|<start_1>|<end_1>|<strand>`.
 GTF `family_id` and `class_id` carry canonical labels, `rmsk_family` and `rmsk_class` carry raw
-labels, and `instance_id` is `I|mm39|<id>`.
+labels, and `instance_id` is `I|mm39|<id>`. Unresolved GTF ranks use
+`unresolved_family_<rmsk_name>` and `unresolved_class_<rmsk_name>` in `family_id` and `class_id`;
+the triple `GeneID` uses these tokens in its family and class positions.
 
 `tables/export_feature_members.tsv.gz` carries `export_path`, `feature_level`,
 `emitted_feature_id`, `rmsk_record_id`, `block_start_1` and `block_end_1`.

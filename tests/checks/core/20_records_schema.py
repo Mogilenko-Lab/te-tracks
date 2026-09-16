@@ -11,10 +11,13 @@ import pyarrow.parquet as pq
 
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
-from records import BUILD, KEY, SCHEMA, read_tsv, require
+from records import BUILD, KEY, SCHEMA, TAXONOMY_SCHEMA, read_tsv, require
 
 
-require("tables/rmsk_records.tsv.gz", "tables/rmsk_records.parquet", "source/mm39.chrom.sizes")
+require("tables/rmsk_records.tsv.gz", "tables/rmsk_records.parquet", "source/mm39.chrom.sizes",
+        "tables/rmsk_taxonomy.tsv")
+taxonomy = read_tsv(BUILD / "tables/rmsk_taxonomy.tsv", TAXONOMY_SCHEMA).to_pandas()
+assert taxonomy["instance_count"].between(1, taxonomy["record_count"]).all()
 tsv = read_tsv(BUILD / "tables/rmsk_records.tsv.gz", SCHEMA)
 parquet = pq.read_table(BUILD / "tables/rmsk_records.parquet")
 assert parquet.schema.names == SCHEMA.names

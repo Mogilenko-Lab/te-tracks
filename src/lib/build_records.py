@@ -112,7 +112,9 @@ def build_records(out_path, table_path, sizes_path, tables_dir):
     if len(members) != len(frame) or members["rmsk_record_id"].duplicated().any():
         raise ValueError("instance membership requires exactly one row per rmsk_record_id")
     taxonomy = frame.groupby(TAXONOMY_KEY, sort=True, dropna=False).agg(
-        record_count=("rmsk_record_id", "size"), record_length_sum_bp=("length_bp", "sum")
+        record_count=("rmsk_record_id", "size"),
+        instance_count=("rmsk_instance_id", "nunique"),
+        record_length_sum_bp=("length_bp", "sum")
     ).reset_index()
     tables_dir = Path(tables_dir)
     tables_dir.mkdir(parents=True, exist_ok=True)

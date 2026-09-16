@@ -1,0 +1,9 @@
+rmsk_name	rmsk_family	rmsk_class	record_count	instance_count	record_length_sum_bp
+(AT)n	Simple_repeat	Simple_repeat	1	1	4
+A	tRNA-X	SINE	1	1	11
+B	L1	LINE	1	1	11
+Maybe	hAT?	DNA?	1	1	5
+Mystery	Unknown	Unknown	1	1	5
+Sat	centr	Satellite	1	1	5
+Split	hAT	DNA	1	1	11
+Unassigned	Unspecified	Unspecified	1	1	5

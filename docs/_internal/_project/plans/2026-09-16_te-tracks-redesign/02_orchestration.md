@@ -21,7 +21,8 @@ The orchestrator holds the whole picture and never implements. Per phase:
    `.claude/agents/opus-reviewer.md`, read-only, recomputes numbers), writing its verdict into the
    final message; the orchestrator saves it as `reviews/p<N>_opus.md`.
 6. **Fix loop.** BLOCKING findings go back to the implementer with the review attached. ADVISORY
-   findings are recorded and scheduled.
+   findings are recorded and scheduled. When a phase's reviews carry design findings, the rulings land in
+   `reviews/p<N>_rulings.md` and the phase file is rewritten to the corrected contract before the fix launches.
 7. **Commit.** Orchestrator commits in te-tracks with an affirmative message. Umbrella pin bumps at
    milestones only.
 

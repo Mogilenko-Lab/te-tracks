@@ -54,9 +54,11 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 | `tests/fixtures/source/` | delivered, tested | 1 |
 | `tests/fixtures/records/` | delivered, tested | 2 |
 | `tests/expectations/mm39/` | delivered, tested | 2 |
-| `tests/fixtures/taxonomy/dfam_snapshot.tsv` | deferred | 3 |
-| `tests/fixtures/taxonomy/dfam_snapshot.provenance.json` | deferred | 3 |
-| `tests/fixtures/taxonomy/rule_cases.tsv` | deferred | 3 |
+| `tests/expectations/mm39/taxonomy_census.tsv` | delivered, tested | 3 |
+| `tests/fixtures/taxonomy/dfam_snapshot.tsv` | delivered, tested | 3 |
+| `tests/fixtures/taxonomy/dfam_snapshot.provenance.json` | delivered, tested | 3 |
+| `tests/fixtures/taxonomy/rule_cases.tsv` | delivered, tested | 3 |
+| `tests/fixtures/taxonomy/rollup_counts.tsv` | delivered, tested | 3 |
 | `tests/fixtures/exports/` | deferred | 4 |
 | `tests/fixtures/consumers/` | deferred | 5 |
 | `tests/lib/consumers.py` | deferred | 5 |
@@ -67,8 +69,8 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 | `tables/rmsk_records.parquet` | delivered, tested | 2 |
 | `tables/rmsk_instance_members.tsv.gz` | delivered, tested | 2 |
 | `tables/rmsk_taxonomy.tsv` | delivered, tested | 2 |
-| `tables/taxonomy_canonical.tsv` | deferred | 3 |
-| `tables/taxonomy_resolution_report.tsv` | deferred | 3 |
+| `tables/taxonomy_canonical.tsv` | delivered, tested | 3 |
+| `tables/taxonomy_resolution_report.tsv` | delivered, tested | 3 |
 | `universes.json` | delivered, tested | 2 |
 | `tables/universe_members.tsv.gz` | delivered, tested | 2 |
 | `tables/universe_summary.tsv` | delivered, tested | 2 |

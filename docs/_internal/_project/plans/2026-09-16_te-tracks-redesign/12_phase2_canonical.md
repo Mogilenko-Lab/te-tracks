@@ -8,6 +8,7 @@ Deliverables
   `<rmsk_name>|<chrom>:<start_1>-<end_1>|<strand>`.
 - `tables/rmsk_instance_members.tsv.gz`: `(rmsk_instance_id, rmsk_record_id)`.
 - `tables/rmsk_taxonomy.tsv`: distinct `(rmsk_name, rmsk_family, rmsk_class)` with `record_count`,
+  `instance_count` (distinct `rmsk_instance_id` among the label's records; phase 3 review H1) and
   `record_length_sum_bp`.
 - `universes.json`: six predicates on raw `rmsk_class` and `rmsk_family`, each with a one-line
   description; `tables/universe_members.tsv.gz` `(universe_name, rmsk_record_id)` for every

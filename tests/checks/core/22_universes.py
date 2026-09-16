@@ -11,7 +11,7 @@ import pyarrow.parquet as pq
 
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
-from records import BUILD, KEY, ROOT, TRIPLE, read_tsv, require
+from records import BUILD, KEY, ROOT, TAXONOMY_SCHEMA, TRIPLE, read_tsv, require
 sys.path.insert(0, str(ROOT / "src/lib"))
 from build_universes import DEFINITIONS, INTERSPERSED_CLASSES
 
@@ -19,7 +19,8 @@ from build_universes import DEFINITIONS, INTERSPERSED_CLASSES
 require("tables/rmsk_records.parquet", "tables/rmsk_taxonomy.tsv", "universes.json",
         "tables/universe_members.tsv.gz", "tables/universe_summary.tsv")
 frame = pq.read_table(BUILD / "tables/rmsk_records.parquet",
-                      columns=list(dict.fromkeys([*KEY, *TRIPLE, "rmsk_record_id", "length_bp"]))).to_pandas()
+                      columns=list(dict.fromkeys([*KEY, *TRIPLE, "rmsk_record_id",
+                                                  "rmsk_instance_id", "length_bp"]))).to_pandas()
 frame = frame.sort_values("rmsk_record_id", ignore_index=True)
 census = frame["rmsk_class"].value_counts().sort_index().rename_axis("rmsk_class").reset_index(name="records")
 expected_census = pd.read_csv(
@@ -120,11 +121,11 @@ assert observed_pairs == {
     ("chr16", 37859046, 37859109, "+", ("B1_Mur3", "ID_B1")),
 }, observed_pairs
 assert collisions["rmsk_record_id"].nunique() == 6
-taxonomy_schema = pa.schema([*[(name, pa.string()) for name in TRIPLE],
-                            ("record_count", pa.int64()), ("record_length_sum_bp", pa.int64())])
-taxonomy = read_tsv(BUILD / "tables/rmsk_taxonomy.tsv", taxonomy_schema).to_pandas()
+taxonomy = read_tsv(BUILD / "tables/rmsk_taxonomy.tsv", TAXONOMY_SCHEMA).to_pandas()
 expected_taxonomy = frame.groupby(TRIPLE, sort=True).agg(
-    record_count=("rmsk_record_id", "size"), record_length_sum_bp=("length_bp", "sum")
+    record_count=("rmsk_record_id", "size"),
+    instance_count=("rmsk_instance_id", "nunique"),
+    record_length_sum_bp=("length_bp", "sum")
 ).reset_index()
 pd.testing.assert_frame_equal(taxonomy, expected_taxonomy)
 ambiguous = taxonomy.loc[taxonomy["rmsk_name"].duplicated(keep=False)]

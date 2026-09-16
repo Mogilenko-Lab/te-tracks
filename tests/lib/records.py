@@ -26,6 +26,11 @@ SCHEMA = pa.schema([
 ])
 KEY = ["chrom", "start_1", "end_1", "strand", "rmsk_name"]
 TRIPLE = ["rmsk_name", "rmsk_family", "rmsk_class"]
+TAXONOMY_SCHEMA = pa.schema([
+    *[(name, pa.string()) for name in TRIPLE],
+    ("record_count", pa.int64()), ("instance_count", pa.int64()),
+    ("record_length_sum_bp", pa.int64()),
+])
 
 
 def require(*paths):
