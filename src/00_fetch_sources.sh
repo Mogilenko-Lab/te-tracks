@@ -1,36 +1,63 @@
 #!/usr/bin/env bash
-# Fetch the pinned sources into the snapshot's source/ directory and record their md5s.
+# Retain checksum-verified sources and their declared provenance.
 SCRIPT_NAME=00_fetch
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/common.sh"
 
-SNAP="${1:?usage: 00_fetch_sources.sh <snapshot-dir> <config.env>}"
-CFG="${2:?usage: 00_fetch_sources.sh <snapshot-dir> <config.env>}"
-# shellcheck disable=SC1090
+[ "$#" -eq 2 ] || die "usage: 00_fetch_sources.sh <build-dir> <config.env>"
+BUILD_DIR="$1"
+CFG="$2"
 source "$CFG"
 
-SRC="$SNAP/source"
+SRC="$BUILD_DIR/source"
 mkdir -p "$SRC"
+rm -f "$SRC/SOURCES.json"
 
-fetch "$RMSK_URL"       "$SRC/rmsk.txt.gz"
-fetch "$CHROMALIAS_URL" "$SRC/chromAlias.txt"
-fetch "$GENE_GTF_URL"   "$SRC/$(basename "$GENE_GTF_URL")"
+source_keys=(rmsk_out rmsk_table chromAlias chrom_sizes)
+source_urls=("$RMSK_OUT_URL" "$RMSK_TABLE_URL" "$CHROMALIAS_URL" "$CHROM_SIZES_URL")
+source_md5s=("$RMSK_OUT_MD5" "$RMSK_TABLE_MD5" "$CHROMALIAS_MD5" "$CHROM_SIZES_MD5")
+source_metadata=()
 
-RMSK_OBSERVED="$(verify_md5 "$SRC/rmsk.txt.gz" "$RMSK_MD5")"
-ALIAS_OBSERVED="$(verify_md5 "$SRC/chromAlias.txt" "$CHROMALIAS_MD5")"
-GTF_OBSERVED="$(verify_md5 "$SRC/$(basename "$GENE_GTF_URL")" "$GENE_GTF_MD5")"
+for i in "${!source_keys[@]}"; do
+  url="${source_urls[$i]}"
+  pin="${source_md5s[$i]}"
+  [[ "$pin" =~ ^[0-9a-f]{32}$ ]] || die "invalid md5 pin for $url"
+  filename="$(basename "$url")"
+  dest="$SRC/$filename"
+  cache="${TE_TRACKS_SOURCE_CACHE:-}/$filename"
+  if [ -n "${TE_TRACKS_SOURCE_CACHE:-}" ] && [ -f "$cache" ] && [ "$(md5_of "$cache")" = "$pin" ]; then
+    # Keep retained source bytes independent of the cache.
+    rm -f "$dest"
+    cp "$cache" "$dest"
+    log "cache: $filename"
+  else
+    fetch "$url" "$dest"
+  fi
+  observed="$(verify_md5 "$dest" "$pin")"
+  source_metadata+=("${source_keys[$i]}" "$url" "$observed" "$dest")
+done
 
-# The source md5s become the provenance of every derived track.
-cat > "$SRC/SOURCES.json" <<JSON
-{
-  "genome": "$GENOME",
-  "assembly": "$ASSEMBLY",
-  "gene_annotation": "$GENE_ANNOTATION",
-  "sources": {
-    "rmsk":        { "url": "$RMSK_URL",       "md5": "$RMSK_OBSERVED" },
-    "chromAlias":  { "url": "$CHROMALIAS_URL", "md5": "$ALIAS_OBSERVED" },
-    "gene_gtf":    { "url": "$GENE_GTF_URL",   "md5": "$GTF_OBSERVED" }
-  }
+python3 - "$SRC/SOURCES.json" "$GENOME" "$ASSEMBLY" \
+  "$RM_VERSION" "$RM_LIBRARY" "$RM_RUN_EVIDENCE" "$RMSK_OUT_PROFILE" \
+  "${source_metadata[@]}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+output, genome, assembly, version, library, evidence, profile, *items = sys.argv[1:]
+sources = {}
+for i in range(0, len(items), 4):
+    key, url, md5, path = items[i:i + 4]
+    sources[key] = {"url": url, "md5": md5, "bytes": Path(path).stat().st_size}
+metadata = {
+    "genome": genome,
+    "assembly": assembly,
+    "rm_version": version,
+    "rm_library": library,
+    "rm_run_evidence": evidence,
+    "rmsk_out_profile": profile,
+    "sources": sources,
 }
-JSON
+Path(output).write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
+PY
 
 log "sources ready in $SRC"

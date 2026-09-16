@@ -1,0 +1,11 @@
+   SW   perc perc perc query position in query matching repeat position in repeat
+
+score  div. del. ins. sequence begin end (left) repeat class/family begin end (left) ID
+
+ 3667   6.7  0.0  1.0  chr1      3050294 3050775 (192103504) +  L1MdA_VI       LINE/L1               6094 6570    (6)      1
+  242  26.5  2.2  3.9  chr1      3051045 3051146 (192103133) C  ID2            SINE/ID               (48)  104      5      2
+   13  11.6  0.0  6.7  chr1      3051160 3051191 (192103088) +  (TGCT)n        Simple_repeat            1   30    (0)      3
+
+   50   0.0  1.0  2.0  chrFixture 10 20 (180) + Starred DNA/hAT? 2 12 (0) 4 *
+  100   1.0  2.0  3.0  chrFixture 40 60 (140) C SplitName DNA/hAT/Tip100 (7) 18 -2 4
+  332  26.5  1.2  0.0  chr11     21327149 21327231 (100646138) C  Charlie17      DNA/hAT-Charlie     (-1847) 2634   2551 590512

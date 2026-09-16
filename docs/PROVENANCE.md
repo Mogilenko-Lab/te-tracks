@@ -24,7 +24,7 @@ and `docs/DECISIONS.md` records its standing.
 
 Rule 1 is a whitelist and the snippet under "Reproducing this" is the complementary blacklist. Both
 yield 3,799,629 records against the current class census, measured. The whitelist is the rule in
-force, so a class new to a future `rmsk` release arrives excluded and surfaces in `99_verify.sh`.
+force, so a class new to a future `rmsk` release arrives excluded and surfaces in the legacy verifier.
 
 ## Evidence, mm39
 

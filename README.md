@@ -18,9 +18,10 @@ and one gene annotation.
 
 ## Build
 
-Builds and publication run on the host. `/data2/users/shared/refcache` is read-only inside the
-container. The host runbook, `docs/RUNBOOK.md`, lands in phase 9; the current legacy procedure
-is in [docs/RELEASES.md](docs/RELEASES.md).
+`./build.sh --genome mm39 --build-dir <dir>` runs the registered stages and writes four pinned
+sources, `source/SOURCES.json` and `source/qualification.md`.
+Set `TE_TRACKS_SOURCE_CACHE` to reuse checksum-matching cached sources; in-container builds use
+a scratch directory, and host publication lands in phase 7.
 
 Tests run in-container against a scratch reference root:
 
@@ -31,12 +32,14 @@ tests/run.sh acceptance --refroot /workspaces/Meta-Aging/_scratch/te-tracks-audi
 ```
 
 The default reference root is `/workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot`.
-Each mode reports `pass`, `fail` or `unsupported` per check. Phase 0 registers zero checks;
-later phases supply them.
+Each mode reports `pass`, `fail` or `unsupported` per check. Core checks cover parser fixtures
+and the source qualification report at `<refroot>/te_mm39/build/source/qualification.md`.
 
 ## Outputs
 
-The current build generates `te_loci.tsv.gz`, `te_dim.tsv`, `MANIFEST.json` and `BUILD_ID`; the redesign replaces them.
+Published legacy releases in the reference cache carry `te_loci.tsv.gz`, `te_dim.tsv`,
+`MANIFEST.json` and `BUILD_ID`; the current build produces the source layer under `source/`, and
+the redesign phases supply the remaining artifacts.
 
 The truth table tracks the redesign artifacts: `delivered` means generated, `tested` means
 verified against their contract, and `deferred` names the phase that supplies them.
@@ -44,9 +47,10 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 
 | artifact | status | phase |
 |---|---|---|
-| `source/qualification.md` | deferred | 1 |
-| `docs/_internal/redesign-2026-09/audit/source_qualification_mm39.md` | deferred | 1 |
-| `tests/fixtures/source/` | deferred | 1 |
+| `source/{mm39.fa.out.gz,rmsk.txt.gz,mm39.chromAlias.txt,mm39.chrom.sizes,SOURCES.json}` | delivered, tested | 1 |
+| `source/qualification.md` | delivered, tested | 1 |
+| `docs/_internal/redesign-2026-09/audit/source_qualification_mm39.md` | delivered, tested | 1 |
+| `tests/fixtures/source/` | delivered, tested | 1 |
 | `tests/fixtures/records/` | deferred | 2 |
 | `tests/expectations/mm39/` | deferred | 2, 9 |
 | `tests/fixtures/taxonomy/dfam_snapshot.tsv` | deferred | 3 |

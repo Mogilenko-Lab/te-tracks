@@ -3,9 +3,11 @@
 Tables, GTF and SAF use **1-based inclusive** coordinates; BED uses **0-based half-open**
 coordinates. The redesign artifacts below are deferred to their listed phases.
 
-## Built today
+## Published legacy release
 
-The current build generates `te_loci.tsv.gz`, `te_dim.tsv`, `MANIFEST.json` and `BUILD_ID`; the redesign replaces them.
+Published legacy releases in the reference cache carry `te_loci.tsv.gz`, `te_dim.tsv`,
+`MANIFEST.json` and `BUILD_ID`; the current build produces the source layer under `source/`, and
+the redesign phases supply the remaining artifacts.
 
 ### `te_loci.tsv.gz` — legacy canonical table, 1-based
 

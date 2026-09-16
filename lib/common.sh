@@ -10,10 +10,6 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-# The producing version travels with every artifact.
-builder_sha()      { git -C "$REPO_ROOT" rev-parse HEAD 2>/dev/null || echo unknown; }
-builder_describe() { git -C "$REPO_ROOT" describe --tags --always --dirty 2>/dev/null || echo unknown; }
-
 log()  { printf '[%s] %s\n' "${SCRIPT_NAME:-te-tracks}" "$*" >&2; }
 die()  { printf '[%s] FATAL %s\n' "${SCRIPT_NAME:-te-tracks}" "$*" >&2; exit 1; }
 
@@ -39,14 +35,3 @@ fetch() {  # fetch <url> <dest>
   curl -fsSL --retry 3 -o "$dest.part" "$url"
   mv "$dest.part" "$dest"
 }
-
-# Assert an observed count against an expected one.
-assert_count() {  # assert_count <label> <observed> <expected>
-  local label="$1" got="$2" want="$3"
-  [ "$got" = "$want" ] || die "$label: got $got, expected $want"
-  log "ok $label = $got"
-}
-
-# Two levels of coordinate convention live in this repo, so each converter is named.
-# Tables are 1-based inclusive. BED is 0-based half-open.
-to_bed_start() { echo $(( $1 - 1 )); }

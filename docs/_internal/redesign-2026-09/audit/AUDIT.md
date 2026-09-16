@@ -145,3 +145,22 @@ scaffolds are GenBank accessions (`GL456210.1`, `JH584295.1`, `MU069434.1`). Aga
 FASTA matches neither the UCSC nor the Ensembl namespace completely, and the exports need a third
 namespace, `gencode`, built through `chromAlias` (ucsc column for chromosomes, genbank column for
 scaffolds). Lengths agree for all 61 contigs.
+
+## 7. Signed consensus-left values in the pinned `.out` (measured 2026-09-16)
+
+Six of 5,320,771 rows carry a negative parenthesized consensus-left value; all six are on the `C`
+strand, and zero rows carry a negative query-left value. A negative consensus left records an
+alignment that runs past the consensus end, the mirror of a consensus start below 1. UCSC carries
+the same values under its signed encoding, and the qualification matched all six. The parser
+therefore treats `query_left_bp` as nonnegative and `consensus_left_bp` as signed; the ADR 5 consult's
+nonnegative statement for the consensus remaining length is corrected by this measurement.
+
+```
+line     score div   del  ins  chrom  start_1  end_1    (query_left)  C  name       class/family      (cons_left) cons_end cons_start ID
+669264   332   26.5  1.2  0.0  chr11  21327149 21327231 (100646138)   C  Charlie17  DNA/hAT-Charlie   (-1847)     2634     2551       590512
+1099217  432   27.5  20.0 3.4  chr12  99817795 99818253 (20274504)    C  Charlie7   DNA/hAT-Charlie   (-231)      2612     2076       976795
+1750645  242   23.1  17.5 0.0  chr15  86467501 86467604 (17606347)    C  Charlie17  DNA/hAT-Charlie   (-1998)     2785     2660       1551176
+3752748  227   30.2  0.0  0.0  chr6   8693759  8693811  (140894233)   C  Tigger16b  DNA/TcMar-Tigger  (-19)       295      243        3326908
+4480048  252   31.9  6.5  8.7  chr8   85592444 85592458 (44535236)    C  ID_B1      SINE/B4           (-1)        224      179        3969364
+4754087  349   38.3  2.3  2.9  chr9   87195541 87195712 (37163988)    C  Tigger16b  DNA/TcMar-Tigger  (-60)       336      172        4214731
+```

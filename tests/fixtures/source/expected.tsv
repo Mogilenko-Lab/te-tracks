@@ -1,0 +1,7 @@
+source_row_number	sw_score	divergence_pct	deletion_pct	insertion_pct	chrom	start_1	end_1	query_left_bp	raw_strand	strand	rmsk_name	rmsk_class_family	rmsk_class	rmsk_family	consensus_start_1	consensus_end_1	consensus_left_bp	rmsk_instance_id	rmsk_overlap_flag
+1	3667	6.7	0.0	1.0	chr1	3050294	3050775	192103504	+	+	L1MdA_VI	LINE/L1	LINE	L1	6094	6570	6	1	0
+2	242	26.5	2.2	3.9	chr1	3051045	3051146	192103133	C	-	ID2	SINE/ID	SINE	ID	5	104	48	2	0
+3	13	11.6	0.0	6.7	chr1	3051160	3051191	192103088	+	+	(TGCT)n	Simple_repeat	Simple_repeat	Simple_repeat	1	30	0	3	0
+4	50	0.0	1.0	2.0	chrFixture	10	20	180	+	+	Starred	DNA/hAT?	DNA	hAT?	2	12	0	4	1
+5	100	1.0	2.0	3.0	chrFixture	40	60	140	C	-	SplitName	DNA/hAT/Tip100	DNA	hAT/Tip100	-2	18	7	4	0
+6	332	26.5	1.2	0.0	chr11	21327149	21327231	100646138	C	-	Charlie17	DNA/hAT-Charlie	DNA	hAT-Charlie	2551	2634	-1847	590512	0

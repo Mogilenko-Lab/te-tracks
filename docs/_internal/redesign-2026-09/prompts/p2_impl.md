@@ -2,10 +2,18 @@
 
 You are the implementer for phase 2 of the te-tracks redesign. Working directory (absolute):
 `/workspaces/Meta-Aging/01_modules/te-tracks`, git branch `redesign-2026-09`. Phases 0 and 1 have landed:
-`AGENTS.md`, `README.md`, `docs/DECISIONS.md`, `tests/run.sh` (checks are executables under
-`tests/checks/<mode>/`, exit 0 pass, 3 unsupported, other fail), `config/mm39.env`, `src/00_fetch_sources.sh`,
-`src/05_qualify_source.sh`, `src/lib/rmsk_out.py` (parser profile `rm_out_v1`, generator `iter_records`),
-`build.sh --genome <name> --build-dir <dir>` running `src/NN_*.sh <dir> <config>` in order.
+`AGENTS.md`, `README.md`, `docs/DECISIONS.md`, `tests/run.sh` (checks are `tests/checks/<mode>/*.sh` and
+`*.py`, run by name order through `bash` or `python3`; exit 0 pass, 3 unsupported, other fail),
+`config/mm39.env`, `src/00_fetch_sources.sh`, `src/05_qualify_source.sh`, `src/lib/rmsk_out.py` (parser
+profile `rm_out_v1`, generator `iter_records`), `build.sh --genome <name> --build-dir <dir>` running
+`src/NN_*.sh <dir> <config>` in order. `iter_records` yields dicts whose keys already carry the phase 2
+column names where the columns coincide: `source_row_number`, `sw_score`, `divergence_pct`, `deletion_pct`,
+`insertion_pct`, `chrom`, `start_1`, `end_1`, `query_left_bp`, `raw_strand`, `strand`, `rmsk_name`,
+`rmsk_class_family`, `rmsk_class`, `rmsk_family`, `consensus_start_1`, `consensus_end_1`,
+`consensus_left_bp`, `rmsk_instance_id` (the `.out` ID token as text), `rmsk_overlap_flag` (bool).
+`raw_strand` has no published column. `query_left_bp` is nonnegative; `consensus_left_bp` is signed (six
+mm39 records run past the consensus end, `AUDIT.md` section 7). Phase 2 derives `rmsk_record_id`,
+`length_bp` and the three `ucsc_rep_*` fields.
 
 ## Read first
 1. `docs/_internal/_project/plans/2026-09-16_te-tracks-redesign/12_phase2_canonical.md` (your phase)
@@ -53,7 +61,9 @@ kept as distinct records; 4,696,900 instances, each on one contig; 20 names carr
      record_length_sum_bp`, sorted by name, family, class.
    - Assertions that fail the build with a message naming the offender: record id unique; exact duplicate
      key; `1 <= start_1 <= end_1 <= contig length`; a chrom absent from `chrom.sizes`; every record in exactly
-     one instance; an instance on more than one contig.
+     one instance; an instance on more than one contig; `rmsk_name` free of `|` and whitespace and `chrom`
+     free of `|`, `:` and whitespace, so `rmsk_record_id` parses back into its parts (mm39 has zero
+     offenders across 61 contigs and 18,484 names).
 2. `src/15_build_universes.sh <build-dir> <config.env>` calling `src/lib/build_universes.py`:
    - `<build-dir>/universes.json`: `schema_version`, `default_universe: "interspersed"`, and one entry per
      universe with `name`, `description` (one sentence), `predicate` as a machine-readable object

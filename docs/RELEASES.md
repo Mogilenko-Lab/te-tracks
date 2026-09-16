@@ -53,12 +53,8 @@ snapshot   te_mm39_20260914
 
 ## Verifying a snapshot
 
-```
-src/99_verify.sh <snapshot-dir> config/<genome>.env
-```
-
-It recomputes every output md5 against `MANIFEST.json` and re-asserts the declared shape. Run it
-after a build and after any transfer between reference roots.
+Phase 7 supplies the snapshot verification command together with the new manifest; a
+transferred legacy snapshot is checked by recomputing the md5s listed in its `MANIFEST.json`.
 
 ## Reference roots
 
