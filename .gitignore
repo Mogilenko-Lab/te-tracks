@@ -8,6 +8,9 @@
 *.tsv
 work/
 
+# Reviewed class policies ship with the builder.
+!config/*.tsv
+
 # Expectations are part of the contract and stay tracked.
 !tests/expectations/**
 

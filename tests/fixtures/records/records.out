@@ -1,0 +1,10 @@
+SW perc perc perc query position in query matching repeat position in repeat
+score div. del. ins. sequence begin end (left) repeat class/family begin end (left) ID
+100 1.0 2.0 3.0 chr2 10 20 (80) + A SINE/tRNA-X 1 11 (9) 001 *
+200 4.0 5.0 6.0 chr2 10 20 (80) + B LINE/L1 2 12 (8) 1
+300 7.0 8.0 9.0 chr2 30 40 (60) C Split DNA/hAT (-2) 20 10 001
+40 0.0 0.0 0.0 chr10 5 9 (91) + Mystery Unknown 1 5 (0) 3
+50 0.0 0.0 0.0 chr2 50 54 (46) + Sat Satellite/centr 1 5 (0) 4
+60 0.0 0.0 0.0 chr2 60 63 (37) + (AT)n Simple_repeat 1 4 (0) 5
+70 0.0 0.0 0.0 chr2 70 74 (26) + Maybe DNA?/hAT? 1 5 (0) 6
+80 0.0 0.0 0.0 chr2 80 84 (16) + Unassigned Unspecified 1 5 (0) 7

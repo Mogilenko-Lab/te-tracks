@@ -127,8 +127,9 @@ def qualify(out_path, table_path):
         for coordinate, names in sorted(collisions.items())
         for first, second in combinations(sorted(names), 2)
     ]
-    id_min = min(stats.id_contigs, default=0)
-    id_max = max(stats.id_contigs, default=0)
+    numeric_ids = {int(token) for token in stats.id_contigs}
+    id_min = min(numeric_ids, default=0)
+    id_max = max(numeric_ids, default=0)
     metrics = {
         "out_rows": stats.records,
         "table_rows": table_rows,
@@ -139,7 +140,7 @@ def qualify(out_path, table_path):
         "distinct_ids": len(stats.id_contigs),
         "id_min": id_min,
         "id_max": id_max,
-        "ids_contiguous": int(bool(stats.id_contigs) and id_max - id_min + 1 == len(stats.id_contigs)),
+        "ids_contiguous": int(bool(numeric_ids) and id_max - id_min + 1 == len(numeric_ids)),
         "ids_spanning_contigs": len(stats.spanning_ids),
         "starred_rows": stats.starred_rows,
         "coordinate_collision_pairs": len(collision_pairs),

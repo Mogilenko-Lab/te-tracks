@@ -1,0 +1,9 @@
+rmsk_record_id	chrom	start_1	end_1	strand	rmsk_name	rmsk_family	rmsk_class	rmsk_instance_id	sw_score	divergence_pct	deletion_pct	insertion_pct	length_bp	consensus_start_1	consensus_end_1	consensus_left_bp	query_left_bp	rmsk_overlap_flag	rmsk_class_family	ucsc_rep_start	ucsc_rep_end	ucsc_rep_left	source_row_number
+Mystery|chr10:5-9|+	chr10	5	9	+	Mystery	Unknown	Unknown	3	40	0.0	0.0	0.0	5	1	5	0	91	false	Unknown	1	5	0	4
+A|chr2:10-20|+	chr2	10	20	+	A	tRNA-X	SINE	001	100	1.0	2.0	3.0	11	1	11	9	80	true	SINE/tRNA-X	1	11	-9	1
+B|chr2:10-20|+	chr2	10	20	+	B	L1	LINE	1	200	4.0	5.0	6.0	11	2	12	8	80	false	LINE/L1	2	12	-8	2
+Split|chr2:30-40|-	chr2	30	40	-	Split	hAT	DNA	001	300	7.0	8.0	9.0	11	10	20	-2	60	false	DNA/hAT	2	20	10	3
+Sat|chr2:50-54|+	chr2	50	54	+	Sat	centr	Satellite	4	50	0.0	0.0	0.0	5	1	5	0	46	false	Satellite/centr	1	5	0	5
+(AT)n|chr2:60-63|+	chr2	60	63	+	(AT)n	Simple_repeat	Simple_repeat	5	60	0.0	0.0	0.0	4	1	4	0	37	false	Simple_repeat	1	4	0	6
+Maybe|chr2:70-74|+	chr2	70	74	+	Maybe	hAT?	DNA?	6	70	0.0	0.0	0.0	5	1	5	0	26	false	DNA?/hAT?	1	5	0	7
+Unassigned|chr2:80-84|+	chr2	80	84	+	Unassigned	Unspecified	Unspecified	7	80	0.0	0.0	0.0	5	1	5	0	16	false	Unspecified	1	5	0	8

@@ -1,0 +1,8 @@
+0	100	10	20	30	chr2	9	20	-80	+	A	SINE	tRNA-X	1	11	-9	1
+0	200	40	50	60	chr2	9	20	-80	+	B	LINE	L1	2	12	-8	1
+0	300	70	80	90	chr2	29	40	-60	-	Split	DNA	hAT2	2	20	10	1
+0	40	0	0	0	chr10	4	9	-91	+	Mystery	Unknown	Unknown	1	5	0	3
+0	50	0	0	0	chr2	49	54	-46	+	Sat	Satellite	centr	1	5	0	4
+0	60	0	0	0	chr2	59	63	-37	+	(AT)n	Simple_repeat	Simple_repeat	1	4	0	5
+0	70	0	0	0	chr2	69	74	-26	+	Maybe	DNA?	hAT?	1	5	0	6
+0	80	0	0	0	chr2	79	84	-16	+	Unassigned	Unspecified	Unspecified	1	5	0	7

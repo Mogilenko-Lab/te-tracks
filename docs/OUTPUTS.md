@@ -1,13 +1,121 @@
 # Outputs
 
-Tables, GTF and SAF use **1-based inclusive** coordinates; BED uses **0-based half-open**
-coordinates. The redesign artifacts below are deferred to their listed phases.
+Canonical tables, GTF and SAF use **1-based inclusive** coordinates. BED uses **0-based
+half-open** coordinates: `[start_1 - 1, end_1)`. Record lengths sum `end_1 - start_1 + 1`,
+with overlaps retained.
+
+## Canonical records and universes (phase 2)
+
+The build writes the complete source catalog under `tables/` and six executable universe
+definitions in `universes.json`. The default universe is `interspersed`.
+
+### `tables/rmsk_records.tsv.gz` and `tables/rmsk_records.parquet`
+
+Each row represents one primary RepeatMasker annotation. The 24 required columns appear in
+this order; `text` is Arrow UTF-8, and every column has a value.
+
+| Column | Type | Contract |
+|---|---|---|
+| `rmsk_record_id` | text | Unique constructed key `<rmsk_name>\|<chrom>:<start_1>-<end_1>\|<strand>` within the build. |
+| `chrom` | text | Source contig name matched to the pinned sequence dictionary. |
+| `start_1` | int64 | Genomic start, 1-based inclusive. |
+| `end_1` | int64 | Genomic end, inclusive and bounded by the contig length. |
+| `strand` | text | `+` or `-`, with source `C` mapped to `-`. |
+| `rmsk_name` | text | Exact source repeat name, preserving case and punctuation. |
+| `rmsk_family` | text | Exact matched UCSC `repFamily`, verified against the parsed source label. |
+| `rmsk_class` | text | Exact matched UCSC `repClass`, verified against the parsed source label. |
+| `rmsk_instance_id` | text | Complete primary `.out` grouping token, preserving leading zeros. |
+| `sw_score` | int64 | Source Smith–Waterman score. |
+| `divergence_pct` | float64 | Source percent divergence; `6.7` denotes 6.7 percent. |
+| `deletion_pct` | float64 | Source percent deletion. |
+| `insertion_pct` | float64 | Source percent insertion. |
+| `length_bp` | int64 | Genomic record length, `end_1 - start_1 + 1`. |
+| `consensus_start_1` | int64 | Signed forward-model start, 1-based, with reverse-strand field order normalized. |
+| `consensus_end_1` | int64 | Signed forward-model end, inclusive. |
+| `consensus_left_bp` | int64 | Signed remaining model length; negative values retain alignments past the consensus end. |
+| `query_left_bp` | int64 | Nonnegative remaining query length from the parenthesized source token. |
+| `rmsk_overlap_flag` | bool | Presence of the source trailing `*` marker. |
+| `rmsk_class_family` | text | Exact `.out` class/family token, including class-only spelling. |
+| `ucsc_rep_start` | int64 | Raw signed UCSC `repStart`, retaining its strand-dependent encoding. |
+| `ucsc_rep_end` | int64 | Raw signed UCSC `repEnd`. |
+| `ucsc_rep_left` | int64 | Raw signed UCSC `repLeft`. |
+| `source_row_number` | int64 | One-based ordinal among primary `.out` annotation rows before sorting. |
+
+Rows sort by `(chrom, start_1, end_1, strand, rmsk_name)` with C-locale text order. Source
+and UCSC rows join one-to-one on these five fields. Class-only `.out` tokens project the
+class into both raw taxonomy fields under the qualified UCSC convention.
+
+Record components remain authoritative for computation. Names are free of `|` and whitespace;
+contig names are free of `|`, `:` and whitespace, so each record key parses back into its
+components. Genomic bounds satisfy `1 <= start_1 <= end_1 <= contig length`. Equal coordinates
+with different names retain separate record identities; exact duplicate keys fail the build.
+
+### `tables/rmsk_instance_members.tsv.gz`
+
+Columns are `rmsk_instance_id` (text) and `rmsk_record_id` (text), sorted by both columns.
+Every record has exactly one membership row. The `.out` token defines the instance, and all
+members of an instance share one contig. Instance text sorts lexically, preserving leading zeros.
+
+### `tables/rmsk_taxonomy.tsv`
+
+Columns are `rmsk_name` (text), `rmsk_family` (text), `rmsk_class` (text), `record_count`
+(int64) and `record_length_sum_bp` (int64). Each distinct source triple has one row, sorted by
+name, family and class. The length sum retains overlapping records. A name may carry several
+source labels; canonical rollups arrive in phase 3.
+
+### `universes.json`
+
+Schema version `1` defines `default_universe: "interspersed"` and a `universes` array. Each
+entry contains `name`, a one-sentence `description`, `predicate` and `provisional_classes`.
+The build evaluates the same predicate objects that it publishes.
+
+`class_in` selects exact raw class labels. `family_prefix_excluded` applies a case-sensitive
+prefix exclusion to raw family labels. Clauses within an object combine with AND; `{}` selects
+every record.
+
+| Universe | Predicate |
+|---|---|
+| `all_rmsk` | Every record. |
+| `interspersed` | Class in SINE, LTR, LINE, DNA, RC, Retroposon, Unknown, Unspecified, DNA?. |
+| `interspersed_plus_satellites` | Class in the `interspersed` classes plus Satellite. |
+| `retrotransposon_derived` | Class in SINE, LTR, LINE, Retroposon. |
+| `satellites` | Class equals Satellite. |
+| `compat_tetranscripts_mm39` | `interspersed_plus_satellites` classes with the `tRNA` family-prefix exclusion. |
+
+`interspersed` and `interspersed_plus_satellites` flag Unknown, Unspecified and DNA? members
+as provisional. The other universes have empty `provisional_classes` arrays. Universe publication
+requires the observed class set to equal `config/<genome>.classes.tsv`; core checks compare
+measured counts with `tests/expectations/<genome>/class_census.tsv`.
+
+### `tables/universe_members.tsv.gz`
+
+Columns are `universe_name` (text), `rmsk_record_id` (text) and `provisional` (bool), sorted
+by universe and record key. Each selected record appears once per universe. Membership for
+`all_rmsk` is implicit in the complete canonical table; the file contains the other five universes.
+
+### `tables/universe_summary.tsv`
+
+Columns are `universe_name` (text), `records` (int64), `names` (int64), `triples` (int64) and
+`length_sum_bp` (int64), sorted by universe name. All six universes appear. `triples` counts
+distinct raw `(rmsk_name, rmsk_family, rmsk_class)` labels; summed record lengths retain overlaps.
+
+### Serialization
+
+TSV files use UTF-8, LF endings, tabs and one header. Integers use decimal notation, floating
+point values use a period decimal separator, and booleans use `true` and `false`. Text retains
+case, literal `Unknown` and empty strings. Every phase 2 field is required; source values must
+be free of embedded tabs and line endings. Readers supply explicit schemas, including text
+instance IDs. The reserved null token for future nullable companion fields is `\N`.
+
+Gzip files have `mtime=0` and an empty embedded filename. Parquet uses an explicit required
+schema with int64, float64, bool and UTF-8 string types. Both record serializations load to equal
+typed rows. Identical input produces byte-identical tables and universe definitions under the
+same builder and serialization libraries.
 
 ## Published legacy release
 
 Published legacy releases in the reference cache carry `te_loci.tsv.gz`, `te_dim.tsv`,
-`MANIFEST.json` and `BUILD_ID`; the current build produces the source layer under `source/`, and
-the redesign phases supply the remaining artifacts.
+`MANIFEST.json` and `BUILD_ID`.
 
 ### `te_loci.tsv.gz` — legacy canonical table, 1-based
 
@@ -31,25 +139,13 @@ One row per locus admitted by the legacy class and family filters.
 | 14 | `length_bp` | `end - start + 1` |
 | 15 | `dup_index` | Per-subfamily ordinal for `subfamily_dupN` compatibility |
 
-The RepeatMasker `.out` ID column is the instance key; its record membership lands in phase 2
-as `tables/rmsk_instance_members.tsv.gz`.
+The RepeatMasker `.out` ID column is the instance key; `tables/rmsk_instance_members.tsv.gz`
+records its membership.
 
 ### `te_dim.tsv` — legacy dimension table
 
 Columns are `subfamily`, `family`, `class`, `n_loci` and `total_bp`. Each row summarizes one
 source `(subfamily, family, class)` triple.
-
-### `MANIFEST.json` — legacy manifest
-
-The manifest records source URLs and md5s, output md5s and byte counts, row counts, class and
-identity policy, and the builder's git SHA. A re-run over an existing snapshot retains its
-manifest and producing SHA.
-
-### `BUILD_ID` — legacy fingerprint
-
-The legacy id is the SHA-256 of the sorted `<md5>  <relative path>` inventory of delivered
-outputs. Source files, scratch files, `MANIFEST.json` and `BUILD_ID` sit outside that inventory.
-[RELEASES.md](RELEASES.md) describes the current publication layout.
 
 ## Deferred
 
@@ -74,21 +170,12 @@ intervals in phase 8. Each emitted feature and block registers to source records
 | `te_context_*.saf` | Deferred to the transcript-context design session after phase 8 |
 | `locus_context.tsv` | Deferred to the transcript-context design session after phase 8 |
 | `rename_map.tsv` | Superseded by `taxonomy_triple.saf` and the `compat_tetranscripts_mm39` universe |
+| `te_loci.tsv.gz` | `tables/rmsk_records.tsv.gz` (phase 2) |
 | `te_loci.parquet` | `tables/rmsk_records.parquet` (phase 2) |
+| `te_dim.tsv` | `tables/rmsk_taxonomy.tsv` and `tables/universe_summary.tsv` (phase 2) |
+| Legacy `MANIFEST.json` | `MANIFEST.json` with `identity` and `provenance` sections (phase 7) |
+| Legacy `BUILD_ID` | `BUILD_ID` computed from the manifest `identity` section (phase 7) |
 | `ensembl_named/` | `exports/ensembl/` (phase 6) |
-
-### Phase 2: canonical records and universes
-
-| Artifact | Contract |
-|---|---|
-| `tables/rmsk_records.{tsv.gz,parquet}` | Complete source catalog; one row per `rmsk_record_id`, with `start_1` and `end_1` |
-| `tables/rmsk_instance_members.tsv.gz` | `rmsk_instance_id`, `rmsk_record_id`; one instance per record |
-| `tables/rmsk_taxonomy.tsv` | Distinct raw name, family and class triples with record counts and summed lengths |
-| `universes.json` | Six named predicates over raw source classification |
-| `tables/universe_members.tsv.gz` | `universe_name`, `rmsk_record_id` membership for each universe except `all_rmsk` |
-
-The record key is `<rmsk_name>|<chrom>:<start_1>-<end_1>|<strand>`. The four feature levels are
-record, instance, subfamily and canonical family.
 
 ### Phase 3: canonical taxonomy
 

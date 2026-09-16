@@ -1,0 +1,9 @@
+rmsk_instance_id	rmsk_record_id
+001	A|chr2:10-20|+
+001	Split|chr2:30-40|-
+1	B|chr2:10-20|+
+3	Mystery|chr10:5-9|+
+4	Sat|chr2:50-54|+
+5	(AT)n|chr2:60-63|+
+6	Maybe|chr2:70-74|+
+7	Unassigned|chr2:80-84|+

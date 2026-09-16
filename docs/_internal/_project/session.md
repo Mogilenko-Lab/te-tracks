@@ -37,6 +37,19 @@ re-verification from a clean build (5,320,771 rows matched, zero disagreements, 
 three collision pairs, report byte-identical to the tracked copy, both core checks pass, sign and report
 mutations fail their checks, link count 1 on every retained source).
 
+**Phase 2** (canonical records, instances, raw taxonomy, universes) is complete and committed on the
+branch. Loop: implemented by codex (`te-tracks-p2-impl`, 1,313 s); codex review `reviews/p2_codex.md` and
+Opus re-review `reviews/p2_opus.md`, both PASS WITH ADVISORIES, both reproducing every number and the
+byte-identical build; fix `te-tracks-p2-fix` from `prompts/p2_fix.md` (README build and outputs paragraphs;
+legacy `te_loci.tsv.gz`/`te_dim.tsv` dictionary restored in OUTPUTS.md with disposition rows; reviewed class
+set moved to `config/mm39.classes.tsv` as the build's gate with counts kept in
+`tests/expectations/mm39/class_census.tsv` and check 22 asserting the two sets agree; UCSC label
+disagreement fixture; one interspersed class list and the `or` grammar key removed; redundant sample
+assertion removed; census read with explicit dtypes; instance statistics keyed by the text token);
+orchestrator re-verification from a clean build (all six table digests unchanged by the fix,
+`universes.json` re-digested, six core checks pass, report byte-identical). Build time about five minutes;
+the seven artifacts reproduce byte-for-byte across three independent builds (orchestrator, codex, Opus).
+
 **Measured this session.** The GENCODE GRCm39 FASTA the lab aligns against names chromosomes
 UCSC-style and scaffolds by GenBank accession (22 + 39 of 61 contigs); hence the third namespace
 `gencode`. All-record taxonomy: 18,484 names, 18,504 triples, 1,201,573,004 bp summed length. Six `.out`
@@ -45,18 +58,17 @@ rows (all `C` strand) carry a negative consensus-left value; zero rows carry a n
 
 ## Next session starts here
 
-1. Phase 2: launch `launch.sh --unit te-tracks-p2-impl --workdir <te-tracks> --effort xhigh --prompt
-   docs/_internal/redesign-2026-09/prompts/p2_impl.md` as a harness background task; on completion read
-   `status.sh --unit` (codex_exit; launcher exit 32 is the blind-run detector's false positive) and the
-   final message; re-run the acceptance block yourself (clean build, digest comparison of two builds,
-   `tests/run.sh core`); fill `review_template.md` (N=2, phase file `12_phase2_canonical.md`, paste the
-   report, add orchestrator notes) and launch `te-tracks-p2-review` writing `reviews/p2_codex.md`; then the
-   `opus-reviewer` agent from `opus_template.md`, saved as `reviews/p2_opus.md`; fix loop through
-   `prompts/p2_fix.md`; commit "Phase 2: canonical records, instances, raw taxonomy and universes".
-2. Milestone review after phase 2: three parallel read-only reviewers with disjoint questions (codex on
-   schema and identity; Opus on numbers and fixtures; `divergent` agent on silent assumptions), each
-   writing one file under `reviews/m2_*.md`; rulings and fixes before phase 3.
-3. Phases 3 to 9 follow with `p3_impl.md` … `p9_impl.md`; milestone reviews after 5, 7, 9; the owner runs
+1. Milestone review after phase 2 (prompts written: `prompts/m2_codex.md` schema and identity seam via
+   `launch.sh --unit te-tracks-m2-codex`; `prompts/m2_opus.md` numbers and fixtures via the `opus-reviewer`
+   agent; `prompts/m2_divergent.md` unstated assumptions via the `divergent` agent). All three run in
+   parallel, read-only, each writing one file under `reviews/m2_*.md`. Rulings go to `prompts/m2_fix.md`
+   (codex unit `te-tracks-m2-fix`) if anything needs a change before phase 3; otherwise record them in
+   the plan files and proceed.
+2. Phase 3: launch `launch.sh --unit te-tracks-p3-impl --workdir <te-tracks> --effort xhigh --prompt
+   docs/_internal/redesign-2026-09/prompts/p3_impl.md`; verify (the taxonomy stage runs on the existing
+   build dir in about a minute); codex review (`review_template.md`, N=3, `13_phase3_taxonomy.md`);
+   Opus re-review (`opus_template.md`); fix loop; commit "Phase 3: canonical taxonomy by rule".
+3. Phases 4 to 9 follow with `p4_impl.md` … `p9_impl.md`; milestone reviews after 5, 7, 9; the owner runs
    the host build at phase 9 (`docs/RUNBOOK.md`), the orchestrator verifies the published bytes and records
    the `BUILD_ID`s here; then the umbrella pin bumps and D2/D3 resume.
 

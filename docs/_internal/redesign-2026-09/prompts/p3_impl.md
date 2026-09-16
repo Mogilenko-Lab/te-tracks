@@ -2,9 +2,14 @@
 
 You are the implementer for phase 3 of the te-tracks redesign. Working directory (absolute):
 `/workspaces/Meta-Aging/01_modules/te-tracks`, git branch `redesign-2026-09`. Phases 0 to 2 have landed:
-read `AGENTS.md`, `tests/run.sh` (check interface: executables under `tests/checks/<mode>/`, exit 0 pass,
-3 unsupported, other fail; build dir `$TE_TRACKS_REFROOT/te_mm39/build`), `src/lib/build_records.py`,
-`src/lib/build_universes.py`, `docs/OUTPUTS.md` for the table contracts you build on.
+read `AGENTS.md`, `tests/run.sh` (checks are `tests/checks/<mode>/*.sh` and `*.py`, run by name order through
+`bash` or `python3`; exit 0 pass, 3 unsupported, other fail; build dir `$TE_TRACKS_REFROOT/te_mm39/build`,
+with `tests/lib/records.py` supplying `BUILD`, `require` and a typed TSV reader), `src/lib/build_records.py`,
+`src/lib/build_universes.py`, `src/lib/records_io.py` (`tsv_stream`, `write_tsv` for deterministic output)
+and `docs/OUTPUTS.md` for the table contracts you build on. `tables/rmsk_taxonomy.tsv` has the columns
+`rmsk_name, rmsk_family, rmsk_class, record_count, record_length_sum_bp`, one row per raw triple; class-only
+`.out` tokens appear with `rmsk_family` equal to `rmsk_class`, and uncertain labels keep their trailing `?`.
+The reviewed class set lives in `config/mm39.classes.tsv`.
 
 ## Read first
 1. `docs/_internal/_project/plans/2026-09-16_te-tracks-redesign/13_phase3_taxonomy.md` (your phase: the rule

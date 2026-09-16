@@ -115,7 +115,7 @@ class RecordStats:
     def add(self, record):
         self.records += 1
         self.starred_rows += record["rmsk_overlap_flag"]
-        rmsk_instance_id = int(record["rmsk_instance_id"])
+        rmsk_instance_id = record["rmsk_instance_id"]
         chrom = sys.intern(record["chrom"])
         if self.id_contigs.setdefault(rmsk_instance_id, chrom) != chrom:
             self.spanning_ids.add(rmsk_instance_id)

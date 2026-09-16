@@ -19,7 +19,8 @@ and one gene annotation.
 ## Build
 
 `./build.sh --genome mm39 --build-dir <dir>` runs the registered stages and writes four pinned
-sources, `source/SOURCES.json` and `source/qualification.md`.
+sources under `source/`, `source/SOURCES.json`, `source/qualification.md`, the canonical tables
+under `tables/` and `universes.json`.
 Set `TE_TRACKS_SOURCE_CACHE` to reuse checksum-matching cached sources; in-container builds use
 a scratch directory, and host publication lands in phase 7.
 
@@ -32,14 +33,14 @@ tests/run.sh acceptance --refroot /workspaces/Meta-Aging/_scratch/te-tracks-audi
 ```
 
 The default reference root is `/workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot`.
-Each mode reports `pass`, `fail` or `unsupported` per check. Core checks cover parser fixtures
-and the source qualification report at `<refroot>/te_mm39/build/source/qualification.md`.
+Each mode reports `pass`, `fail` or `unsupported` per check. Core checks cover the parser fixtures,
+the qualification report, the record schema, instances, universes and the record fixtures.
 
 ## Outputs
 
 Published legacy releases in the reference cache carry `te_loci.tsv.gz`, `te_dim.tsv`,
-`MANIFEST.json` and `BUILD_ID`; the current build produces the source layer under `source/`, and
-the redesign phases supply the remaining artifacts.
+`MANIFEST.json` and `BUILD_ID`; the current build produces `source/`, `tables/` and `universes.json`,
+and phases 3 to 9 supply the remaining artifacts.
 
 The truth table tracks the redesign artifacts: `delivered` means generated, `tested` means
 verified against their contract, and `deferred` names the phase that supplies them.
@@ -51,25 +52,26 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 | `source/qualification.md` | delivered, tested | 1 |
 | `docs/_internal/redesign-2026-09/audit/source_qualification_mm39.md` | delivered, tested | 1 |
 | `tests/fixtures/source/` | delivered, tested | 1 |
-| `tests/fixtures/records/` | deferred | 2 |
-| `tests/expectations/mm39/` | deferred | 2, 9 |
+| `tests/fixtures/records/` | delivered, tested | 2 |
+| `tests/expectations/mm39/` | delivered, tested | 2 |
 | `tests/fixtures/taxonomy/dfam_snapshot.tsv` | deferred | 3 |
 | `tests/fixtures/taxonomy/dfam_snapshot.provenance.json` | deferred | 3 |
 | `tests/fixtures/taxonomy/rule_cases.tsv` | deferred | 3 |
 | `tests/fixtures/exports/` | deferred | 4 |
 | `tests/fixtures/consumers/` | deferred | 5 |
 | `tests/lib/consumers.py` | deferred | 5 |
+| `tests/lib/records.py` | delivered, tested | 2 |
 | `tests/fixtures/contigs/` | deferred | 6 |
 | `tests/fixtures/publication/` | deferred | 7 |
-| `tables/rmsk_records.tsv.gz` | deferred | 2 |
-| `tables/rmsk_records.parquet` | deferred | 2 |
-| `tables/rmsk_instance_members.tsv.gz` | deferred | 2 |
-| `tables/rmsk_taxonomy.tsv` | deferred | 2 |
+| `tables/rmsk_records.tsv.gz` | delivered, tested | 2 |
+| `tables/rmsk_records.parquet` | delivered, tested | 2 |
+| `tables/rmsk_instance_members.tsv.gz` | delivered, tested | 2 |
+| `tables/rmsk_taxonomy.tsv` | delivered, tested | 2 |
 | `tables/taxonomy_canonical.tsv` | deferred | 3 |
 | `tables/taxonomy_resolution_report.tsv` | deferred | 3 |
-| `universes.json` | deferred | 2 |
-| `tables/universe_members.tsv.gz` | deferred | 2 |
-| `tables/universe_summary.tsv` | deferred | 2 |
+| `universes.json` | delivered, tested | 2 |
+| `tables/universe_members.tsv.gz` | delivered, tested | 2 |
+| `tables/universe_summary.tsv` | delivered, tested | 2 |
 | `tables/export_feature_members.tsv.gz` | deferred | 4 |
 | `tables/export_summary.tsv` | deferred | 4 |
 | `tables/contig_aliases.tsv` | deferred | 6 |
@@ -103,7 +105,7 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 | `docs/RUNBOOK.md` | deferred | 9 |
 | `docs/RELEASES.md` | deferred | 7 |
 
-[docs/OUTPUTS.md](docs/OUTPUTS.md) describes the legacy columns and deferred export contracts.
+[docs/OUTPUTS.md](docs/OUTPUTS.md) specifies the schemas, serialization and deferred export contracts.
 
 ## Guarantees
 
