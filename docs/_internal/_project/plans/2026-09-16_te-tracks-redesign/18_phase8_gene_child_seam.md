@@ -7,7 +7,7 @@ Deliverables
   `GENE_GTF_MD5=702e27a8727db66cd23e9f66f5aa1d38`, `EXON_MASK_POLICY=all_exons_unstranded_union_v1`.
 - Family `te_mm39_gene` built by the same `build.sh`, manifest identity pins
   `parent_core_build_id`.
-- `exports/{ucsc,ensembl}/interspersed/exon_subtracted/subfamily.saf`: mask = union of every
+- `exports/{ucsc,ensembl,gencode}/interspersed/exon_subtracted/{subfamily,taxonomy_triple}.saf`: mask = union of every
   `exon` row of the pinned GTF, both strands; pieces registered in `export_feature_members` with
   `block_start_1`, `block_end_1`; per-record view status table `tables/exon_subtraction_status.tsv`
   (`unchanged`, `trimmed`, `split`, `fully_subtracted`, `retained_bp`, `removed_bp`).

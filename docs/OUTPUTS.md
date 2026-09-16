@@ -1,88 +1,164 @@
 # Outputs
 
-Coordinates are **1-based inclusive** in tables and **0-based half-open** in BED. Each entry states
-which applies.
+Tables, GTF and SAF use **1-based inclusive** coordinates; BED uses **0-based half-open**
+coordinates. The redesign artifacts below are deferred to their listed phases.
 
 ## Built today
 
-### `te_loci.tsv.gz` — the canonical table, 1-based
+The current build generates `te_loci.tsv.gz`, `te_dim.tsv`, `MANIFEST.json` and `BUILD_ID`; the redesign replaces them.
 
-One row per TE locus.
+### `te_loci.tsv.gz` — legacy canonical table, 1-based
+
+One row per locus admitted by the legacy class and family filters.
 
 | # | Column | Note |
 |---|---|---|
-| 1 | `locus_id` | `<subfamily>|<chrom>:<start>-<end>|<strand>`, the cross-modality join key |
-| 2 | `chrom` | UCSC names in the default view |
+| 1 | `locus_id` | `<subfamily>\|<chrom>:<start>-<end>\|<strand>`, the legacy join key |
+| 2 | `chrom` | UCSC names |
 | 3 | `start` | 1-based inclusive |
-| 4 | `end` | inclusive |
+| 4 | `end` | Inclusive |
 | 5 | `strand` | `+` or `-` |
-| 6 | `subfamily` | rmsk `repName` |
-| 7 | `family` | rmsk `repFamily` |
-| 8 | `class` | rmsk `repClass` |
+| 6 | `subfamily` | UCSC `repName` |
+| 7 | `family` | UCSC `repFamily` |
+| 8 | `class` | UCSC `repClass` |
 | 9 | `sw_score` | RepeatMasker Smith-Waterman score |
-| 10 | `perc_div` | percent divergence from the consensus; separates young copies from old |
-| 11 | `perc_del` | percent deletion |
-| 12 | `perc_ins` | percent insertion |
-| 13 | `rmsk_id` | RepeatMasker fragment id, joins fragments of one insertion |
+| 10 | `perc_div` | Percent divergence from the consensus |
+| 11 | `perc_del` | Percent deletion |
+| 12 | `perc_ins` | Percent insertion |
+| 13 | `rmsk_id` | UCSC `id`, a one-character value without fragment-linking meaning |
 | 14 | `length_bp` | `end - start + 1` |
-| 15 | `dup_index` | per-subfamily ordinal, for `subfamily_dupN` compatibility |
+| 15 | `dup_index` | Per-subfamily ordinal for `subfamily_dupN` compatibility |
 
-### `te_dim.tsv` — the dimension table, one row per triple
+The RepeatMasker `.out` ID column is the instance key; its record membership lands in phase 2
+as `tables/rmsk_instance_members.tsv.gz`.
 
-`subfamily`, `family`, `class`, `n_loci`, `total_bp`.
+### `te_dim.tsv` — legacy dimension table
 
-Views carry the key; this table carries the hierarchy. Rollups from locus to subfamily to family to
-class are a join and a `GROUP BY`.
+Columns are `subfamily`, `family`, `class`, `n_loci` and `total_bp`. Each row summarizes one
+source `(subfamily, family, class)` triple.
 
-### `MANIFEST.json`
+### `MANIFEST.json` — legacy manifest
 
-Source URLs and md5s, output md5s and byte counts, row counts, the class and identity policy, and
-the builder's git SHA. A re-run over an existing snapshot leaves it in place, so the recorded SHA
-keeps naming the version that produced the bytes.
+The manifest records source URLs and md5s, output md5s and byte counts, row counts, class and
+identity policy, and the builder's git SHA. A re-run over an existing snapshot retains its
+manifest and producing SHA.
 
-## Planned
+### `BUILD_ID` — legacy fingerprint
 
-These land once the identity and policy questions settle. Each is a projection of the canonical
-table, so adding one changes no upstream stage.
+The legacy id is the SHA-256 of the sorted `<md5>  <relative path>` inventory of delivered
+outputs. Source files, scratch files, `MANIFEST.json` and `BUILD_ID` sit outside that inventory.
+[RELEASES.md](RELEASES.md) describes the current publication layout.
 
-Views are named `te_<level>[_<variant>].<format>`. The level sets the name field, the format sets the
-container, and the two are independent. Consumers appear here rather than in the layout, so one file
-serves every tool that reads its format.
+## Deferred
 
-| File | Coordinates | Name field | Consumer |
-|---|---|---|---|
-| `te_subfamily.saf` | 1-based | `subfamily` | featureCounts |
-| `te_locus.saf` | 1-based | `locus_id` | featureCounts, locus-level bulk counting |
-| `te_subfamily.bed` | 0-based | `subfamily` | IRescue default, scTE, SoloTE |
-| `te_locus.bed` | 0-based | `locus_id` | `irescue --locus-level`, ATAC peak intersection |
-| `te_subfamily.gtf` | 1-based | `gene_id` = `subfamily` | TEtranscripts |
-| `te_locus.gtf` | 1-based | locus attribute | Telescope |
-| `te_locus.locInd` | 1-based | `locus_id` | TElocal |
-| `te_subfamily_noExon.saf` | 1-based | `subfamily` | featureCounts, joint gene + TE matrices |
-| `te_context_{intronic,adjacent,intergenic}.saf` | 1-based | `subfamily` | context-stratified counting |
-| `te_loci.parquet` | 1-based | — | DuckDB ledgers |
-| `locus_context.tsv` | — | — | `locus_id`, `genic_context`, signed `dist_to_gene`, `nearest_gene_id`, `nearest_gene_strand` |
-| `rename_map.tsv` | — | — | packaged-annotation names mapped to rmsk names, for comparisons against earlier results |
-| `ensembl_named/` | as above | as above | consumers on Ensembl contig names |
+Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>[_<profile>].<format>`.
+The core release supplies six `interspersed` full-interval exports in each of the `ucsc`,
+`ensembl` and `gencode` contig namespaces. The gene child family supplies `exon_subtracted`
+intervals in phase 8. Each emitted feature and block registers to source records through
+`tables/export_feature_members.tsv.gz`.
 
-`te_subfamily.gtf` and `te_locus.gtf` differ in the attribute that names the feature, so each tool
-reads the file built for it. The exact attribute keys are confirmed against each tool's
-documentation when the view stage is written.
+### Legacy names and their disposition
 
-### BED column layout
+| Legacy name | Disposition |
+|---|---|
+| `te_subfamily.saf` | `subfamily.saf` (phase 4) |
+| `te_locus.saf` | A record-level SAF enters a release with a named consumer and a passing fixture ([ADR 3](DECISIONS.md#3-delivered-scope)); record-level counting reads `record.bed` or `record.gtf` |
+| `te_subfamily.bed` | `subfamily.bed` (phase 4) |
+| `te_locus.bed` | `record.bed` (phase 4) |
+| `te_subfamily.gtf` | `record.gtf`: one GTF; consumers group by attribute (phase 4) |
+| `te_locus.gtf` | `record.gtf`: one GTF; consumers group by attribute (phase 4) |
+| `te_locus.locInd` | `record.gtf` read as `.locInd` (fixture, phase 5) |
+| `te_subfamily_noExon.saf` | `exon_subtracted/subfamily.saf` in `te_mm39_gene` (phase 8) |
+| `te_context_*.saf` | Deferred to the transcript-context design session after phase 8 |
+| `locus_context.tsv` | Deferred to the transcript-context design session after phase 8 |
+| `rename_map.tsv` | Superseded by `taxonomy_triple.saf` and the `compat_tetranscripts_mm39` universe |
+| `te_loci.parquet` | `tables/rmsk_records.parquet` (phase 2) |
+| `ensembl_named/` | `exports/ensembl/` (phase 6) |
 
-BED6 core keeps `bedtools` and IRescue working unmodified. Columns 7 onward carry the annotation and
-are ignored by tools that read the first six.
+### Phase 2: canonical records and universes
 
-```
-1 chrom  2 start(0-based)  3 end  4 name  5 score  6 strand
-7 subfamily  8 family  9 class  10 perc_div  11 genic_context  12 dist_to_gene
-```
+| Artifact | Contract |
+|---|---|
+| `tables/rmsk_records.{tsv.gz,parquet}` | Complete source catalog; one row per `rmsk_record_id`, with `start_1` and `end_1` |
+| `tables/rmsk_instance_members.tsv.gz` | `rmsk_instance_id`, `rmsk_record_id`; one instance per record |
+| `tables/rmsk_taxonomy.tsv` | Distinct raw name, family and class triples with record counts and summed lengths |
+| `universes.json` | Six named predicates over raw source classification |
+| `tables/universe_members.tsv.gz` | `universe_name`, `rmsk_record_id` membership for each universe except `all_rmsk` |
 
-`score` is `min(sw_score, 1000)`, inside the BED range. Column 10 carries divergence for anyone
-filtering young families.
+The record key is `<rmsk_name>|<chrom>:<start_1>-<end_1>|<strand>`. The four feature levels are
+record, instance, subfamily and canonical family.
 
-### `locus_context.tsv`
+### Phase 3: canonical taxonomy
 
-`dist_to_gene` is signed and exact, so a context threshold is a query parameter.
-`nearest_gene_strand` supports separating co-oriented from antiparallel read-through.
+`tables/taxonomy_canonical.tsv` supplies one row per name with canonical class and family,
+rank-specific resolution statuses and median record divergence under `taxonomy_rule_v1`.
+`tables/taxonomy_resolution_report.tsv` records names with multiple raw labels and the rule used.
+Family and class rollups join through `taxonomy_canonical`; unresolved names enter an explicit
+`unresolved` bucket, distinct from RepeatMasker's literal `Unknown`.
+
+### Phase 4: UCSC full-interval exports
+
+All six exports land under `exports/ucsc/interspersed/full/`.
+
+| File | Coordinates | Feature identity |
+|---|---|---|
+| `record.bed` | 0-based half-open | BED6 name = `rmsk_record_id` |
+| `subfamily.bed` | 0-based half-open | BED6 name = `rmsk_name` |
+| `family.bed` | 0-based half-open | BED6 name = `<canonical_class>/<canonical_family>` or `unresolved/<rmsk_name>` |
+| `record.gtf` | 1-based inclusive | Exon rows; `gene_id` = `rmsk_name`; `transcript_id` and `locus` = record alias |
+| `subfamily.saf` | 1-based inclusive | `GeneID` = `rmsk_name` |
+| `taxonomy_triple.saf` | 1-based inclusive | Canonical taxonomy-triple grouping; `GeneID` = `<rmsk_name>:<canonical_family>:<canonical_class>` |
+
+Canonical labels are a function of the name, so `taxonomy_triple.saf` carries one `GeneID` per
+`rmsk_name`, and a name whose raw labels differ across records appears once, under its canonical
+triple.
+
+BED6 columns are `chrom`, `start`, `end`, `name`, `score` and `strand`;
+`score = min(sw_score, 1000)`. The GTF record alias is
+`R|mm39|<name>|<chrom>|<start_1>|<end_1>|<strand>`.
+GTF `family_id` and `class_id` carry canonical labels, `rmsk_family` and `rmsk_class` carry raw
+labels, and `instance_id` is `I|mm39|<id>`.
+
+`tables/export_feature_members.tsv.gz` carries `export_path`, `feature_level`,
+`emitted_feature_id`, `rmsk_record_id`, `block_start_1` and `block_end_1`.
+Full-interval exports register one block per record.
+
+### Phase 5: consumer fixtures
+
+Known-answer parser and execution fixtures establish each consumer contract. Additional adapters
+enter a release with a named consumer and a passing fixture.
+
+### Phase 6: contig namespaces and qualification
+
+The six full-interval exports also land under `exports/ensembl/interspersed/full/` and
+`exports/gencode/interspersed/full/`. They carry the same rows as their UCSC counterparts,
+with contig columns renamed through `tables/contig_aliases.tsv`.
+Record ids retain their UCSC contig names. `tables/contig_coverage.tsv` reports per-contig record
+coverage, alias availability and length agreement. `bin/te-tracks-preflight <export> <bam|fai|sizes>`
+checks contig sets and lengths for the selected export against an alignment, a FASTA index or a
+chrom.sizes file.
+
+### Phase 7: identity and publication
+
+`MANIFEST.json` separates build `identity` from builder and validation `provenance`.
+`BUILD_ID = sha256("te-tracks-build-v1\n" + canonical_json(identity))` covers the identity,
+including the complete file inventory with SHA-256 digests. Verified staging builds install
+once into `archive/<BUILD_ID>/`; an atomic replacement selects the single `current` symlink.
+
+### Phase 8: gene child family
+
+`te_mm39_gene` pins its parent core build and a gene GTF. Its
+`exports/{ucsc,ensembl,gencode}/interspersed/exon_subtracted/{subfamily,taxonomy_triple}.saf` subtract the unstranded union
+of all annotated exons and register every retained piece in `tables/export_feature_members.tsv.gz`.
+`tables/exon_subtraction_status.tsv` records `unchanged`, `trimmed`, `split` or `fully_subtracted`
+status with retained and removed base counts per record.
+
+Exon subtraction guarantees exon-disjoint sequence support under the declared mask; molecule
+exclusivity between gene and TE counts is a property of the joint counting run.
+The record-by-transcript context relation follows phase 8 in a dedicated design session covering
+annotation choice, interval blocks, relative strand, promoter parameters and distance conventions.
+
+### Phase 9: acceptance and host runbook
+
+`docs/RUNBOOK.md` supplies the host build, verification, publication, transfer and recovery
+procedure. Full mm39 acceptance verifies the published contracts and updates artifact status.

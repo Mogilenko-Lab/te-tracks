@@ -21,9 +21,10 @@ class census before any biological universe publishes.
 
 ## 3. Delivered scope
 The parked mm39 release contains the canonical tables, instance membership, raw and canonical
-taxonomy, universe definitions, and the `interspersed` exports at record, subfamily and family level
-in BED, GTF and full-interval SAF, in UCSC and Ensembl contig namespaces with an alias table and a
-coverage report. Every export ships with a known-answer fixture for its consumer, a local test
+taxonomy, universe definitions, and the `interspersed` full-interval exports: BED at record,
+subfamily and family level, GTF at record level, SAF at subfamily level and at the legacy
+taxonomy-triple grouping, each in the `ucsc`, `ensembl` and `gencode` contig namespaces, with an
+alias table and a coverage report. Every export ships with a known-answer fixture for its consumer, a local test
 runner, a preflight command, a host-build runbook and `AGENTS.md`. Additional adapters enter a
 release together with a named consumer and a passing fixture.
 
@@ -40,9 +41,9 @@ Source-derived tables carry the `rmsk_` qualifier: `rmsk_records`, `rmsk_instanc
 `rmsk_taxonomy`. Derived tables carry plain names: `taxonomy_canonical`,
 `export_feature_members`, `universes.json`. Coordinate columns state their convention, `start_1`
 and `end_1`. Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>[_<profile>].<format>`,
-with `full` and `exon_subtracted` as variants. Ledger tables are `rmsk_records`,
-`peak_record_overlaps` and `te_feature_registration`, and the measurement grain column is
-`feature_level`.
+with `full` and `exon_subtracted` as variants. Consuming projects keep their quantification
+ledger in their own tables, `peak_record_overlaps` and `te_feature_registration`, keyed to
+`rmsk_records`, with `feature_level` as the measurement grain column.
 
 ## 6. Source
 The primary source is the checksum-pinned RepeatMasker `.out` for the assembly, parsed under a

@@ -35,3 +35,27 @@ same-day and concurrent publication tests on the host filesystem.
 
 **Context budget.** One phase per implementer session, roughly a third of the context. The
 orchestrator reads reviews and diffs, never whole artifacts.
+
+## Standing authorizations and environment facts (owner, 2026-09-16)
+
+- **Fan-out is pre-authorized.** Codex units (`launch.sh`) and harness agents (`Agent` tool: `opus-reviewer`,
+  `divergent`, `general-purpose`) launch without asking the owner for permission, one implementer at a
+  time on the repository, reviewers in parallel with each other. The owner asked to stop being prompted
+  per agent; asking again is a protocol violation. Only destructive actions (deleting published builds,
+  pushes, force operations) still need the owner's word.
+- **Commits are part of the protocol.** The owner's "proceed with orchestration as agreed" authorizes the
+  per-phase commits on branch `redesign-2026-09` in te-tracks. No push. Umbrella pin bumps at milestones.
+- **Prompts are records.** Every implementer, fix, review and re-review prompt is kept under
+  `docs/_internal/redesign-2026-09/prompts/` (`p<N>_impl.md`, `p<N>_fix.md`, `review_template.md`,
+  `opus_template.md`); reviews land in `docs/_internal/redesign-2026-09/reviews/p<N>_{codex,opus}.md`.
+- **Exit 32 from `launch.sh`** is the blind-run detector reacting to skill prose in the stream; read
+  `codex_exit` from `status.sh --unit <unit>` and the final message; codex_exit 0 plus disk truth decide.
+- **`/tmp` is mounted noexec**; scratch that must execute lives under `/workspaces/Meta-Aging/_scratch/`.
+  `TE_TRACKS_REFROOT=/workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot`,
+  `TE_TRACKS_SOURCE_CACHE=/workspaces/Meta-Aging/_scratch/te-tracks-audit/source` (all four mm39 sources
+  cached with matching checksums; the GENCODE vM37 GTF is in the read-only refcache at
+  `/data2/users/shared/refcache/mm39/mm39_20260911/`).
+- **Absent in-container:** irescue, featureCounts, stellarscope, TEsingle, TEcount, TElocal, duckdb, bgzip,
+  shellcheck. Present: python3 (pyarrow 25, pandas 2.2, numpy, pysam 0.24, pytest), bedtools, samtools, jq.
+- **te-tracks git identity** is set repo-locally (Anton Zhelonkin, anton.bioinf.md@gmail.com), matching
+  the umbrella and the earlier te-tracks commits.

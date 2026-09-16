@@ -9,7 +9,10 @@
 work/
 
 # Expectations are part of the contract and stay tracked.
-!tests/expectations/*.tsv
+!tests/expectations/**
+
+# Fixtures preserve consumer inputs and expected results.
+!tests/fixtures/**
 
 # Internal memory carries its tables and worksheets.
 !docs/_internal/**/*.tsv

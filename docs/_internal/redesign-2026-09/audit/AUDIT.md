@@ -135,3 +135,13 @@ Critique: `consult/codex_critique.md`. Items checked against code or source and 
 run with `-s`, libraries "RepBase RELEASE 20181026" and "Dfam_Consensus RELEASE 20181026". The
 `.out.gz` carries no version line. The hgTrackUi page is generic. Record these as declared provenance
 in the manifest with their source URL.
+
+## 6. Contig namespace of the GENCODE GRCm39 FASTA (measured 2026-09-16)
+
+`refcache/mm39/mm39_20260911/GRCm39.genome.fa.gz` carries 61 contigs whose names and lengths are in
+`gencode_grcm39_fasta_contigs.tsv`. The 22 chromosomes are UCSC-named (`chr1` … `chrM`); the 39
+scaffolds are GenBank accessions (`GL456210.1`, `JH584295.1`, `MU069434.1`). Against UCSC
+`chrom.sizes`: 22 identical (name, length) lines, 39 differ by name only. So a BAM aligned to this
+FASTA matches neither the UCSC nor the Ensembl namespace completely, and the exports need a third
+namespace, `gencode`, built through `chromAlias` (ucsc column for chromosomes, genbank column for
+scaffolds). Lengths agree for all 61 contigs.

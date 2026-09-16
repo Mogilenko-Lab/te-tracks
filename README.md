@@ -1,95 +1,138 @@
 # te-tracks
 
-Reproducible transposable-element annotation tracks, built from RepeatMasker.
-
-One canonical table holds one row per TE locus. 
-Every delivered track is a projection of that table.
-So bulk RNA-seq, single-cell RNA and single-cell ATAC are intended to share 
-* one subfamily universe 
-* and one locus identity. 
-
-A TE locus in an ATAC peak and a TE locus in a bulk locus-level call are the same object,
-joined by string equality on `locus_id`.
+te-tracks builds a reference projection of RepeatMasker for one assembly. Canonical tables,
+named universes, registered exports and consumer fixtures share record identities and source
+provenance. The redesign contract below lands in phases 1–9.
 
 ## Sources
 
-Two public URLs and one gene annotation. All three are md5-pinned in `config/<genome>.env`.
-
-| Source | Provides |
+| Source | Role in the redesign |
 |---|---|
-| UCSC `<genome>/database/rmsk.txt.gz` | the RepeatMasker run: coordinates, subfamily, family, class, divergence |
-| UCSC `<genome>/bigZips/<genome>.chromAlias.txt` | exact contig-name mapping, UCSC to Ensembl, scaffolds included |
-| GENCODE gene annotation | gene bodies and exons, for genic context and for the bulk exon-subtracted view |
+| Checksum-pinned RepeatMasker `.out` | Primary records, instance keys, source labels, consensus coordinates and overlap flags |
+| UCSC browser `rmsk` table | One-time source qualification against the `.out`, with a retained report |
+| UCSC `chromAlias` | Contig mappings across UCSC, Ensembl, GenBank and RefSeq namespaces |
+| UCSC `chrom.sizes` | Contig lengths and coordinate bounds |
+
+The gene GTF belongs to the child family `te_<assembly>_gene`, which pins its parent core build
+and one gene annotation.
 
 ## Build
 
-```
-./build.sh --genome mm39 --dest /data2/users/shared/refcache
+Builds and publication run on the host. `/data2/users/shared/refcache` is read-only inside the
+container. The host runbook, `docs/RUNBOOK.md`, lands in phase 9; the current legacy procedure
+is in [docs/RELEASES.md](docs/RELEASES.md).
+
+Tests run in-container against a scratch reference root:
+
+```bash
+tests/run.sh core
+tests/run.sh consumers
+tests/run.sh acceptance --refroot /workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot
 ```
 
-The build writes a dated snapshot, fingerprints it, and moves `current` onto it. 
-A re-run that reproduces the same content leaves `current` alone and records a `reconfirmed` row. 
-A build that changes any output archives the previous snapshot and records both.
-
-Every build carries a `BUILD_ID`, so a project cites one id and gets exactly those bytes.
-`docs/RELEASES.md` holds the contract.
+The default reference root is `/workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot`.
+Each mode reports `pass`, `fail` or `unsupported` per check. Phase 0 registers zero checks;
+later phases supply them.
 
 ## Outputs
 
-One interval set, projected along two axes: the **level** the name field carries, and the **format**
-the tool parses. Bulk and single-cell tools read the same cells of this grid.
+The current build generates `te_loci.tsv.gz`, `te_dim.tsv`, `MANIFEST.json` and `BUILD_ID`; the redesign replaces them.
 
-| Format | subfamily level | locus level |
+The truth table tracks the redesign artifacts: `delivered` means generated, `tested` means
+verified against their contract, and `deferred` names the phase that supplies them.
+Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>[_<profile>].<format>`.
+
+| artifact | status | phase |
 |---|---|---|
-| SAF, 1-based — featureCounts | `te_subfamily.saf` | `te_locus.saf` |
-| BED, 0-based — IRescue, scTE, SoloTE, bedtools | `te_subfamily.bed` | `te_locus.bed` |
-| GTF, 1-based — TEtranscripts, Telescope | `te_subfamily.gtf` | `te_locus.gtf` |
-| locInd — TElocal | | `te_locus.locInd` |
+| `source/qualification.md` | deferred | 1 |
+| `docs/_internal/redesign-2026-09/audit/source_qualification_mm39.md` | deferred | 1 |
+| `tests/fixtures/source/` | deferred | 1 |
+| `tests/fixtures/records/` | deferred | 2 |
+| `tests/expectations/mm39/` | deferred | 2, 9 |
+| `tests/fixtures/taxonomy/dfam_snapshot.tsv` | deferred | 3 |
+| `tests/fixtures/taxonomy/dfam_snapshot.provenance.json` | deferred | 3 |
+| `tests/fixtures/taxonomy/rule_cases.tsv` | deferred | 3 |
+| `tests/fixtures/exports/` | deferred | 4 |
+| `tests/fixtures/consumers/` | deferred | 5 |
+| `tests/lib/consumers.py` | deferred | 5 |
+| `tests/fixtures/contigs/` | deferred | 6 |
+| `tests/fixtures/publication/` | deferred | 7 |
+| `tables/rmsk_records.tsv.gz` | deferred | 2 |
+| `tables/rmsk_records.parquet` | deferred | 2 |
+| `tables/rmsk_instance_members.tsv.gz` | deferred | 2 |
+| `tables/rmsk_taxonomy.tsv` | deferred | 2 |
+| `tables/taxonomy_canonical.tsv` | deferred | 3 |
+| `tables/taxonomy_resolution_report.tsv` | deferred | 3 |
+| `universes.json` | deferred | 2 |
+| `tables/universe_members.tsv.gz` | deferred | 2 |
+| `tables/universe_summary.tsv` | deferred | 2 |
+| `tables/export_feature_members.tsv.gz` | deferred | 4 |
+| `tables/export_summary.tsv` | deferred | 4 |
+| `tables/contig_aliases.tsv` | deferred | 6 |
+| `tables/contig_coverage.tsv` | deferred | 6 |
+| `exports/ucsc/interspersed/full/record.bed` | deferred | 4 |
+| `exports/ucsc/interspersed/full/subfamily.bed` | deferred | 4 |
+| `exports/ucsc/interspersed/full/family.bed` | deferred | 4 |
+| `exports/ucsc/interspersed/full/record.gtf` | deferred | 4 |
+| `exports/ucsc/interspersed/full/subfamily.saf` | deferred | 4 |
+| `exports/ucsc/interspersed/full/taxonomy_triple.saf` | deferred | 4 |
+| `exports/ensembl/interspersed/full/record.bed` | deferred | 6 |
+| `exports/ensembl/interspersed/full/subfamily.bed` | deferred | 6 |
+| `exports/ensembl/interspersed/full/family.bed` | deferred | 6 |
+| `exports/ensembl/interspersed/full/record.gtf` | deferred | 6 |
+| `exports/ensembl/interspersed/full/subfamily.saf` | deferred | 6 |
+| `exports/ensembl/interspersed/full/taxonomy_triple.saf` | deferred | 6 |
+| `exports/gencode/interspersed/full/record.bed` | deferred | 6 |
+| `exports/gencode/interspersed/full/subfamily.bed` | deferred | 6 |
+| `exports/gencode/interspersed/full/family.bed` | deferred | 6 |
+| `exports/gencode/interspersed/full/record.gtf` | deferred | 6 |
+| `exports/gencode/interspersed/full/subfamily.saf` | deferred | 6 |
+| `exports/gencode/interspersed/full/taxonomy_triple.saf` | deferred | 6 |
+| `te_mm39_gene`: `exports/ucsc/interspersed/exon_subtracted/subfamily.saf` | deferred | 8 |
+| `te_mm39_gene`: `exports/ensembl/interspersed/exon_subtracted/subfamily.saf` | deferred | 8 |
+| `te_mm39_gene`: `exports/gencode/interspersed/exon_subtracted/subfamily.saf` | deferred | 8 |
+| `te_mm39_gene`: `exports/{ucsc,ensembl,gencode}/interspersed/exon_subtracted/taxonomy_triple.saf` | deferred | 8 |
+| `te_mm39_gene`: `tables/exon_subtraction_status.tsv` | deferred | 8 |
+| `MANIFEST.json` | deferred | 7 |
+| `BUILD_ID` | deferred | 7 |
+| `bin/te-tracks-preflight` | deferred | 6 |
+| `docs/RUNBOOK.md` | deferred | 9 |
+| `docs/RELEASES.md` | deferred | 7 |
 
-At subfamily level the name field holds `subfamily`, and a count means reads per subfamily summed
-over its loci. At locus level it holds `locus_id`, and a count means reads per insertion.
-featureCounts and IRescue read subfamily level by default; TElocal and `irescue --locus-level`
-resolve loci.
-
-**Canonical table** — `te_loci.tsv.gz`, `te_loci.parquet`, `te_dim.tsv`. Every cell above is a
-projection of it, and ledger joins and rollups read it directly.
-
-**Interval variants**, the views whose intervals depart from the canonical set:
-
-| Variant | Purpose |
-|---|---|
-| `te_subfamily_noExon.saf` | a joint gene + TE bulk matrix counts each read once |
-| `te_context_{intronic,adjacent,intergenic}.saf` | genic-context strata for the bulk ladder |
-
-**Namespace** — `ensembl_named/` carries every view on Ensembl contig names.
-
-`docs/OUTPUTS.md` states every file, its columns and its consumer.
+[docs/OUTPUTS.md](docs/OUTPUTS.md) describes the legacy columns and deferred export contracts.
 
 ## Guarantees
 
-- A re-run reproduces byte-identical outputs, and `BUILD_ID` proves it by content.
-- Every published build stays on disk. Superseded builds move to `archive/` complete, so a result
-  produced against an earlier annotation stays reproducible against the bytes that produced it.
-- Scripts run under `LC_ALL=C`, so sort order is stable across machines and locales.
-- Data files carry coordinates and annotation. `MANIFEST.json` carries timestamps, input md5s,
-  output md5s and the builder's git SHA.
-- Table coordinates are 1-based inclusive. BED coordinates are 0-based half-open. `docs/OUTPUTS.md`
-  states which applies to each file.
-- Contig names ship in UCSC (`chr1`) and Ensembl (`1`) flavours, mapped through `chromAlias`.
-- Every assertion in `src/99_verify.sh` carries an expected number, held in `tests/expectations/`.
+The redesign contract establishes these guarantees as the listed phases land:
+
+- Four feature levels describe record, instance, subfamily and canonical family. Family and
+  class rollups use `taxonomy_canonical`.
+- Universes are named predicates over raw source classification in the complete catalog;
+  `interspersed` is the default.
+- `rmsk_record_id` is `<rmsk_name>|<chrom>:<start_1>-<end_1>|<strand>`. Export membership
+  registers each emitted feature and interval block to its source records.
+- The `interspersed` full-interval exports contain six files in each of `ucsc`, `ensembl` and
+  `gencode`: BED at record, subfamily and family level; GTF at record level; SAF at subfamily
+  level and at the legacy taxonomy-triple grouping.
+- Tables, GTF and SAF use 1-based inclusive coordinates; BED uses 0-based half-open coordinates.
+  Contig aliases preserve record identity across `ucsc`, `ensembl` and `gencode` exports.
+- Exon subtraction guarantees exon-disjoint sequence support under the declared mask;
+  molecule exclusivity between gene and TE counts is a property of the joint counting run.
+- `BUILD_ID` is the SHA-256 of the manifest `identity` section, computed as
+  `sha256("te-tracks-build-v1\n" + canonical_json(identity))`. The identity covers the schema,
+  sources, declared run identity, universe predicates, export contracts and complete file
+  inventory; builder and validation evidence live in `provenance` outside the hash.
+- Builds complete and verify in staging, install once into `archive/<BUILD_ID>/`, and become
+  selected by an atomic replacement of the single `current` symlink. Every published build stays
+  on disk; consumers pin the full id and the digests of the files they read.
+- Scripts use `LC_ALL=C` for stable sort order.
 
 ## Genomes
 
-`--genome mm39` is built today. `rmsk` and `chromAlias` are published for `mm10` and `hg38`, so the
-same pins and the same rule extend to them by adding a `config/<genome>.env`.
+mm39 is built in the legacy layout. Its redesign artifacts follow the phases above. hg38 is
+deferred; source pins, a class census and packaged-file reconciliation follow the mm39 release.
 
 ## Design
 
-`docs/DECISIONS.md` records the choices that shape every output: the `locus_id` form, the contig
-namespace, exon subtraction as a view, and the class policy.
-
-`docs/RELEASES.md` records the `BUILD_ID` contract, the archive behaviour and how a project cites a
-build.
-
-`docs/PROVENANCE.md` records the derivation and the evidence that it reproduces the annotation the
-lab has been using.
+[docs/DECISIONS.md](docs/DECISIONS.md) records the redesign choices and recorded deferrals.
+[docs/PROVENANCE.md](docs/PROVENANCE.md) retains the legacy derivation and comparison evidence.
