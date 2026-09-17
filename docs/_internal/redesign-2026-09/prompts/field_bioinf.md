@@ -1,6 +1,6 @@
 Bioinformatics-methods review of the te-tracks programme's treatment of TE annotation, classification rungs,
 genic context and counting, for three single-cell datasets. Repository: /workspaces/Meta-Aging/01_modules/te-tracks
-(branch redesign-2026-09, commit __HEAD__). You are read-only; write exactly one file,
+(branch redesign-2026-09, commit 8589873). You are read-only; write exactly one file,
 /workspaces/Meta-Aging/01_modules/te-tracks/docs/_internal/redesign-2026-09/reviews/field_bioinf.md, and change nothing
 else. No git writes (the checkouts under /workspaces/Meta-Aging/01_modules/.ref/ are git repositories too), no installs.
 Web search is allowed for published methods and benchmarks; cite what you use.

@@ -1,7 +1,7 @@
 # te-tracks field-practice consult: TE annotation, classification rungs, genic context and counting (codex, read-only)
 
 You are consulted on design and field practice. Working directory: `/workspaces/Meta-Aging/01_modules/te-tracks`,
-branch `redesign-2026-09`, commit `__HEAD__`. You write exactly one file:
+branch `redesign-2026-09`, commit `8589873`. You write exactly one file:
 `docs/_internal/redesign-2026-09/consults/field_practice_consult.md`. You change nothing else. No git writes anywhere
 (the eleven consumer checkouts under `/workspaces/Meta-Aging/01_modules/.ref/` are git repositories too:
 DfamTEBrowser, irescue, mascarade, MATES, mLLMCelltype, scTE, scTEfinder, stellarscope, TElocal, TEsingle,

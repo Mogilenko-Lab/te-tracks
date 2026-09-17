@@ -198,28 +198,41 @@ command line (symlink case); nine consumer checkouts clean; reflog at `c2a7a43`.
 bytes over 43 payload files before the child family. Stage 30 peaks at 5,891,116 KiB resident and stage 35 at 3,853,776 KiB (per-stage `RUSAGE_CHILDREN`, this container, 200 s and 100 s); a rebuild of stages 30 and 35 reproduced all 24 inventory digests and the registration digest `0726aa7b…`; `tests/run.sh core` 16 pass, `tests/run.sh consumers` 8 pass and 5 unsupported, both exit 0. Only the `ucsc` `family.bed` digest changed in the fix (4 rows at 3 coordinate
 ties); the seven other UCSC interspersed digests equal the phase 4 inventory.
 
+**Phase 7 and milestone 7** (identity and publication) are complete and committed: `9d16506` "Phase 7:
+identity and publication" and `8589873` "Milestone 7: identity hardening after the publication review".
+`MANIFEST.json` carries `identity` and `provenance`; `BUILD_ID` hashes the identity and `CATALOG_ID` the
+catalog (the `rmsk_out` source, run identity, instance scope and the decompressed canonical text tables);
+`99_verify.py` judges an archive against its own declaration and published version sets; `release.py`
+installs into `archive/<BUILD_ID>/` under a lock and selects the relative `current`; `build.sh --root`
+builds in staging and publishes. Reviews: `reviews/p7_codex.md` (BLOCKING), `p7_opus.md` (FAIL),
+`m7_codex.md`, `m7_opus.md` (PASS WITH ADVISORIES), `m7_divergent.md` (5 High); rulings in
+`reviews/p7_rulings.md` and `m7_rulings.md`. Scratch identities at `8589873`: `BUILD_ID`
+`9ddf36220830761e74cf1fa5ce02fd993dff8214075ee094e973ed8bfdd1fd8d`, `CATALOG_ID`
+`90cc18be5d4ee9342b57b58e4b8ad19e59f9e6b48b9a94bab9db615db1091b5e`; the 43 payload files are unchanged
+since phase 6. Core suite 19 checks (about 13 min), consumers 13 checks (8 pass, 5 unsupported).
+
 ## Next session starts here
 
-1. Milestone 7 is committed ("Milestone 7: identity hardening after the publication review") on top of phase 7
-   (`9d16506`). Three reviewers (`reviews/m7_codex.md` PASS WITH ADVISORIES, `reviews/m7_opus.md` PASS WITH ADVISORIES,
-   `reviews/m7_divergent.md` 5 High) and the rulings in `reviews/m7_rulings.md` produced the fix: species admission by
-   name and taxon, contract fields as a required core, reader labels out of the identity, `CATALOG_ID` over the
-   decompressed canonical text tables (a serializer change moves `BUILD_ID` alone), a core payload roster at authoring,
-   preflight bound to the enclosing build with `MANIFEST.json`, runner exit 2 for an empty mode, predicate keys per
-   schema, consumer pins without the raw manifest digest, plan 19's oracle corrected to the packaged
-   `GRCm39_Ensembl_rmsk_TE.gtf.gz` (3,799,629 records). Identities after the fix: `BUILD_ID`
-   `9ddf36220830761e74cf1fa5ce02fd993dff8214075ee094e973ed8bfdd1fd8d`, `CATALOG_ID`
-   `90cc18be5d4ee9342b57b58e4b8ad19e59f9e6b48b9a94bab9db615db1091b5e`; the 43 payload files are unchanged since phase 6.
-   Orchestrator verification `_scratch/te-tracks-audit/p7_verify/verify_c.log`: core 19 pass, consumers 8/5. After the
-   commit: the scratch root is republished from the clean tree, the umbrella pin bumped to the milestone commit.
-   Gene context: the phase 8 codex consult is in (`consults/gene_child_consult.md`, measurements reproduced by
-   bedtools), the owner's ADR brief is drafted (`consults/gene_context_adr_brief.md`, six candidate decisions with the
-   points only the owner settles), and the owner's dissertation excerpts, the TEsingle paper excerpts and the scTE,
-   scTEfinder and TEsingle readings are recorded (`consults/thesis_2023_excerpts.md`, `tesingle_notes.md`,
-   `sctefinder_scte_notes.md`); the TEsingle paper's RepeatMasker filter equals the `interspersed_plus_satellites`
-   universe on mm39. A field-practice consult (`prompts/field_consult.md`, codex) with bioinf and divergent reviewers
-   (`prompts/field_bioinf.md`, `field_divergent.md`) runs against the milestone commit; its synthesis joins the ADR
-   brief before the owner's discussion and the phase 8 implementation prompt.
+1. **Pick up here.** Three things were running when the 2026-09-16 session closed; each leaves its result on
+   disk, so collect them first:
+   - the scratch republish from the clean tree (`_scratch/te-tracks-audit/p7_verify/republish_clean.log`; expect
+     `verify-current exit=0`, `builder_git_sha` `8589873…`, `dirty False`, and the same `BUILD_ID` as above). If the
+     log is incomplete, reset `$TE_TRACKS_REFROOT/pubroot` (restore write modes first) and run
+     `./build.sh --genome mm39 --root "$TE_TRACKS_REFROOT/pubroot"` again (about 12 min);
+   - the codex field-practice consult (unit `te-tracks-field-consult`, prompt `prompts/field_consult.md`, output
+     `consults/field_practice_consult.md`; `status.sh --unit te-tracks-field-consult` shows `codex_exit`);
+   - the bioinf and divergent field reviews (`reviews/field_bioinf.md`, `reviews/field_divergent.md`, from
+     `prompts/field_bioinf.md` and `field_divergent.md`).
+   Then: write `consults/field_practice_synthesis.md` (what the field does at each rung, which counting it uses, what
+   te-tracks adds or leaves to consumers, with the owner's questions from `consults/thesis_2023_excerpts.md`
+   answered one by one) and amend `consults/gene_context_adr_brief.md` with the consult's recommendations; hold the
+   ADR discussion with the owner on the brief's six candidate decisions plus the field recommendations (the owner
+   asked for this discussion, 2026-09-16); record the rulings in `docs/DECISIONS.md` only by the owner's word;
+   rewrite plan `18_phase8_gene_child_seam.md` from the rulings and the two consults; write `prompts/p8_impl.md`
+   aligned with `reviews/{m5,p6,p7,m7}_rulings.md` (family and assembly separate, `GENOME=mm39` with
+   `FAMILY=te_mm39_gene`, parent pinned by full `BUILD_ID`, child `.staging`, alias table copied by digest, explicit
+   variant in exporter and registration, the GTF as a child source role outside `catalog.sources`, verifier branch
+   for non-null parents). Commit the synthesis and brief as records before the discussion.
 2. Phases 8 and 9 with `p8_impl.md` and `p9_impl.md`, each aligned with the rulings in its plan file before launch;
    phase 8 opens with a codex design consult on the child family's topology, architecture and approach, recorded under
    `redesign-2026-09/consults/` and ruled by the owner before `p8_impl.md` is finalized (owner, 2026-09-16); the
@@ -236,9 +249,47 @@ file disagree, and the disagreement is a deviation to report. Rulings the owner 
 
 ## Open at handoff
 
+- Gene context: the owner's ADR discussion has not been held; `consults/gene_context_adr_brief.md` lists six
+  candidate decisions (one gene family with immutable snapshots; all-exon unstranded mask; sparse relation plus
+  per-record status with context `not_computed` in phase 8; transcript and gene-body geometry with an explicit
+  promoter window; consumers derive labels from published geometry; alias table copied into the child) and the
+  point only the owner settles for each.
+- Field practice: the codex consult and two reviews were running at handoff (see item 1 above); their synthesis
+  joins the brief.
+- Rulings the owner may overturn (recorded where made): instance weighting; `CATALOG_ID` scope (`rmsk_out` alone,
+  decompressed text tables, `p7_rulings.md` Opus A2 and `m7_rulings.md` divergent H3); reader labels outside the
+  identity (`m7_rulings.md` divergent H2); `subfamily.gtf`; compat as membership; `gene_context` deferred; pandas
+  conservation proof; `all_rmsk` record BED; `key_grammar`; preflight gate; the payload roster at authoring.
+- Phase 9 items collected in plan 19 (host modes and retention policy, clean-revision gate, id-mismatch remedy,
+  the 14761 ledger's `te_catalog_id` and `te_build_id` columns as a consumer gate, acceptance checks and the
+  runner's exit 2 for an empty mode); the compat oracle is the packaged `GRCm39_Ensembl_rmsk_TE.gtf.gz`.
+- Unverified inputs for the gene-context decision: the nf-core "filtered" GTF recipe of the cGAS gene pass, the GTF
+  inside the 10x cellranger-arc reference used by 14761, and whether either equals GENCODE vM37.
+
 - Consumer executables absent in-container; phase 5 reports them `unsupported` until the owner decides
   installation (irescue, featureCounts, Stellarscope, TEsingle, TEtranscripts, TElocal).
 - TElocal prepackaged annotation tables (Dropbox) not fetched; reconciliation belongs to the
   `compat_tetranscripts_mm39` fixture.
 - Gene context stays a seam (phase 8); its design session follows.
 - Deferred and recorded: hg38, ERV units, young/old tiers.
+
+## Orchestration mechanics (for the next session)
+
+- Environment: `TE_TRACKS_REFROOT=/workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot`,
+  `TE_TRACKS_SOURCE_CACHE=/workspaces/Meta-Aging/_scratch/te-tracks-audit/source`, `PYTHONDONTWRITEBYTECODE=1`;
+  the build at `$TE_TRACKS_REFROOT/te_mm39/build`, the published root at `$TE_TRACKS_REFROOT/pubroot`; the
+  orchestrator's verification scripts and logs under `_scratch/te-tracks-audit/p7_verify/` (`verify_c.sh` is the
+  current template). `/tmp` is noexec; scratch lives under `_scratch/te-tracks-audit/`.
+- Delegation: `.claude/skills/delegate-cli/assets/launch.sh --unit U --workdir <te-tracks> --effort xhigh
+  [--parallel-ok] --prompt <file>` as a harness background task; the launcher's exit 32 is a blind-run false
+  positive on every unit, so read `codex_exit` from `status.sh --unit U` and the report from
+  `/tmp/scio-delegate/U/<run>/final.md`. Opus and divergent reviewers run as harness agents; a truncated Opus
+  report is recovered from the longest `Verdict:`-bearing string in the agent's transcript under
+  `~/.claude/projects/*/*.jsonl`. Reviewer prompts set `PYTHONDONTWRITEBYTECODE=1` and name the checkouts under
+  `01_modules/.ref/` explicitly (DfamTEBrowser, irescue, mascarade, MATES, mLLMCelltype, scTE, scTEfinder,
+  stellarscope, TElocal, TEsingle, TEsingle_benchmarking_scripts, TEsingle_Martirosyan_analysis_code, TEtranscripts,
+  Thesis_2023; `14839-DM-cGAS` and `sene/` are the owner's plain directories).
+- Protocol: `plans/2026-09-16_te-tracks-redesign/02_orchestration.md` (loop, standing authorizations, milestone
+  reviews, umbrella pin bumps); package files change only through codex units, records and prompts under
+  `docs/_internal/` are the orchestrator's; commits on `redesign-2026-09` without push; no AI attribution in
+  commit messages; prose affirmative, comments state intent.

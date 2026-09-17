@@ -1,6 +1,6 @@
 Divergent review of the te-tracks programme's stance on TE annotation, classification rungs, genic context and
 counting, for three single-cell datasets. Repository: /workspaces/Meta-Aging/01_modules/te-tracks (branch
-redesign-2026-09, commit __HEAD__). You are a read-only reviewer; write exactly one file,
+redesign-2026-09, commit 8589873). You are a read-only reviewer; write exactly one file,
 /workspaces/Meta-Aging/01_modules/te-tracks/docs/_internal/redesign-2026-09/reviews/field_divergent.md, and change nothing
 else. No git writes (the checkouts under /workspaces/Meta-Aging/01_modules/.ref/ are git repositories too).
 
