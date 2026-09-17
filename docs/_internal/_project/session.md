@@ -233,17 +233,18 @@ for measurement and consultation on C2, C4, C8 and C11; the rulings and the owne
 GRCm39-2024-A gene GTF was extracted from the owner's download to
 `_scratch/te-tracks-audit/refs/refdata-gex-GRCm39-2024-A/genes/genes.gtf.gz` (GENCODE vM33 filtered, 33,696 genes,
 834,423 exon rows, md5 `7a998f670d6d0bdf599c046284da051b`; contigs `chr`-named, 61). A Dfam census of the 1,220
-interspersed names runs against the live API (Dfam 4.0, May 2026) into
-`_scratch/te-tracks-audit/field/dfam_census_1220.tsv`; the 40-name probe hit every LTR, SINE and DNA name exactly
-and no LINE name, since Dfam models L1 as `_5end`, `_orf2` and `_3end` parts.
+interspersed names against the live API (Dfam 4.0, May 2026) is complete: 1,047 exact hits; 143 of the 173 misses
+are L1 names that Dfam models as `_5end`, `_orf2` and `_3end` parts; summary in `consults/adr_rulings_2026-09-17.md`,
+file at `redesign-2026-09/taxonomy/dfam_census_1220_20260917.tsv`.
 
 ## Next session starts here
 
 1. **Pick up here: collect the three consults, then close the ADR discussion.** Read
    `consults/{mask_policy,loci_gtf,structural_views}_consult.md` (check `status.sh --unit te-tracks-<mask|loci|structure>-consult`
    for `codex_exit`; final messages under `/tmp/scio-delegate/<unit>/<run>/final.md`), recompute their measurements on
-   the build, and summarize the Dfam census (`_scratch/te-tracks-audit/field/dfam_census_1220.tsv`, 1,220 rows when
-   complete: exact-hit share by class, the L1 part-model pattern) for C10's feasibility assessment. Then put C2 (mask
+   the build. The Dfam census is complete and summarized in `consults/adr_rulings_2026-09-17.md` (C10: 1,047 of
+   1,220 names exact; 143 of the 173 misses are L1 names that Dfam models as `_5end`, `_orf2`, `_3end` parts; the
+   census file is `redesign-2026-09/taxonomy/dfam_census_1220_20260917.tsv`). Then put C2 (mask
    policy set), C4 (promoter window and TSS source), C8 (`record_starsolo.gtf` and the Stellarscope/IRescue
    expectations) and C11 (structural views, plain-language brief) to the owner with the consults' measurements, and
    record the rulings in `consults/adr_rulings_2026-09-17.md`. Once ruled: a codex unit writes the `docs/DECISIONS.md`
