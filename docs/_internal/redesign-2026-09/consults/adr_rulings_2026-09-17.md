@@ -545,3 +545,173 @@ GRN edges, reconstruction candidates, aggregates and effects are dataset and int
 the consult's sketch and SQL examples are the material.
 
 **Next.** `../prompts/p9a_impl.md` is written from plan 19 as amended and launches after the phase 8 commit.
+
+## Sixth round (2026-09-17, later): the owner's rulings on the post-phase-8 questions
+
+The owner read `open_questions_premises_after_phase8_2026-09-17.md` and ruled, asking three technical
+questions of the record. Rulings first, then the answers.
+
+**Priority: ruled.** Contrasts leave the critical path. The primary question is how TE counting fits the
+multiome schema, so that the database supports every granularity and every forking query path from peaks
+through motifs to TF families and named TFs and GRN edges, with TE data layered onto it; the owner adds
+that a run of the TE tools may be needed before the shape is fully understood. Question 1's contrast
+choice is therefore recorded and parked: no estimator takes a contrast, so counting precedes it (answer 1
+below). Two decisions that do precede counting are the cell universe and the feature universe, and both
+are schema facts.
+
+**Age tiers (question 2): route D ruled**, the literature name lists as the working tier, with later
+manual verification of those names against Dfam. Read by the orchestrator as "D now, checked against
+Dfam by hand later"; the alternative reading, "verified manually against route D", changes one sentence
+and nothing built. The 9a Dfam view is unaffected: it publishes clade paths, per-rank statuses and
+divergence beside them, which is the material the manual check reads. Consequence: the young-name list
+becomes a durable documented alias set with citations, owned by the consuming layer.
+
+**Evidence ladder (question 3): route A ruled**, the strict funnel beside an allocated-support
+sensitivity.
+
+**Evidence vocabulary (question 4): route A ruled**, five orthogonal row-level fields. The owner asks why
+any combination would be meaningless; answer 4 below gives the five impossible cells and the reason the
+table is a completeness statement rather than a restriction.
+
+**Reconstruction (question 5): A then B ruled**, L1 before ERV, with the owner's observation that each may
+be a different problem, evidenced by McKerrow et al. 2023 (*Nucleic Acids Research* 51:2033–2045,
+`doi:10.1093/nar/gkad049`) and its code at `01_modules/.ref/5pL1sc`. That route is consensus-space
+quantification and is a third kind of measurement, neither genomic interval counting nor reconstruction;
+answer 5 below records what it is, what te-tracks can supply to it, and the two facts measured from the
+checkout today.
+
+**The 10x child (question 6): ruled.** The ARC GTF is expected equal to the GEX one from 10x's
+documentation and is still verified from the run's reference path as a fact; the 10x-matched child is
+built after the host build together with the first context-relation snapshot.
+
+**Chemistry audit (question 7): route A ruled**, run reproducibly and documented in the consuming layer,
+under the dataset's `40_transposable_elements/` or the umbrella's `integration/02_analysis/checks`, not
+inside te-tracks.
+
+**Projection tool (question 8): out of scope for now**, superseded by the schema priority above.
+
+**te-consumers packaging (question 9): route B ruled**, its own repository, hub-wired through `prov` and
+pinned per dataset. The cellranger tarball leaves the umbrella tree for a host cache with its sha256.
+
+### Answer 1: no estimator takes a contrast, and what does precede counting
+
+IRescue, Stellarscope, TEsingle and STARsolo's EM each operate within one library, over one cell's or one
+molecule's candidate set. None reads a condition label, so every contrast is strictly downstream of
+counting and the owner's ordering holds. One related choice is a schema fact rather than a contrast: the
+estimators learn their allocation within whatever molecule population a run contains, so a run pooling two
+conditions lets one condition's ambiguity shape the other's estimate. Runs are therefore per library, with
+`run_id` per library, and pooling across conditions never happens at estimation time.
+
+Two decisions do precede counting, and both are schema decisions:
+
+- the **cell axis**: which barcodes are eligible, which must equal the roster the peaks and the labels
+  already use, so the RNA matrix joins the existing nuclei;
+- the **feature axis**: which TE features exist and at which grain, and under which universe, because the
+  row axis binds to the registration through `(universe_name, variant, feature_level, key_grammar)`.
+
+### Answer 2: aligning the RepeatMasker library and the Dfam release
+
+The 2018 library against Dfam 4.0 is a join gap over names, never over coordinates: every interval,
+every record identity and both hashed ids come from the pinned UCSC run and are untouched by the snapshot.
+The gap can break three things, and the 9a view carries a status for each: a name the current release no
+longer holds (26 names, 38,569 records, 1.02% of `interspersed`); a name whose model has changed shape, so
+its current length is no denominator for a copy annotated under the old model; and a name whose
+classification has moved, where the 2026 curation is the better answer to the lineage question.
+
+| route | what it gives | what it costs |
+|---|---|---|
+| align down to a 2018-era Dfam | names and models contemporaneous with the annotation | the metadata the view exists for: the classification tree with Wicker equivalents, per-model clades and curated lengths grew in 3.x and 4.0; RepBase 20181026 is no longer openly distributed, so an aligned library is not reliably obtainable, while Dfam 4.0 is CC0 |
+| align up: re-run RepeatMasker on mm39 with a current library | one self-consistent annotation | a new `CATALOG_ID` and a de novo annotation project the owner excluded; it breaks parity with the three datasets' cellranger references and with the legacy TEtranscripts membership |
+| keep the split pin, status every name | the current curated taxonomy over the established annotation, with drift visible per row | the drift is real and must be measured rather than asserted |
+
+The split pin is the right choice for the purpose Dfam serves here, which is the aggregate and lineage
+vocabulary and the clade evidence for the age question. The one place alignment genuinely bites is model
+coordinates used as a completeness denominator, which is exactly the L1 prefix question of route A above:
+`L1MdA_I`'s Dfam parts sum to 7,002 bp while the catalog's row-implied lengths for that name run 4,915 to
+8,042 bp. The remedy is a per-name projection status comparing the two, not a different snapshot; plan 19
+already forbids the part sum as a denominator, and the structural batch adds the status.
+
+### Answer 3: one STARsolo alignment, several count channels, and where cellranger remains
+
+The owner is right that no cellranger run is needed for the TE route. What each consumer needs from an
+alignment is a BAM carrying every reported alignment per read with corrected `CB` and `UB` tags; STARsolo
+emits all of that (`--soloType CB_UMI_Simple`, `--outSAMmultNmax -1`, `--outSAMattributes NH HI AS nM CB
+UB`), so one alignment per library feeds IRescue, Stellarscope and TEsingle, with per-tool preparation
+being a name sort and nothing else. That is the ruled C7 design, "all on one STARsolo re-alignment", and it
+is what makes the tools' differences estimator differences.
+
+Two precisions. First, STARsolo's own EM is a fourth channel for free only if the TE features sit in the
+run's solo annotation, and putting them there changes the gene counts too, because record features then
+compete with genes; single-exon features add no splice junctions, so the alignment is unaffected. The
+honest arrangement is one alignment, and separate `matrix_id`s for the gene channel, the TE channel and
+each tool's output. Second, cellranger stays relevant for exactly two reasons, neither of them a re-run:
+it is the provenance of the gene matrices, the cleaned barcode universes and the labels the whole analysis
+is keyed to; and the re-alignment must reproduce that barcode namespace, so the STARsolo run pins the
+matching ARC whitelist and cellranger-like correction (`--soloCBmatchWLtype 1MM_multi_pseudocounts`,
+`--soloUMIdedup 1MM_CR`, `--soloFeatures GeneFull` for the introns-included setting) and the pilot's first
+gate is barcode equality against the existing roster. Inside te-tracks, `25_cellranger_mkref.sh` is a
+portability gate proving the record profile's `gene_id` grammar survives a cellranger reference build; it
+reports unsupported without the binary and no pipeline depends on it.
+
+### Answer 4: the impossible cells of the evidence vocabulary
+
+The five fields are orthogonal in meaning, and a handful of their combinations cannot be produced by any
+dataset in this cohort. Naming them is what lets an empty query result read as "impossible here" rather
+than "not measured" or "measured zero", which is the same premise as measured-zero semantics applied to
+the vocabulary itself.
+
+| combination | why no dataset yields it |
+|---|---|
+| `pairing_level=same_nucleus` with `inference_source=unpaired_wholecell` | the whole-cell arms carry no chromatin from the same cell |
+| `replication_tier=single_tissue_animal` or `paired_tissue_animals` with `inference_source=paired_multiome` | 14761 pools three mice per library and recovers no animal identity |
+| `replication_tier=paired_tissue_animals` for any 14761 row | the Multiome has one tissue and no MouseID |
+| `rna_attribution=unique_locus` or `model_allocated_locus` on a subfamily-grain matrix | locus attribution is undefined at that grain |
+| `spatial_scope=TE_peak_intersection` with `pairing_level=same_nucleus` outside 14761 | the peaks and the paired nuclei are 14761's |
+
+A row from the whole-cell arm scoped to a TE–peak intersection is legal and useful: the interval is 14761's
+peak and the RNA evidence is genomic, so `pairing_level=condition_cross_dataset` states what it is. The
+constraint lives on pairing and replication, not on spatial scope.
+
+### Answer 5: the consensus-space route as a third kind of measurement
+
+McKerrow et al. mask the L1 family from the genome and append L1 consensus sequences as decoy
+chromosomes, then count proper read pairs whose read 1 begins in the model's 5′ region under strict
+mismatch and clipping filters. It answers "how much transcript initiating at this subfamily's 5′ UTR does
+this cell hold" and deliberately surrenders locus identity, solving multimapping by collapsing loci into
+the model instead of allocating among them. For mouse the 5′ UTR is a tandem monomer array with no single
+start, so the authors located an initiator match in the Orleans Reeler L1MdTf monomer and accepted read 1
+anywhere in a tandem repeat.
+
+Three consequences for this programme.
+
+- **It needs its own index**, so the "one alignment feeds everything" rule holds for the genomic routes
+  and not for this one. The counter reads `nM`, `CB` and `UB` and fetches by decoy region, all of which a
+  STARsolo run supplies, so cellranger is not required here either.
+- **It introduces a feature space the schema does not yet have.** Its features are
+  `(model_accession, model_version, window)` in consensus coordinates, which cannot join to peaks by
+  geometry at all; their only bridge to the peak world is subfamily identity, and their counts must never
+  be summed with genomic-space counts. The schema therefore needs a `feature_space` dimension alongside
+  the existing grains.
+- **It is the mouse 5′ initiation assay** the evidence ladder's rung five wants, and it applies to the
+  whole-cell 5′ paired-end arms and not to the 3′ single-end Multiome GEX. Its genomic counterpart is
+  weak for precisely the mouse reason: of the 10,351 records under the three subfamilies the paper
+  retains, 18 begin at model base 1, because RepeatMasker splits the monomer array.
+
+What te-tracks can supply, measured from the checkout today. The published masking set `L1Md.bed` holds
+232,494 intervals over 31 names and is reproduced exactly from the catalog by a case-insensitive `l1md`
+name filter; a case-sensitive `L1Md` filter gives 216,865 records over 25 names, so six ancient
+subfamilies (`L1MD`, `L1MD1`, `L1MD2`, `L1MD3`, `L1MDa`, `L1MDb`, 15,629 records) entered the mask through
+case folding. A pinned, name-explicit mask export makes that a decision instead of an accident, and the
+strict two-mismatch filter limits its consequence. The decoy set needs its release pinned as well: the
+paper's mouse decoys are Dfam part models (`L1MdTf_I_5end` and siblings, which the snapshot holds with
+accessions `DF000001864`, `DF000001849`, `DF000001807` and lengths 1,314, 1,277 and 1,328 bp), while the
+checkout's shipped `L1MdI.Consensus.fa` holds 25 full-length RepBase-style consensi named
+`L1_Md_Tf_Clade_I` and siblings at 6.2 to 7.5 kb, which its own README's ranges do not address. Resolving
+which consensus set is used, and pinning it by accession and version, precedes any adoption. The
+authors' exclusion of `L1MdTf_II`, `L1MdTf_III`, `L1MdGf_II`, `L1MdA_II` and `L1MdA_III` for similarity to
+the retained models is a decoy-set design choice with the same character as a universe predicate.
+
+The statistical note carries over with one caution: their per-cell negative binomial model with
+`log(total UMIs)` as a fixed offset suits counts this sparse, and with four animals per condition the unit
+of inference here stays the animal, so the offset model belongs inside an animal-level or mixed
+specification rather than a per-cell test across conditions.
