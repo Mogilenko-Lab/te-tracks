@@ -1,7 +1,7 @@
 # Consult: the unified TE schema, the interactive genome projection and reconstruction as a consumer (codex, read-only)
 
 You are consulted on design. Working directory: `/workspaces/Meta-Aging/01_modules/te-tracks`, branch
-`redesign-2026-09`, tree clean at the commit that carries this prompt. You write exactly one file:
+`redesign-2026-09`; the tree carries the phase 8 implementer's uncommitted work while you run. You write exactly one file:
 `docs/_internal/redesign-2026-09/consults/unified_te_schema_consult.md`. You change nothing else. No git writes
 anywhere (the checkouts under `/workspaces/Meta-Aging/01_modules/.ref/` are git repositories too; `14839-DM-cGAS`
 there is the owner's copy, read it and leave it alone; `sene/` you leave alone), no installs, no network. Export
@@ -55,7 +55,9 @@ The downstream structure the schema must fit (14761-DM D2 outline, `02_analysis/
    Q5 (intron-retention views).
 4. `docs/_internal/redesign-2026-09/taxonomy/dfam_census_1220_20260917.tsv` and
    `taxonomy/dfam_classes_20260917.json` (each node carries `wicker_equiv`, `repeatmasker_type` and
-   `repeatmasker_subtype`); the owner ruled a Dfam view with Wicker's rank names, per-rank status and the clade per
+   `repeatmasker_subtype`) and `taxonomy/dfam_interspersed_mm39_snapshot.json.gz` with its provenance (Dfam 4.0
+   metadata: `summaries` keep every search hit per name, `records` hold full metadata without sequences for the
+   exact-name hits and the strict `_5end`, `_orf2`, `_3end` part models only, by design); the owner ruled a Dfam view with Wicker's rank names, per-rank status and the clade per
    model as the age-tier evidence, admitted now.
 5. `/workspaces/Meta-Aging/14761-DM/docs/_internal/_project/plans/2026-09-11_codebase-topology/02_next_session_agenda.md`
    and its siblings in that directory (the D2 outline and the D1 consult), `/workspaces/Meta-Aging/AGENTS.md` (the
