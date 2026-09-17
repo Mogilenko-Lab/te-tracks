@@ -184,3 +184,9 @@ same lines and confirms the following, which supersede the bullets above where t
   setup_STAR_index.sh:92-96`) and passes the TE GTF to TEsingle at count time (`run_STAR_TEsingle.sh:96`, with
   `--stranded`, `--cutoff` 100 and STAR `--outFilterMultimapNmax`/`--winAnchorMultimapNmax` from the script's
   variables). The "combined index" sentence in the benchmarking paragraph above describes the benchmark only.
+- **Identical four-tuples collapse before counting.** `TEindex.TE_annotation` translates every overlapping GTF row to
+  `fullShortIdxDict[idx]`, the index of its `transcript_id:gene_id:family_id:class_id` tuple, so two rows carrying the
+  same four attributes are one competitor and one count column; `subfLengthDict` sums their lengths rather than
+  taking a block union (`TEtools/TEindex.py:252-275,329-364`; loci consult M6, 2026-09-17). TElocal keeps each row a
+  separate entry until reporting. The Martirosyan STAR recipe sets `outFilterMultimapNmax 100` and
+  `winAnchorMultimapNmax 200` (`run_STAR_TEsingle.sh:12-13`); the dissertation text's 100/150 describes its own runs.

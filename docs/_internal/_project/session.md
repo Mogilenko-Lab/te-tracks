@@ -237,26 +237,30 @@ interspersed names against the live API (Dfam 4.0, May 2026) is complete: 1,047 
 are L1 names that Dfam models as `_5end`, `_orf2` and `_3end` parts; summary in `consults/adr_rulings_2026-09-17.md`,
 file at `redesign-2026-09/taxonomy/dfam_census_1220_20260917.tsv`.
 
+**Consults collected** (2026-09-17, later): all three units succeeded; every number the orchestrator rechecked
+reproduces (mask census by bedtools for both GTFs, instance union, LTR adjacency, divergence bins, chr1 body pairs,
+STARsolo GTF size arithmetic, contig dictionary, registration counts). Results and recommendations are in
+`consults/adr_rulings_2026-09-17.md`; two corrections landed in the synthesis and the TEsingle notes (STAR anchors
+100/200 in the scripts; TEsingle collapses identical four-tuples).
+
 ## Next session starts here
 
-1. **Pick up here: collect the three consults, then close the ADR discussion.** Read
-   `consults/{mask_policy,loci_gtf,structural_views}_consult.md` (check `status.sh --unit te-tracks-<mask|loci|structure>-consult`
-   for `codex_exit`; final messages under `/tmp/scio-delegate/<unit>/<run>/final.md`), recompute their measurements on
-   the build. The Dfam census is complete and summarized in `consults/adr_rulings_2026-09-17.md` (C10: 1,047 of
-   1,220 names exact; 143 of the 173 misses are L1 names that Dfam models as `_5end`, `_orf2`, `_3end` parts; the
-   census file is `redesign-2026-09/taxonomy/dfam_census_1220_20260917.tsv`). Then put C2 (mask
-   policy set), C4 (promoter window and TSS source), C8 (`record_starsolo.gtf` and the Stellarscope/IRescue
-   expectations) and C11 (structural views, plain-language brief) to the owner with the consults' measurements, and
-   record the rulings in `consults/adr_rulings_2026-09-17.md`. Once ruled: a codex unit writes the `docs/DECISIONS.md`
-   entries (package file; the orchestrator supplies the ruled text), the orchestrator rewrites plan
-   `18_phase8_gene_child_seam.md` from the rulings and the consults (`gene_child_consult.md`,
-   `field_practice_consult.md`, the three above) and writes `prompts/p8_impl.md` aligned with
-   `reviews/{m5,p6,p7,m7}_rulings.md` (family and assembly separate, `GENOME=mm39` with `FAMILY=te_mm39_gene`, parent
-   pinned by full `BUILD_ID`, child `.staging`, alias table copied by digest, explicit variant in exporter and
+1. **Pick up here: close the ADR discussion.** The three consults are collected, verified and committed
+   (`consults/{mask_policy,loci_gtf,structural_views}_consult.md`; verified numbers and recommendations in
+   `consults/adr_rulings_2026-09-17.md`, section "Consult results"). Put C2 (mask policy set), C4 (promoter window
+   (10000,2000) and TSS source), C8 (`record_starsolo.gtf` in phase 9 by scope amendment, about 4.84 GB more per
+   build) and C11 (structural views after the host build) to the owner with those numbers, record the rulings in
+   the same file, then: a codex unit writes the `docs/DECISIONS.md` entries (package file; the orchestrator supplies
+   the ruled text); the orchestrator rewrites plan `18_phase8_gene_child_seam.md` from the rulings and the consults
+   (`gene_child_consult.md`, `field_practice_consult.md`, the three above) and writes `prompts/p8_impl.md` aligned
+   with `reviews/{m5,p6,p7,m7}_rulings.md` (family and assembly separate, `GENOME=mm39` with `FAMILY=te_mm39_gene`,
+   parent pinned by full `BUILD_ID`, child `.staging`, alias table copied by digest, explicit variant in exporter and
    registration, the GTF as a child source role and a parameter, verifier branch for non-null parents, context
-   `not_computed`, per-pair status backlog, the bulk-scope statement of C3). Phase 9 gains the C9 binding-rule
-   correction and join fixture, the C10 label-surprise and constant-flag notes, the RNA qualification limits in the
-   parking handoff, and C8 if the owner amends scope.
+   `not_computed`, per-pair status backlog, the bulk-scope statement of C3, the default mask alone). Phase 9 gains
+   the C9 binding-rule correction and join fixture, the C10 label-surprise and constant-flag notes, the RNA
+   qualification limits in the parking handoff (TEsingle mates, UMI graph, hard ties; Stellarscope boundary and
+   overlap preselection; the IRescue 5.5/3.5 against 6/3 oracle question), a failed-build cleanup case, and C8 if
+   the owner amends scope.
 2. Phases 8 and 9 with `p8_impl.md` and `p9_impl.md`, each aligned with the rulings in its plan file before launch;
    phase 8 opens with a codex design consult on the child family's topology, architecture and approach, recorded under
    `redesign-2026-09/consults/` and ruled by the owner before `p8_impl.md` is finalized (owner, 2026-09-16); the
@@ -276,8 +280,9 @@ file disagree, and the disagreement is a deviation to report. Rulings the owner 
 - ADR discussion: ruled C1 (adopted; compat kept, 18439-DM to be recounted), C3 and C5 (geometry only, consumers
   derive; context `not_computed` in phase 8), C6 (confirmed; GENCODE), C7 (STARsolo re-alignment; IRescue,
   TEsingle, Stellarscope for loci; 14761 RNA pilot first; ATAC direct counts, no ATAC EM at first), C9 (confirmed)
-  and C10 (note now, rank view later, Dfam feasibility assessed). Open with consults running: C2 mask policy set,
-  C4 promoter window and TSS source, C8 loci GTF, C11 structural views. See `consults/adr_rulings_2026-09-17.md`.
+  and C10 (note now, rank view later; Dfam census 1,047 of 1,220 exact). Open, with consults collected and
+  verified: C2 mask policy set, C4 promoter window, C8 loci GTF, C11 structural views. See
+  `consults/adr_rulings_2026-09-17.md`.
 - Rulings the owner may overturn (recorded where made): instance weighting; `CATALOG_ID` scope (`rmsk_out` alone,
   decompressed text tables, `p7_rulings.md` Opus A2 and `m7_rulings.md` divergent H3); reader labels outside the
   identity (`m7_rulings.md` divergent H2); `subfamily.gtf`; compat as membership; `gene_context` deferred; pandas

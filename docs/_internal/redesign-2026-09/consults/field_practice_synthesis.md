@@ -20,8 +20,9 @@ the checkouts consumes genomic alignments and assigns reads to genomic TE interv
 (`X/TEsingle/TEtools/AlignmentIO.py:13-81`), Stellarscope (`X/stellarscope/.../stellarscope_assign.yaml`),
 IRescue (`X/irescue/irescue/map.py`), MATES (`X/MATES/build_reference.py`), scTE (`X/scTE/scTE/base.py`), and
 the dissertation's STARsolo route. The alignment recipe that recurs is STAR with `outFilterMultimapNmax 100`
-and `winAnchorMultimapNmax 100` or `150` (`thesis_2023_excerpts.md`, `X/TEsingle_Martirosyan_analysis_code/
-TEsingle/run_STAR_TEsingle.sh:60`, `X/irescue/README.md`). Ambiguity between candidate loci is then resolved
+and a `winAnchorMultimapNmax` of 100 (IRescue's README), 150 (the dissertation text) or 200 (the Martirosyan
+script, `X/TEsingle_Martirosyan_analysis_code/TEsingle/run_STAR_TEsingle.sh:12-13`; corrected 2026-09-17 from
+the loci consult). Ambiguity between candidate loci is then resolved
 after alignment, by EM over the retained alternatives.
 
 **Consensus space is the curation and browsing coordinate system.** Dfam and RepeatMasker define a
@@ -129,7 +130,7 @@ F7).
 | rung | field practice | te-tracks today | missing |
 |---|---|---|---|
 | locus = RepeatMasker record | TEsingle, TElocal, Stellarscope `locus`, IRescue record BED, MATES, dissertation STARsolo | `record.bed`, `record.gtf`, registration `(record, *)` | a GTF with `gene_id` = record for STARsolo GeneFull (today `record.gtf` has `gene_id` = subfamily, the dissertation's "subfamily GTF") |
-| insertion / instance | Stellarscope `instance_id`, IRescue instance mode; curated ERV and full-length L1 sets | `rmsk_instance_members`, `instance_id` in `record.gtf`, `(instance, instance_alias)` | a block-union view per instance preserving gaps and mixed-name status; TEsingle and TElocal append each GTF row as its own competitor, so an alias repeated on rows does not merge them |
+| insertion / instance | Stellarscope `instance_id`, IRescue instance mode; curated ERV and full-length L1 sets | `rmsk_instance_members`, `instance_id` in `record.gtf`, `(instance, instance_alias)` | a block-union view per instance preserving gaps and mixed-name status; TElocal keeps each GTF row a separate competitor, while TEsingle collapses rows with an identical four-tuple into one (loci consult M6, corrected 2026-09-17), so a repeated alias merges fragments only where the whole tuple repeats |
 | subfamily = `rmsk_name` | the common reporting rung; scTE/SoloTE metagenes count here directly | `subfamily.bed/.gtf/.saf`, `(subfamily, *)`, `rmsk_taxonomy.tsv` with `record_count` and `instance_count` | nothing; estimate at record then sum once per name, or count grouped features directly, and say which |
 | family = canonical family | descriptive rollup | `family.bed`, `(family, family_bucket)`, `taxonomy_canonical` | none required |
 | class = source `repClass` | descriptive rollup | `taxonomy_canonical.canonical_class` | a documented conserving rollup example; no class export |
