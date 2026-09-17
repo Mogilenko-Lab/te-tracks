@@ -55,9 +55,30 @@ spleen–lung pairing.
 feasibility assessment of the Dfam route.** The orchestrator's probe on 2026-09-17: the Dfam API is
 reachable from the container and reports Dfam 4.0 (May 2026; 30,621 curated families); of the ten most
 abundant names per class, all ten LTR, SINE and DNA names hit exactly with a classification lineage, and
-none of the ten LINE names did (Dfam models L1 as `_5end`, `_orf2`, `_3end` parts). A census of all 1,220
-interspersed names is in `_scratch/te-tracks-audit/field/dfam_census_1220.tsv` (running at the time of
-writing); its summary lands in the next session record.
+none of the ten LINE names did (Dfam models L1 as `_5end`, `_orf2`, `_3end` parts). The census of all 1,220
+interspersed names (2026-09-17, Dfam 4.0 API, `format=summary`, 590 s, no errors) is kept at
+`../taxonomy/dfam_census_1220_20260917.tsv`. Exact-name hits by class:
+
+| class | names | exact | records | records under exact names |
+|---|---:|---:|---:|---:|
+| LTR | 630 | 609 | 1,105,064 | 1,076,099 |
+| SINE | 37 | 36 | 1,495,172 | 1,486,191 |
+| LINE | 198 | 49 | 976,368 | 47,256 |
+| DNA | 293 | 291 | 160,425 | 160,386 |
+| RC, Retroposon, Unknown, Unspecified | 62 | 62 | 23,553 | 23,553 |
+| total | 1,220 | 1,047 | 3,760,582 | 2,793,485 |
+
+The 173 misses hold 967,097 records; 143 of them are L1 names (of 149), and for all but one the API returns the
+same name with a `_5end`, `_orf2` or `_3end` suffix, so an L1 mapping rule joins the RepeatMasker whole-element
+name to Dfam's part models and lifts coverage to nearly every record. The remaining misses are 21 LTR `-int`
+names with no result (`ERVL-B4-int`, `ERVL-E-int`, ...), 12 ERVK and 8 ERVL names, 5 L2, 1 CR1, 2 DNA
+(`Tigger1a_Art`, `Tigger1a_Mars`) and `ID`. Feasibility: the route works from the container for the 1,220
+interspersed names in about ten minutes; a full admission adds the release pin (the version endpoint reports
+Dfam 4.0, May 2026), the L1 part rule, an accession choice for the names returning several hits, and explicit
+states for the misses. The lineage strings returned (for example
+`...;Class_I_Retrotransposition;...;Gypsy-ERV;Retroviridae;Orthoretrovirinae;ERV2-group;ERV3;MaLR` and
+`...;L1-dependent_Retroposon;SINE;7SL-RNA_Promoter;No-core;L1-dependent;Alu`) place B1 under the Alu branch and
+the MaLR groups under ERV3, which is the rank material the view would publish.
 
 ## Open, with the consult unit assigned
 
