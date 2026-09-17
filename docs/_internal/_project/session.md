@@ -348,7 +348,8 @@ file disagree, and the disagreement is a deviation to report. Rulings the owner 
   vocabulary (`pairing_level`, `rna_attribution`, `spatial_scope`, `replication_tier`, `inference_source`; agree, 14761's
   discussion), reconstruction calibration (L1 prefix and completeness first, then ERV; agree), part-match scope (adopted), the
   projection tool (marimo with jscatter panels and an embedded genome-browser prototype over DuckDB and Parquet; agree, D2's
-  decision). The owner has not yet read `docs/DECISIONS.md` as written (`829e0ad`); invite that reading. Pending design inputs:
+  decision). The owner has not yet read `docs/DECISIONS.md` as written (`829e0ad`); invite that reading. The owner asked for a second re-orientation after phase 8; the lay-out of the biology, fourteen premises and ten
+  open questions with routes is `consults/open_questions_premises_after_phase8_2026-09-17.md`, the successor of the pre-phase-8 file. Pending design inputs:
   the ARC GTF verification for the 10x child; a TES-side window if the 3′ pilot needs it. The `te-consumers` directory and the
   cellranger tarball are untracked in the umbrella until the owner commits them or asks for a repository.
 - Rulings the owner may overturn (recorded where made): instance weighting; `CATALOG_ID` scope (`rmsk_out` alone,
