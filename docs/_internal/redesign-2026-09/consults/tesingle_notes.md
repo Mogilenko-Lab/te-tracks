@@ -148,3 +148,39 @@ choice the design made for counting.
   donor age (`Seurat/scripts/Martirosyan_integration.R:22`). A published, versioned age or intactness annotation is
   therefore absent from the reference practice, which is the gap te-tracks' divergence and consensus-coordinate
   columns can fill.
+
+## Corrections from source, after the field consult (orchestrator, 2026-09-16, later the same day)
+
+The codex field consult (`field_practice_consult.md` Q7, M5) probed the TEsingle source; the orchestrator read the
+same lines and confirms the following, which supersede the bullets above where they differ.
+
+- **UMI graph.** `cell_graph.grapher` links every pair of a cell's UMIs at Hamming distance 1 through the wildcard
+  index and `subgrapher` takes connected components, with no annotation-compatibility or abundance condition
+  (`TEtools/CellGrapher.py:4-39`). A chain `AAAA, AAAT, AATT` is one molecule although its ends differ at two bases,
+  and one UMI shared by molecules of unrelated genes is one node.
+- **EM scope.** `rearranger` routes gene-only molecules (unmoored gene-only, category 2; anchored gene-only,
+  category 5) past the EM as fixed counts; every TE-containing molecule enters it: unmoored TE-only (category 0),
+  unmoored gene+TE split 0.5/0.5 (category 1), anchored TE-only (category 3) and anchored gene+TE after the
+  `te_frac` weighting (category 4) (`TEtools/Counters.py:19-33,195-201`). The earlier bullet's "unmoored molecule
+  vectors go through the EM" is therefore too narrow.
+- **`te_frac`.** `resolver` computes `te_frac = category[3] / (category[3] + category[5])`: anchored TE-only over
+  anchored TE-only plus anchored gene-only; anchored gene+TE molecules are outside the denominator, and a zero
+  denominator gives zero TE weight (`Counters.py:36-41`).
+- **Final allocation.** After convergence `compute_likeliest` adds one count to the `argmax` feature of each
+  molecule's masked weight vector, ties resolving to the first index in feature order (`TEtools/EM.py:30-36,114`).
+  TE-containing molecules therefore yield hard integer allocations; only the gene-only path can leave fractional
+  gene counts. `preprocess` builds Boolean candidate masks from `count != 0`, so a zero initial weight removes a
+  candidate (`EM.py:55-61`). There is no effective-length weighting; the dissertation prototype had one
+  (`Thesis_2023/quantification_method/EM/multiprocess_wrapper_cole.py`).
+- **Paired mates.** `read_in_alignment` groups records by `(CB, UR, query_name)` and appends every record as an
+  alternative alignment with its own `is_reverse`, without `is_read1`, `is_read2`, `is_proper_pair` or `HI`
+  handling (`TEtools/AlignmentIO.py:60-76`). A uniquely aligned proper pair becomes two entries with opposite
+  annotation strands, and `count_reads` treats a read as anchored only with exactly one entry (`Counters.py:71-72`).
+  The two whole-cell datasets' cellranger BAMs are fully paired (both cDNA mates aligned), so a TEsingle run on a
+  paired STARsolo BAM needs a fragment-aware fix or a declared single-mate route before it counts anything.
+- **Index recipes differ between the two paper checkouts.** The benchmarking scripts build a combined gene-and-TE
+  STAR index (`TEsingle_benchmarking_scripts/index_generation/T2T_STAR_index_generation.sh`); the Martirosyan
+  analysis builds the STAR index from the gene GTF alone (`TEsingle_Martirosyan_analysis_code/TEsingle/
+  setup_STAR_index.sh:92-96`) and passes the TE GTF to TEsingle at count time (`run_STAR_TEsingle.sh:96`, with
+  `--stranded`, `--cutoff` 100 and STAR `--outFilterMultimapNmax`/`--winAnchorMultimapNmax` from the script's
+  variables). The "combined index" sentence in the benchmarking paragraph above describes the benchmark only.

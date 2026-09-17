@@ -101,6 +101,85 @@ scaffold miss prefix stripping yields, and keeps preflight local to the child.
 
 ## Facts still unverified
 
-The nf-core "filtered" gene GTF the cGAS gene pass used (its filter recipe), the GTF inside the 10x
-cellranger-arc reference used by 14761 and therefore whether it equals vM37, and the TE-Seq behaviour
-cited second-hand. The compat count is now measured and no longer open.
+The GTF inside the 10x references: the two whole-cell datasets were aligned against
+`refdata-cellranger-GRCm39-2024-A` and the Multiome against `refdata-cellranger-arc-GRCm39-2024-A` (BAM headers
+and web summaries, 2026-09-16); 10x documents both as GENCODE vM32 filtered by biotype, and the reference
+directories live on the sequencing core's machine, so the GTF bytes are unverified here. The nf-core "filtered"
+gene GTF the cGAS gene pass used (its filter recipe) and the TE-Seq behaviour cited second-hand remain
+unverified. The compat count is measured and no longer open.
+
+## Additions from the field consult and the field reviews (2026-09-16, later the same day)
+
+Sources: `field_practice_consult.md` (codex), `../reviews/field_bioinf.md`, `../reviews/field_divergent.md`,
+ruled in `../reviews/field_rulings.md` and synthesized in `field_practice_synthesis.md`. Every number was
+recomputed by the orchestrator (synthesis section 9).
+
+### Dataset facts the decisions now rest on
+
+| dataset | pipeline and chemistry | reference | BAM layout | multimappers in the BAM |
+|---|---|---|---|---|
+| 14616 spleen | cellranger 9.0.1, `Single Cell 5' PE OCM v3`, introns included | `refdata-cellranger-GRCm39-2024-A` | both cDNA mates aligned, proper pairs | one record per read; 14.8% carry `NH>1`, none secondary |
+| 14782 lung | cellranger 10.0.0, same chemistry, introns included | same reference | same | same pattern |
+| 14761 spleen GEX | cellranger-arc 2.1.0, Multiome v1, introns included | `refdata-cellranger-arc-GRCm39-2024-A` | single-end (R2) | one record per read; 3.8% `NH>1` |
+| 14761 spleen ATAC | cellranger-arc 2.1.0 | same | paired fragments | |
+
+Consequence: every EM route needs a re-alignment that emits all alternatives; the 10x references are five
+GENCODE releases behind the child's vM37 pin, so C5's reconciliation applies to every consumer.
+
+### Amendments to C1 to C6
+
+- **C3.** Status becomes per record × transcript pair with a per-record roll-up (the four-state vocabulary
+  otherwise conflates "no body overlap" with "annotation present, nothing in the window" and drops a host
+  when one of six isoforms is unsupported). Phase 8 states in `README.md` and `docs/DECISIONS.md` that the
+  exon-subtracted SAF is the bulk product and the single-cell context product is the deferred relation.
+- **C4.** The relation carries `utr5` and `utr3` flags, bases and exact segments per pair with a
+  coding-boundary status (vM37: 186,133 UTR rows, 95,682 5′ and 90,451 3′ by strand and CDS bounds; 10,247
+  records touch a 5′ UTR and 46,588 a 3′ UTR). Host-gene promoter windows and TE-end windows stay separate
+  relations.
+- **C5.** The reconciliation target for all three datasets is the 10x 2024-A GTF (documented as vM32)
+  against vM37; the D2 keys become `te_catalog_id` plus `te_build_id`, with intersection coordinates and a
+  counting-run id (consult Q5).
+- **C1, C2, C6** stand as written.
+
+### New candidate decisions
+
+**C7. The RNA route and grain for 14616 and 14782, and who qualifies it.** Neither dataset has a written
+TE requirement. Recommendation: record-level estimation with multimappers retained, subfamily as the
+reported rung, family and class as descriptive rollups; TEsingle as the first consumer to qualify, with
+STARsolo GeneFull plus `soloMultiMappers EM` and a unique-only run as comparators, all on a STARsolo
+re-alignment with `outFilterMultimapNmax 100`, `winAnchorMultimapNmax 100` or `150` and `outSAMmultNmax -1`.
+Promotion criteria for TEsingle: paired-mate handling (its reader appends mates as alternative alignments
+with opposite strands), UMI-collision behaviour (unconstrained Hamming-1 components) and hard-tie policy
+(argmax, first index), accepted or corrected in a pinned fork. Reporting contract: animal-replicated,
+tissue-paired claims from the whole-cell arm; descriptive, direction-corroborating use of the Multiome arm.
+*Owner settles:* the route, the grain, the qualification owner, and the reporting contract.
+
+**C8. A STARsolo locus-as-gene GTF profile, `record_starsolo.gtf`.** `gene_id = transcript_id = locus =`
+record alias, `rmsk_name` and canonical taxonomy as attributes, its own export contract and a fixture in
+which two records of one name become two genes. Prevents STARsolo GeneFull counting 1,220 subfamilies where
+3,764,949 loci were meant; today's `record.gtf` has the dissertation's subfamily grammar and stays as
+TEsingle's input. *Owner settles:* phase 9 by scope amendment, or the next core snapshot; until then a
+pinned consumer rename with its digest recorded is acceptable.
+
+**C9. The matrix binding rule names the universe and variant.** `docs/OUTPUTS.md` binds a run's matrix to
+`(feature_level, key_grammar)`; the registration holds 3,764,949 `interspersed` and 5,320,771 `all_rmsk`
+rows at `(record, rmsk_record_id)`, so a join on the documented pair doubles every interspersed count. The
+rule becomes `(universe_name, variant, feature_level, key_grammar)` with a join fixture over both universes.
+Phase 9 documentation and check. *Owner settles:* confirmation.
+
+**C10. Rank vocabulary and Dfam admission scope.** A later core view with one row per name carrying the Dfam
+lineage, accession and model version, a named rank scheme, per-rank status (mapped, missing, ambiguous,
+inapplicable) and the raw and canonical RepeatMasker labels beside it; pinned to a Dfam release. Now: a
+label-surprise note in `docs/OUTPUTS.md` (B1 under `Alu`, 558,808 records; `ERVL-MaLR`; hyphenated DNA
+superfamilies; 5,893 class-less records) and `rmsk_overlap_flag` documented as constant false for the mm39
+source. *Owner settles:* the rank scheme and whether admission covers all 18,484 names or the 1,220
+interspersed names first.
+
+**C11. Structural and end-window views, keyed on insertions.** Later snapshots publish an instance
+block-union view (gaps preserved, mixed-name and mixed-strand status kept), strand-aware record-end windows
+with consensus-prefix eligibility, divergence-bin universes with pinned thresholds, and LTR–internal
+candidate pairs with strand, order and distance rules. Measured reasons: 445,649 multi-record instances;
+17,947 LTR instances hold both an internal and an LTR name while 722,280 hold LTR names only; promoter-intact
+L1 at the record is 588 loci (75 ≥ 6 kb) and at the insertion 583 to 2,221; row-implied consensus lengths
+vary within 145 of 149 L1 names. *Owner settles:* ordering against phase 9 and the host build; nothing ships
+before its evidence gate.
