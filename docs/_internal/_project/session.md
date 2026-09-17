@@ -291,10 +291,10 @@ it. Fix unit `te-tracks-p8-fix` (run `20260917T164350Z-3711107`, codex exit 0, 1
 `prompts/p8_fix.md` in twelve files; orchestrator verification (recorded in the rulings): verifier exit 0 with the new `ok child SAF
 rows` line, 159 s, peak 3,493,396,480 bytes; builds and published root byte-untouched (140 files); both symlink spellings exit 2;
 fixture coverage row recomputed; scratch through `$TE_TRACKS_REFROOT/pubtest`; `.ref` clean; reflog `cf1b150`. The orchestrator's
-own `tests/run.sh core` re-run after the fix was still running at compaction (the fix unit's run: 23 pass). The orchestrator's records
+own `tests/run.sh core` re-run after the fix passed (23 pass, 15 min 14 s; `pubtest` empty, no `p8impl/`). The orchestrator's records
 (plans 18 and 19 amended, the fifth round, the schema consult, the p8 prompts, reviews and rulings, `prompts/p9a_impl.md`, this
-record) are committed as `4b117f2`; the tree holds the phase 8 implementation with its fix, uncommitted (nine modified files, ten
-untracked entries), awaiting the suite result and the phase 8 commit. The schema consult
+record) are committed as `4b117f2`; the phase 8 implementation with its fix is committed as `393ca76` ("Phase 8: the gene child family, first
+snapshot"). The schema consult
 landed as `consults/unified_te_schema_consult.md` (328 lines); its measurements were recomputed by the orchestrator (all equal; the
 census TSV's 4,367-record shortfall sits on the 20 multi-label names) and the fifth round is recorded in
 `consults/adr_rulings_2026-09-17.md`; plan 19's Dfam bullet is corrected (147 part sets and 26 missing; partial sets with
@@ -304,23 +304,22 @@ and launches after the phase 8 commit with `__HEAD__` replaced by that commit.
 
 ## Next session starts here
 
-1. **Pick up here: commit phase 8, then launch 9a.** (a) Run `tests/run.sh core` (about 15 min; expect 23 pass, check 81
-   reporting "15 geometry cases, 12 SAFs, 96 registrations", check 82 naming the SAF content, order and trailing-slash symlink
-   refusals; `pubtest` empty and no `_scratch/te-tracks-audit/p8impl/` afterwards). If it passes, append one line with the pass
-   count and wall time to "Orchestrator verification of the fix" in `reviews/p8_rulings.md`, then `git add -A && git commit -m
-   "Phase 8: the gene child family, first snapshot"` (the commit carries the implementation and fix, plans 18 and 19, the fifth
-   round, the schema consult, the p8 prompts, reviews and rulings, `prompts/p9a_impl.md` and this record; no AI attribution). If
-   it fails, the failing check is named in the output; rule and run a `p8_fix2` unit before committing. (b) Replace `__HEAD__` in
-   `prompts/p9a_impl.md` with `git rev-parse --short HEAD`, commit that edit as a record commit, launch `te-tracks-p9a-impl`
-   from it (launcher as a harness background task, `--effort xhigh`, timeout 600000; the unit rebuilds the core, about 12 min
-   and 6 GB resident, then the child, and republishes both into the scratch root beside the old archives; 316 GB free). When
-   terminal, re-verify from plan 19's 9a section: 27 export contracts, 51 payload files, `record_starsolo.gtf` with 3,764,949
-   rows and distinct `gene_id`s per namespace, `taxonomy_dfam.tsv` 1,047 / 147 / 26, the earlier `9ddf3622…` archive still
-   verifying, `CATALOG_ID` `90cc18be…` unchanged, the child summary unchanged with `CATALOG_ID` equal; then `prompts/p9a_review.md`
-   and `p9a_opus.md` from the templates, rulings `reviews/p9a_rulings.md`, fix, commit "Phase 9a: core additions before
-   acceptance". (c) 9b from `prompts/p9_impl.md` aligned with plan 19 as amended (the bedtools oracle; the host runbook into the
-   existing `docs/RUNBOOK.md`), the milestone 9 review, the owner's host build, the umbrella pin. (d) Bring the owner the fifth
-   round's five recommendations and invite the reading of `docs/DECISIONS.md`.
+1. **Pick up here: launch phase 9a.** Phase 8 is committed as `393ca76` ("Phase 8: the gene child family, first snapshot").
+   (a) Launch `te-tracks-p9a-impl` from `prompts/p9a_impl.md` (pinned to `393ca76`; launcher as a harness background task,
+   `--effort xhigh`, timeout 600000; the unit rebuilds the core, about 12 min and 6 GB resident, then the child, and republishes
+   both into the scratch root beside the old archives; 316 GB free). If `status.sh --unit te-tracks-p9a-impl` shows a run,
+   wait for it instead. When terminal, read its final message and re-verify from plan 19's 9a section: 27 export contracts, 51
+   payload files, `record_starsolo.gtf` with 3,764,949 rows and distinct `gene_id`s per namespace and the twelve attributes in
+   order, `taxonomy_dfam.tsv` 1,221 lines with `match_status` 1,047 / 147 / 26 and the three companion tables, the earlier
+   `9ddf3622…` archive still verifying, `CATALOG_ID` `90cc18be…` unchanged with a new core `BUILD_ID`, the child rebuilt on the
+   new parent with its summary unchanged and `CATALOG_ID` equal, core 26 checks passing, consumers with and without the shims
+   as the prompt expects, `git status --short` equal to the touch list. Then `prompts/p9a_review.md` and `p9a_opus.md` from
+   `review_template.md` and `opus_template.md` with 9a specifics (independent recomputation of the Dfam census from the snapshot,
+   the record profile's attribute bytes, the earlier-archive admission, the binding fixture, the STAR and cellranger gates),
+   codex review, the `opus-reviewer` agent, rulings `reviews/p9a_rulings.md`, fix, commit "Phase 9a: core additions before
+   acceptance". (b) 9b from `prompts/p9_impl.md` aligned with plan 19 as amended (the bedtools oracle; the host runbook into the
+   existing `docs/RUNBOOK.md`; expectations for the new files), the milestone 9 review, the owner's host build, the umbrella pin.
+   (c) Bring the owner the fifth round's five recommendations and invite the reading of `docs/DECISIONS.md`.
 2. Phases 8 and 9 with `p8_impl.md` and `p9_impl.md`, each aligned with the rulings in its plan file before launch;
    phase 8 opens with a codex design consult on the child family's topology, architecture and approach, recorded under
    `redesign-2026-09/consults/` and ruled by the owner before `p8_impl.md` is finalized (owner, 2026-09-16); the

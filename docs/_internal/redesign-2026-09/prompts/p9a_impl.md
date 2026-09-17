@@ -1,7 +1,7 @@
 # te-tracks phase 9a: core additions before acceptance (unit `te-tracks-p9a-impl`)
 
 Working directory: `/workspaces/Meta-Aging/01_modules/te-tracks` (branch `redesign-2026-09`, tree clean at HEAD
-`__HEAD__`, the phase 8 commit). You implement phase 9a as specified in the "Phase 9a" section of
+`393ca76`, the phase 8 commit). You implement phase 9a as specified in the "Phase 9a" section of
 `docs/_internal/_project/plans/2026-09-16_te-tracks-redesign/19_phase9_acceptance_park.md`; that plan is authoritative
 where this prompt and the plan disagree, and a disagreement is a deviation to report. Every item changes the core
 `BUILD_ID` and keeps `CATALOG_ID`.
