@@ -302,26 +302,49 @@ census TSV's 4,367-record shortfall sits on the 20 multi-label names) and the fi
 review constraints and a bedtools acceptance oracle for 9b. `prompts/p9a_impl.md` (263 lines) is written from plan 19 as amended
 and launches after the phase 8 commit with `__HEAD__` replaced by that commit.
 
+**Phase 9a implemented, reviewed twice, fix running; parking is now the goal** (2026-09-17, later).
+The owner ruled: te-tracks is parked in a state supporting the discussed inference for the three single-cell and
+single-nucleus datasets and the out-of-scope bulk RNA-seq dataset; contrasts leave the critical path and the multiome
+schema becomes the primary question; codex `gpt-6-astra` implements, Opus reviews each implementation and codex reviews
+each major seam; a final pass then cleans fixtures, laconicizes comments and distills `README.md`, followed by a codex
+fan-out validating every claim against the real repository outputs. `gpt-6-astra-pro` and `gpt-6-pro` are refused by this
+account, so implementers stay on `gpt-6-astra` at xhigh. Sixth-round rulings and the three technical answers (the
+RepeatMasker-Dfam release split, one STARsolo alignment feeding every consumer, the consensus-space route of McKerrow et
+al. with its measured mask reproduction) are in `consults/adr_rulings_2026-09-17.md`; the post-phase-8 lay-out of biology,
+premises and routes is `consults/open_questions_premises_after_phase8_2026-09-17.md`.
+`te-tracks-p9a-impl` finished (codex exit 0, 9,872 s, 40 files). Orchestrator verification before the reviews: core 26 of
+26 on the frozen tree, consumers 15 pass and 1 unsupported with the shims, each `record_starsolo.gtf` parsed row by row
+at 3,764,949 rows and distinct `gene_id`s over 59 contigs with the twelve attributes in order, the Dfam strict part rule
+recomputed from the snapshot agreeing with all 1,220 published rows, 51 inventory entries and 27 contracts, five
+`build_sources` roles with `catalog.sources` still `['rmsk_out']`, core `BUILD_ID` `763815187e…`, child `693ba1aa15…`,
+`CATALOG_ID` `90cc18be…` in both, the phase-8 archive verifying at exit 0, the child pinning the new parent with a
+byte-identical summary. The two reviews ran in parallel and independently: `reviews/p9a_codex.md` BLOCKING on two checks
+that pass mutations they should refuse (IRescue conservation defeated by `zip` truncation and `dict` overwrite; STARsolo
+support permitted on a gene the fixture does not support), both reproduced by the orchestrator in the code;
+`reviews/p9a_opus.md` PASS WITH ADVISORIES with one blocking documentation clause (`UCON4` is class-less and still
+inherits a Wicker code, so the missing-rank claim belonged to the 53 `Unknown`-leaf names) and nine advisories, the
+largest being that nine of ten derived rank columns can drift with check 33 still passing. `reviews/p9a_rulings.md`
+accepts every finding; `prompts/p9a_fix.md` carries eleven items and rebuilds and republishes because retaining the
+snapshot provenance and recording `rank_scheme_wicker_v1` in the identity both move `BUILD_ID`.
+The launcher's `result_exit=32` is explained: its blind-run guard greps the stream for `bwrap`, and the umbrella
+`AGENTS.md` sentence about bwrap is echoed by every codex run in this repository. Reported to the owner, unedited, because
+the guard belongs to the scio toolkit.
+
+
 ## Next session starts here
 
-1. **Pick up here: phase 9a is running.** Phase 8 is committed as `393ca76` ("Phase 8: the gene child family, first snapshot").
-   `te-tracks-p9a-impl` was launched at 17:32 UTC (run `20260917T173249Z-3759311`, gpt-6-astra xhigh); its final message lands
-   in `/tmp/scio-delegate/te-tracks-p9a-impl/20260917T173249Z-3759311/final.md`. (a) If that run is still alive or terminal,
-   use it; otherwise launch `te-tracks-p9a-impl` from `prompts/p9a_impl.md` (pinned to `393ca76`; launcher as a harness background task,
-   `--effort xhigh`, timeout 600000; the unit rebuilds the core, about 12 min and 6 GB resident, then the child, and republishes
-   both into the scratch root beside the old archives; 316 GB free). If `status.sh --unit te-tracks-p9a-impl` shows a run,
-   wait for it instead. When terminal, read its final message and re-verify from plan 19's 9a section: 27 export contracts, 51
-   payload files, `record_starsolo.gtf` with 3,764,949 rows and distinct `gene_id`s per namespace and the twelve attributes in
-   order, `taxonomy_dfam.tsv` 1,221 lines with `match_status` 1,047 / 147 / 26 and the three companion tables, the earlier
-   `9ddf3622…` archive still verifying, `CATALOG_ID` `90cc18be…` unchanged with a new core `BUILD_ID`, the child rebuilt on the
-   new parent with its summary unchanged and `CATALOG_ID` equal, core 26 checks passing, consumers with and without the shims
-   as the prompt expects, `git status --short` equal to the touch list. Then `prompts/p9a_review.md` and `p9a_opus.md` from
-   `review_template.md` and `opus_template.md` with 9a specifics (independent recomputation of the Dfam census from the snapshot,
-   the record profile's attribute bytes, the earlier-archive admission, the binding fixture, the STAR and cellranger gates),
-   codex review, the `opus-reviewer` agent, rulings `reviews/p9a_rulings.md`, fix, commit "Phase 9a: core additions before
-   acceptance". (b) 9b from `prompts/p9_impl.md` aligned with plan 19 as amended (the bedtools oracle; the host runbook into the
-   existing `docs/RUNBOOK.md`; expectations for the new files), the milestone 9 review, the owner's host build, the umbrella pin.
-   (c) Bring the owner the fifth round's five recommendations and invite the reading of `docs/DECISIONS.md`.
+1. **Pick up here: the phase 9a fix is running.** Commits on `redesign-2026-09`: `393ca76` phase 8, `0bb9b6d`,
+   `1a3c123`, `30431bb` and `99a14b2` records, `0354c6a` the 9a review prompts, `4046ce6` the 9a reviews, rulings and the
+   9a fix and 9b implementer prompts. Phase 9a's own package files are not committed yet, by design: the fix lands on top
+   and the two commit together. `te-tracks-p9a-fix` was launched from `prompts/p9a_fix.md`; it rebuilds the core and the
+   child and republishes both, so expect about ninety minutes. When it is terminal, re-verify each of the eleven items
+   with your own evidence, especially that the three new negative cases refuse by name, that the payload roster moved
+   from 51 to 52 with `BUILD_ID` moving and `CATALOG_ID` holding at `90cc18be…`, and that both earlier core archives still
+   verify; then run an Opus review of the fix, rule it, and commit the whole of phase 9a as "Phase 9a: core additions
+   before acceptance". Then 9b from `prompts/p9b_impl.md` with `__HEAD__` replaced by that commit, which supersedes
+   `p9_impl.md`: the acceptance suite over a fresh build of both families, the bedtools child-geometry oracle, the host
+   runbook section, the consumer map in OUTPUTS, and the parking handoff. Then the milestone 9 review, the owner's host
+   build, the umbrella pin bump, and last the cleanup pass and its validation fan-out.
 2. Phases 8 and 9 with `p8_impl.md` and `p9_impl.md`, each aligned with the rulings in its plan file before launch;
    phase 8 opens with a codex design consult on the child family's topology, architecture and approach, recorded under
    `redesign-2026-09/consults/` and ruled by the owner before `p8_impl.md` is finalized (owner, 2026-09-16); the
