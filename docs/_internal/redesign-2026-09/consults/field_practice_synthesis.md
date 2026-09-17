@@ -158,9 +158,9 @@ must prove it (divergent H1; consult Q4 "Conservation").
 `refdata-cellranger-GRCm39-2024-A` and `include-introns true`; their BAMs are fully paired (both cDNA mates
 aligned as proper pairs). 14761 (cellranger-arc 2.1.0) used `refdata-cellranger-arc-GRCm39-2024-A` with
 introns included; its GEX BAM is single-end (R2 only) and its ATAC BAM is paired. All three carry 61
-`chr`-named contigs. 10x documents both 2024-A references as GENCODE vM32 filtered by biotype; that is
-unverified on disk because the reference directories live on the sequencing core's machine. te-tracks pins
-vM37, so the gene child and the counting GTF differ by five GENCODE releases whatever route is chosen; C5's
+`chr`-named contigs. The GEX reference's own metadata names GENCODE vM33 filtered by biotype (verified 2026-09-17 from the
+tarball the owner downloaded; the ARC reference is unverified). te-tracks pins vM37, so the gene child and the
+counting GTF differ by four GENCODE releases whatever route is chosen; C5's
 reconciliation rule applies. The divergent's M6 concern that spleen and lung were counted under different
 gene references is answered: the reference is the same, the cellranger versions differ.
 

@@ -224,20 +224,38 @@ re-alignment. TEsingle 1.0 appends paired mates as alternative alignments with o
 (`tesingle_notes.md`, corrections section). The scratch republish from the clean tree verified with exit 0:
 `BUILD_ID 9ddf3622…`, `builder_git_sha 6bf9a22`, `dirty False`.
 
+**ADR discussion, first round** (2026-09-17): the owner ruled C1, C3, C5 (option A), C6, C7, C9 and C10 and asked
+for measurement and consultation on C2, C4, C8 and C11; the rulings and the owner's words are in
+`redesign-2026-09/consults/adr_rulings_2026-09-17.md`. Three codex consults were launched against `9c27b14` with
+`--parallel-ok`: `te-tracks-mask-consult` (`prompts/mask_consult.md` → `consults/mask_policy_consult.md`),
+`te-tracks-loci-consult` (`prompts/loci_consult.md` → `consults/loci_gtf_consult.md`) and
+`te-tracks-structure-consult` (`prompts/structure_consult.md` → `consults/structural_views_consult.md`). The 10x
+GRCm39-2024-A gene GTF was extracted from the owner's download to
+`_scratch/te-tracks-audit/refs/refdata-gex-GRCm39-2024-A/genes/genes.gtf.gz` (GENCODE vM33 filtered, 33,696 genes,
+834,423 exon rows, md5 `7a998f670d6d0bdf599c046284da051b`; contigs `chr`-named, 61). A Dfam census of the 1,220
+interspersed names runs against the live API (Dfam 4.0, May 2026) into
+`_scratch/te-tracks-audit/field/dfam_census_1220.tsv`; the 40-name probe hit every LTR, SINE and DNA name exactly
+and no LINE name, since Dfam models L1 as `_5end`, `_orf2` and `_3end` parts.
+
 ## Next session starts here
 
-1. **Pick up here: the ADR discussion with the owner.** Everything it needs is committed:
-   `consults/gene_context_adr_brief.md` (C1 to C11, each with what only the owner settles),
-   `consults/field_practice_synthesis.md` (the field answers and the measured facts), `reviews/field_rulings.md`.
-   The orchestrator presents the candidates, the owner rules, and the rulings land in `docs/DECISIONS.md` only by
-   the owner's word (a codex unit writes the package file). Then rewrite plan `18_phase8_gene_child_seam.md` from
-   the rulings and the two consults (`gene_child_consult.md`, `field_practice_consult.md`); write `prompts/p8_impl.md`
-   aligned with `reviews/{m5,p6,p7,m7}_rulings.md` (family and assembly separate, `GENOME=mm39` with
-   `FAMILY=te_mm39_gene`, parent pinned by full `BUILD_ID`, child `.staging`, alias table copied by digest, explicit
-   variant in exporter and registration, the GTF as a child source role outside `catalog.sources`, verifier branch
-   for non-null parents, context `not_computed`, per-pair status backlog, the bulk-scope statement of C3). Phase 9
-   gains the C9 binding-rule correction and join fixture, the C10 label-surprise and constant-flag notes, and the
-   RNA qualification limits in the parking handoff; C8 enters phase 9 only by the owner's scope amendment.
+1. **Pick up here: collect the three consults, then close the ADR discussion.** Read
+   `consults/{mask_policy,loci_gtf,structural_views}_consult.md` (check `status.sh --unit te-tracks-<mask|loci|structure>-consult`
+   for `codex_exit`; final messages under `/tmp/scio-delegate/<unit>/<run>/final.md`), recompute their measurements on
+   the build, and summarize the Dfam census (`_scratch/te-tracks-audit/field/dfam_census_1220.tsv`, 1,220 rows when
+   complete: exact-hit share by class, the L1 part-model pattern) for C10's feasibility assessment. Then put C2 (mask
+   policy set), C4 (promoter window and TSS source), C8 (`record_starsolo.gtf` and the Stellarscope/IRescue
+   expectations) and C11 (structural views, plain-language brief) to the owner with the consults' measurements, and
+   record the rulings in `consults/adr_rulings_2026-09-17.md`. Once ruled: a codex unit writes the `docs/DECISIONS.md`
+   entries (package file; the orchestrator supplies the ruled text), the orchestrator rewrites plan
+   `18_phase8_gene_child_seam.md` from the rulings and the consults (`gene_child_consult.md`,
+   `field_practice_consult.md`, the three above) and writes `prompts/p8_impl.md` aligned with
+   `reviews/{m5,p6,p7,m7}_rulings.md` (family and assembly separate, `GENOME=mm39` with `FAMILY=te_mm39_gene`, parent
+   pinned by full `BUILD_ID`, child `.staging`, alias table copied by digest, explicit variant in exporter and
+   registration, the GTF as a child source role and a parameter, verifier branch for non-null parents, context
+   `not_computed`, per-pair status backlog, the bulk-scope statement of C3). Phase 9 gains the C9 binding-rule
+   correction and join fixture, the C10 label-surprise and constant-flag notes, the RNA qualification limits in the
+   parking handoff, and C8 if the owner amends scope.
 2. Phases 8 and 9 with `p8_impl.md` and `p9_impl.md`, each aligned with the rulings in its plan file before launch;
    phase 8 opens with a codex design consult on the child family's topology, architecture and approach, recorded under
    `redesign-2026-09/consults/` and ruled by the owner before `p8_impl.md` is finalized (owner, 2026-09-16); the
@@ -254,14 +272,11 @@ file disagree, and the disagreement is a deviation to report. Rulings the owner 
 
 ## Open at handoff
 
-- Gene context and field practice: the owner's ADR discussion has not been held; `consults/gene_context_adr_brief.md`
-  lists eleven candidate decisions (C1 one gene family with immutable snapshots; C2 all-exon unstranded mask; C3
-  sparse relation, per-pair status with per-record roll-up, context `not_computed` in phase 8 and the bulk-scope
-  statement; C4 transcript and gene-body geometry with UTR flags and an explicit promoter window; C5 consumers derive
-  labels, reconciliation against the 10x 2024-A GTF; C6 alias table copied into the child; C7 the RNA route and grain
-  for 14616 and 14782 and TEsingle's promotion criteria; C8 `record_starsolo.gtf`; C9 the binding rule with universe
-  and variant; C10 rank vocabulary and Dfam admission; C11 structural and end-window views keyed on insertions) and
-  the point only the owner settles for each.
+- ADR discussion: ruled C1 (adopted; compat kept, 18439-DM to be recounted), C3 and C5 (geometry only, consumers
+  derive; context `not_computed` in phase 8), C6 (confirmed; GENCODE), C7 (STARsolo re-alignment; IRescue,
+  TEsingle, Stellarscope for loci; 14761 RNA pilot first; ATAC direct counts, no ATAC EM at first), C9 (confirmed)
+  and C10 (note now, rank view later, Dfam feasibility assessed). Open with consults running: C2 mask policy set,
+  C4 promoter window and TSS source, C8 loci GTF, C11 structural views. See `consults/adr_rulings_2026-09-17.md`.
 - Rulings the owner may overturn (recorded where made): instance weighting; `CATALOG_ID` scope (`rmsk_out` alone,
   decompressed text tables, `p7_rulings.md` Opus A2 and `m7_rulings.md` divergent H3); reader labels outside the
   identity (`m7_rulings.md` divergent H2); `subfamily.gtf`; compat as membership; `gene_context` deferred; pandas
@@ -270,8 +285,8 @@ file disagree, and the disagreement is a deviation to report. Rulings the owner 
   the 14761 ledger's `te_catalog_id` and `te_build_id` columns as a consumer gate, acceptance checks and the
   runner's exit 2 for an empty mode); the compat oracle is the packaged `GRCm39_Ensembl_rmsk_TE.gtf.gz`.
 - Unverified inputs for the gene-context decision: the GTF bytes inside `refdata-cellranger-GRCm39-2024-A` and
-  `refdata-cellranger-arc-GRCm39-2024-A` (10x documents both as GENCODE vM32; the directories live on the sequencing
-  core's machine), and the nf-core "filtered" GTF recipe of the cGAS gene pass.
+  `refdata-cellranger-arc-GRCm39-2024-A` (the GEX reference's metadata names GENCODE vM33 filtered, verified 2026-09-17 from the owner's download;
+  the ARC reference is unverified), and the nf-core "filtered" GTF recipe of the cGAS gene pass.
 
 - Consumer executables absent in-container; phase 5 reports them `unsupported` until the owner decides
   installation (irescue, featureCounts, Stellarscope, TEsingle, TEtranscripts, TElocal).

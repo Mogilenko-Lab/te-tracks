@@ -103,8 +103,9 @@ scaffold miss prefix stripping yields, and keeps preflight local to the child.
 
 The GTF inside the 10x references: the two whole-cell datasets were aligned against
 `refdata-cellranger-GRCm39-2024-A` and the Multiome against `refdata-cellranger-arc-GRCm39-2024-A` (BAM headers
-and web summaries, 2026-09-16); 10x documents both as GENCODE vM32 filtered by biotype, and the reference
-directories live on the sequencing core's machine, so the GTF bytes are unverified here. The nf-core "filtered"
+and web summaries, 2026-09-16); the GEX reference's `reference.json` names `gencode.vM33.primary_assembly.annotation.gtf.filtered` (verified
+2026-09-17 from the tarball the owner downloaded: 33,696 genes of protein-coding, lncRNA and IG/TR types, 834,423 exon
+rows, md5 `7a998f670d6d0bdf599c046284da051b`); the ARC reference's GTF is unverified and is presumed the same. The nf-core "filtered"
 gene GTF the cGAS gene pass used (its filter recipe) and the TE-Seq behaviour cited second-hand remain
 unverified. The compat count is measured and no longer open.
 
@@ -123,7 +124,7 @@ recomputed by the orchestrator (synthesis section 9).
 | 14761 spleen GEX | cellranger-arc 2.1.0, Multiome v1, introns included | `refdata-cellranger-arc-GRCm39-2024-A` | single-end (R2) | one record per read; 3.8% `NH>1` |
 | 14761 spleen ATAC | cellranger-arc 2.1.0 | same | paired fragments | |
 
-Consequence: every EM route needs a re-alignment that emits all alternatives; the 10x references are five
+Consequence: every EM route needs a re-alignment that emits all alternatives; the 10x references are four
 GENCODE releases behind the child's vM37 pin, so C5's reconciliation applies to every consumer.
 
 ### Amendments to C1 to C6
@@ -136,7 +137,7 @@ GENCODE releases behind the child's vM37 pin, so C5's reconciliation applies to 
   coding-boundary status (vM37: 186,133 UTR rows, 95,682 5′ and 90,451 3′ by strand and CDS bounds; 10,247
   records touch a 5′ UTR and 46,588 a 3′ UTR). Host-gene promoter windows and TE-end windows stay separate
   relations.
-- **C5.** The reconciliation target for all three datasets is the 10x 2024-A GTF (documented as vM32)
+- **C5.** The reconciliation target for all three datasets is the 10x 2024-A GTF (GENCODE vM33 filtered)
   against vM37; the D2 keys become `te_catalog_id` plus `te_build_id`, with intersection coordinates and a
   counting-run id (consult Q5).
 - **C1, C2, C6** stand as written.
