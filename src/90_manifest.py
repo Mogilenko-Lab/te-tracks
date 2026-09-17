@@ -15,8 +15,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("build_dir", type=Path)
     parser.add_argument("config", type=Path)
+    parent = parser.add_mutually_exclusive_group()
+    parent.add_argument("--parent-dir", type=Path)
+    parent.add_argument("--root", type=Path)
     args = parser.parse_args()
     try:
-        write_manifest(args.build_dir, args.config)
-    except (ValueError, KeyError, TypeError, OSError, subprocess.CalledProcessError) as error:
+        write_manifest(args.build_dir, args.config, parent_dir=args.parent_dir, root=args.root)
+    except (ValueError, KeyError, TypeError, StopIteration, OSError, subprocess.CalledProcessError) as error:
         parser.exit(1, f"manifest: {error}\n")

@@ -23,6 +23,10 @@ and one gene annotation.
 `./build.sh --genome mm39 --root <refroot>` builds in a unique staging directory, verifies,
 installs at `te_mm39/archive/<BUILD_ID>/` and selects the relative `current` symlink.
 Add `--no-select` to install while preserving the existing selection.
+`./build.sh --genome mm39 --family gene --root <refroot> --parent-build-id <full-parent-id>`
+publishes a GENCODE vM37 child with exon-subtracted SAFs for `interspersed` and
+`compat_tetranscripts_mm39`. [docs/RUNBOOK.md](docs/RUNBOOK.md) gives the parent resolution
+and scratch build commands.
 `BUILD_ID` identifies the complete build; `CATALOG_ID` binds the record-producing RepeatMasker
 `.out`, run identity, source-wide instance scope and decompressed canonical text tables for consumer
 ledger keys, so a serializer or compressor change moves `BUILD_ID` alone.
@@ -41,7 +45,8 @@ tests/run.sh acceptance --refroot /workspaces/Meta-Aging/_scratch/te-tracks-audi
 The default reference root is `/workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot`.
 Each mode reports `pass`, `fail` or `unsupported` per check. Core checks cover the parser fixtures,
 the qualification report, the record schema, instances, universes, the record fixtures,
-taxonomy (30 to 32), exports (40 to 42), contigs (60 to 62) and identity and publication (70 to 72).
+taxonomy (30 to 32), exports (40 to 42), contigs (60 to 62), identity and publication (70 to 72),
+and gene subtraction, identity and dependencies (80 to 83).
 
 ## Outputs
 
@@ -62,6 +67,7 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 | `tests/fixtures/records/` | delivered, tested | 2 |
 | `tests/expectations/mm39/` | delivered, tested | 2 |
 | `tests/expectations/mm39/taxonomy_census.tsv` | delivered, tested | 3 |
+| `tests/expectations/mm39/exon_subtraction_summary.tsv` | delivered, tested | 8 |
 | `tests/fixtures/taxonomy/dfam_snapshot.tsv` | delivered, tested | 3 |
 | `tests/fixtures/taxonomy/dfam_snapshot.provenance.json` | delivered, tested | 3 |
 | `tests/fixtures/taxonomy/rule_cases.tsv` | delivered, tested | 3 |
@@ -110,16 +116,22 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 | `exports/ucsc/all_rmsk/full/record.bed` | delivered, tested | 6 |
 | `exports/ensembl/all_rmsk/full/record.bed` | delivered, tested | 6 |
 | `exports/gencode/all_rmsk/full/record.bed` | delivered, tested | 6 |
-| `te_mm39_gene`: `exports/ucsc/interspersed/exon_subtracted/subfamily.saf` | deferred | 8 |
-| `te_mm39_gene`: `exports/ensembl/interspersed/exon_subtracted/subfamily.saf` | deferred | 8 |
-| `te_mm39_gene`: `exports/gencode/interspersed/exon_subtracted/subfamily.saf` | deferred | 8 |
-| `te_mm39_gene`: `exports/{ucsc,ensembl,gencode}/interspersed/exon_subtracted/taxonomy_triple.saf` | deferred | 8 |
-| `te_mm39_gene`: `tables/exon_subtraction_status.tsv` | deferred | 8 |
+| `te_mm39_gene`: `exports/ucsc/interspersed/exon_subtracted/subfamily.saf` | delivered, tested | 8 |
+| `te_mm39_gene`: `exports/ensembl/interspersed/exon_subtracted/subfamily.saf` | delivered, tested | 8 |
+| `te_mm39_gene`: `exports/gencode/interspersed/exon_subtracted/subfamily.saf` | delivered, tested | 8 |
+| `te_mm39_gene`: `exports/{ucsc,ensembl,gencode}/interspersed/exon_subtracted/taxonomy_triple.saf` | delivered, tested | 8 |
+| `te_mm39_gene`: `tables/exon_subtraction_status.tsv` | delivered, tested | 8 |
+| `te_mm39_gene`: `exports/{ucsc,ensembl,gencode}/compat_tetranscripts_mm39/exon_subtracted/{subfamily,taxonomy_triple}.saf` | delivered, tested | 8 |
+| `te_mm39_gene`: `tables/exon_subtraction_summary.tsv`, `tables/gene_annotation_coverage.tsv` | delivered, tested | 8 |
+| `te_mm39_gene`: copied `universes.json`, `tables/contig_aliases.tsv`, registration and export inventory | delivered, tested | 8 |
+| `te_mm39_gene`: retained GTF, source declaration, manifest and identities | delivered, tested | 8 |
+| `tests/fixtures/gene/` | delivered, tested | 8 |
 | `MANIFEST.json` | delivered, tested | 7 |
 | `BUILD_ID` | delivered, tested | 7 |
 | `CATALOG_ID` | delivered, tested | 7 |
 | `bin/te-tracks-preflight` | delivered, tested | 6 |
-| `docs/RUNBOOK.md` | deferred | 9 |
+| `docs/RUNBOOK.md`: gene child build and verification | delivered, tested | 8 |
+| `docs/RUNBOOK.md`: host qualification | deferred | 9 |
 | `docs/RELEASES.md` | delivered, tested | 7 |
 
 [docs/OUTPUTS.md](docs/OUTPUTS.md) specifies the schemas, serialization and deferred export contracts.

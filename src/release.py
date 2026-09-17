@@ -57,11 +57,11 @@ def verify_archive(path, family, identifier):
     try:
         require((path / "BUILD_ID").read_bytes() == (identifier + "\n").encode(),
                 f"BUILD_ID differs from archive name {identifier}")
-        observed = verify_build(path, emit=lambda line: None)
+        observed = verify_build(path, emit=lambda line: None, root=family.parent)
         require(observed == identifier, f"archive name differs from recomputed BUILD_ID {observed}")
         require(read_json(path / "MANIFEST.json")["identity"]["family"] == family.name,
                 f"manifest family differs from {family.name}")
-    except (ValueError, KeyError, TypeError, OSError) as error:
+    except (ValueError, KeyError, TypeError, StopIteration, OSError) as error:
         raise ValueError(f"archive {path}: {error}") from error
     return identifier
 
@@ -77,7 +77,7 @@ def verify_current(family):
     require(match is not None, f"invalid current target: {current} -> {target}")
     try:
         return verify_archive(family / target, family, match[1])
-    except (ValueError, KeyError, TypeError, OSError) as error:
+    except (ValueError, KeyError, TypeError, StopIteration, OSError) as error:
         raise ValueError(f"current -> {target}: {error}") from error
 
 
@@ -122,7 +122,7 @@ def install(family, staging, select=False):
             and staging.parent.resolve() == parent.resolve(),
             f"staging must be a direct directory under {parent}: {staging}")
     require(staging.is_dir(), f"missing staging directory: {staging}")
-    identifier = verify_build(staging, emit=lambda line: None)
+    identifier = verify_build(staging, emit=lambda line: None, root=family.parent)
     require(read_json(staging / "MANIFEST.json")["identity"]["family"] == family.name,
             f"staging manifest family differs from {family.name}")
     with publication_lock(family, create=True) as archive:
@@ -173,7 +173,7 @@ def main():
                 select_locked(family, identifier)
         else:
             print(verify_current(family))
-    except (ValueError, KeyError, TypeError, OSError) as error:
+    except (ValueError, KeyError, TypeError, StopIteration, OSError) as error:
         parser.exit(1, f"release: {error}\n")
 
 

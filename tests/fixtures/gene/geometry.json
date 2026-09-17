@@ -1,0 +1,17 @@
+[
+  {"name":"Central","chrom":"chr1","start":101,"end":200,"strand":"+","blocks":[[101,140],[161,200]],"status":"split","retained":80,"removed":20},
+  {"name":"Intronic","chrom":"chr1","start":301,"end":400,"strand":"+","blocks":[[301,400]],"status":"unchanged","retained":100,"removed":0},
+  {"name":"Intergenic","chrom":"chr1","start":501,"end":600,"strand":"+","blocks":[[501,600]],"status":"unchanged","retained":100,"removed":0},
+  {"name":"Covered","chrom":"chr1","start":701,"end":800,"strand":"+","blocks":[],"status":"fully_subtracted","retained":0,"removed":100},
+  {"name":"OneBase","chrom":"chr1","start":901,"end":1000,"strand":"+","blocks":[[901,901]],"status":"trimmed","retained":1,"removed":99},
+  {"name":"Touching","chrom":"chr1","start":1101,"end":1200,"strand":"+","blocks":[[1101,1200]],"status":"unchanged","retained":100,"removed":0},
+  {"name":"Endpoints","chrom":"chr1","start":1301,"end":1400,"strand":"-","blocks":[[1302,1399]],"status":"trimmed","retained":98,"removed":2},
+  {"name":"Adjacent","chrom":"chr1","start":1501,"end":1600,"strand":"+","blocks":[[1501,1540],[1561,1600]],"status":"split","retained":80,"removed":20},
+  {"name":"Opposite","chrom":"chr1","start":1701,"end":1800,"strand":"+","blocks":[[1701,1740],[1761,1800]],"status":"split","retained":80,"removed":20},
+  {"name":"Duplicate","chrom":"chr1","start":1901,"end":2000,"strand":"+","blocks":[[1901,1940],[1961,2000]],"status":"split","retained":80,"removed":20},
+  {"name":"Nested","chrom":"chr1","start":2101,"end":2200,"strand":"+","blocks":[[2101,2140],[2161,2200]],"status":"split","retained":80,"removed":20},
+  {"name":"Overlapping","chrom":"chr1","start":2301,"end":2400,"strand":"+","blocks":[[2301,2340],[2371,2400]],"status":"split","retained":70,"removed":30},
+  {"name":"FourBlocks","chrom":"chr1","start":2501,"end":2600,"strand":"-","blocks":[[2501,2520],[2531,2550],[2561,2580],[2591,2600]],"status":"split","retained":70,"removed":30},
+  {"name":"Scaffold","chrom":"chr1_GL456210v1_random","start":101,"end":200,"strand":"-","blocks":[[101,140],[161,200]],"status":"split","retained":80,"removed":20},
+  {"name":"Unannotated","chrom":"chr2","start":101,"end":200,"strand":"+","blocks":[[101,200]],"status":"unchanged","retained":100,"removed":0}
+]

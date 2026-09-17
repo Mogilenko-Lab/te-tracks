@@ -1,0 +1,4 @@
+chrom_ucsc	gene_rows	transcript_rows	exon_rows	exon_union_bp	annotated
+chr1	1	1	21	441	true
+chr1_GL456210v1_random	0	0	1	20	true
+chr2	0	0	0	0	false

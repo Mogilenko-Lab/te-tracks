@@ -145,7 +145,7 @@ staging directory, then run `release.py install` with the destination root and f
 An existing identical archive retains its first manifest on convergence; compare the installed
 manifest checksum with the transfer pin before `release.py select`. Keep the source archive
 and destination staging paths explicit in the copy command.
-Required parent archives transfer and verify before selecting their child.
+Parent archives transfer and verify before their children are installed or selected.
 The publication checks leave interrupted transfer into staging, readers during selector replacement,
 disk exhaustion during rename, staging on another filesystem and ACL access for consumers to host qualification.
 
@@ -176,3 +176,42 @@ by a few hundred bytes with the manifest's provenance. Reserve additional workin
 staging and sorting.
 The export writer peaks near 6.0 GB resident, measured between 5.5 GB and 6.0 GB across
 in-container builds; `provenance.peak_rss_bytes` records each build's own measurement.
+
+## Gene child snapshots
+
+Build the parent core first, then supply its full ID to the gene family:
+
+```bash
+./build.sh --genome mm39 --family gene --root <refroot> --parent-build-id <full-parent-id>
+./build.sh --genome mm39 --family gene --build-dir <child-dir> --parent-dir <core-build-dir>
+python3 src/99_verify.py <child-dir> --parent-dir <core-build-dir>
+python3 src/release.py verify-current --root <refroot> --family te_mm39_gene
+```
+
+`--family gene` selects `config/mm39_gene.env` and the stages under `src/gene/`.
+`--parent-dir` and `--parent-build-id` are exclusive; scratch builds require the directory,
+and publication requires the full lowercase hexadecimal ID. Parent arguments name explicit
+builds, with the lexical path judged after stripping trailing slashes and before symlink resolution.
+Resolve a selected parent through `release.py verify-current` as shown in the runbook.
+The builder verifies the parent before any child stage reads it and checks its family and assembly.
+
+The child retains schema `te-tracks-manifest-1` with non-null `parent_build_id` and
+`parent_catalog_id`, plus `parent_family`, `copied_inputs`, `gene_annotation`, `policy_bundle`
+and `child_universes`. It inherits the parent's catalog, species, assembly, declared assembly,
+contig digest, universes and taxonomy rule. Its `CATALOG_ID` bytes equal the parent's.
+`build_sources` contains `gene_gtf` alone. `gene_annotation` binds name, URL, MD5, SHA-256 and
+bytes; `policy_bundle` binds the mask identifier and definition, minimum retained block and
+context capability. Each change to an annotation digest, policy value, export roster or parent
+pin changes the child `BUILD_ID`. Parent identity stays fixed.
+
+Child verification resolves the parent through `--parent-dir`, `--root`, or the sibling archive
+under the root enclosing a `.staging` or `archive` build. A scratch child needs an explicit
+parent location. Verification checks the parent's complete build, inherited catalog, copied-input
+digests, every registration and status row against the parent and mask, SAF row counts, content and order against
+registration and annotation coverage against the retained GTF.
+
+`install`, `select` and `verify-current` require the pinned parent archive present and verified
+under the same root. Earlier core archives remain selectable after a child is published.
+Transfer the parent dependency first; then transfer, verify and install the child under
+`te_mm39_gene`. Child provenance records each stage's wall time and maximum resident bytes
+through `RUSAGE_CHILDREN`.

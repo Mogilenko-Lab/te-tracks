@@ -577,16 +577,62 @@ once into `archive/<BUILD_ID>/`; an atomic replacement selects the single `curre
 
 ### Phase 8: gene child family
 
-`te_mm39_gene` pins its parent core build and a gene GTF. Its
-`exports/{ucsc,ensembl,gencode}/interspersed/exon_subtracted/{subfamily,taxonomy_triple}.saf` subtract the unstranded union
-of all annotated exons and register every retained piece in `tables/export_feature_members.tsv.gz`.
-`tables/exon_subtraction_status.tsv` records `unchanged`, `trimmed`, `split` or `fully_subtracted`
-status with retained and removed base counts per record.
+`te_mm39_gene` pins one verified `te_mm39` parent by full `BUILD_ID`, one gene annotation
+and a versioned policy bundle. The first snapshot uses GENCODE vM37 and keeps the parent's
+`CATALOG_ID`. Context capability is `not_computed`.
 
-Exon subtraction guarantees exon-disjoint sequence support under the declared mask; molecule
+The mask unions every exon on both strands, merging overlapping or touching intervals.
+The policy `all_exons_unstranded_union_v1` retains every positive-length block
+(`min_retained_block_bp = 1`). GTF contigs normalize through the copied `chrom_gencode`
+alias column, including scaffolds; every annotation contig must resolve.
+`min_retained_block_bp` and `context_capability` are declared policy values pinned to `1` and
+`not_computed` in this snapshot, so the build refuses other values and applies no block-size filter.
+
+Twelve SAFs occupy
+`exports/{ucsc,ensembl,gencode}/{interspersed,compat_tetranscripts_mm39}/exon_subtracted/{subfamily,taxonomy_triple}.saf`.
+Each has the header `GeneID`, `Chr`, `Start`, `End`, `Strand`, with one row per retained block
+in 1-based inclusive coordinates and the source record's strand. `subfamily` uses `rmsk_name`;
+`taxonomy_triple` uses `<rmsk_name>:<family_id>:<class_id>` with the parent's canonical labels
+and positional unresolved tokens. Rows sort by contig bytes, numeric bounds, strand and GeneID.
+Each interspersed SAF contains 3,684,934 data rows; each compat SAF contains 3,717,740.
+
+`tables/export_feature_members.tsv.gz` uses the eight registration columns above. Each retained
+block registers its parent record at `(subfamily, rmsk_name)` and
+`(taxonomy_triple, taxonomy_triple)` in its universe and `exon_subtracted` variant. Uniqueness
+includes both block bounds. Registration is shared across namespaces and holds 7,369,868
+interspersed rows and 7,435,480 compat rows. `tables/exports.tsv` inventories all twelve files
+with measured rows, distinct GeneIDs and SHA-256 digests.
+Verification compares every SAF's rows and order with the registration joined to the parent
+record's strand and contig in each namespace.
+Registration row order is outside the contract; each SAF's sort order is part of it.
+
+`tables/exon_subtraction_status.tsv` contains `rmsk_record_id`, `status`, `n_blocks`,
+`retained_bp` and `removed_bp` for every parent catalog record. `unchanged` means zero removed
+bases; `trimmed` means one shorter block; `split` means several retained blocks;
+`fully_subtracted` means zero blocks. Fully subtracted records retain their status rows.
+`exon_subtraction_status` describes counting-support geometry.
+`unchanged` covers intronic and intergenic records alike.
+
+Every record conserves `retained_bp + removed_bp = length_bp`. Retained blocks are disjoint,
+ordered, contained in their record and exon-disjoint under the declared mask. Molecule
 exclusivity between gene and TE counts is a property of the joint counting run.
-The record-by-transcript context relation follows phase 8 in a dedicated design session covering
-annotation choice, interval blocks, relative strand, promoter parameters and distance conventions.
+
+`tables/exon_subtraction_summary.tsv` contains `universe_name`, `records`, `unchanged`,
+`trimmed`, `split`, `fully_subtracted`, `retained_records`, `blocks`, `retained_bp`, `removed_bp`
+and `records_on_unannotated_contigs`, for `all_rmsk`, `interspersed` and
+`compat_tetranscripts_mm39`. Base totals sum record support, preserving overlaps between records.
+
+`tables/gene_annotation_coverage.tsv` contains `chrom_ucsc`, `gene_rows`, `transcript_rows`,
+`exon_rows`, `exon_union_bp` and `annotated` for every parent contig, sorted by `chrom_ucsc`.
+`annotated` means the retained GTF has at least one row on that contig. The vM37 annotation
+covers 38 of 61 contigs; 2,638 catalog records lie on the 23 remaining contigs and retain their
+full support. Coverage counts are 78,317 gene rows, 278,369 transcript rows and 1,298,921 exon
+rows; the exon union spans 160,549,642 bp.
+
+`universes.json` and `tables/contig_aliases.tsv` are exact parent copies whose SHA-256 digests
+appear in `identity.copied_inputs`. The child retains the GTF and `source/SOURCES.json`, which
+records assembly, parent family and IDs, the `gene_gtf` source role and policy bundle.
+The transcript-context relation enters a later snapshot after its chr1 and mm39 scaling checks.
 
 ### Phase 9: acceptance and host runbook
 

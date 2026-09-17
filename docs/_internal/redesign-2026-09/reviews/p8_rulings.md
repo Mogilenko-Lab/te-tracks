@@ -147,3 +147,4 @@ from 3,464,622,080 to 3,466,821,632 bytes peak; 23 checks passed; the builds and
   for contrastive wording finds only code conditionals and a pre-existing phase 5 sentence.
 - Git: reflog head `cf1b150`, no git writes by any unit; the fourteen checkouts under `.ref` are clean; no
   `__pycache__` under `src/`, `tests/`, `bin/`.
+- `tests/run.sh core` after the fix: 23 pass, exit 0, 15 min 14 s wall; `pubtest` empty and no `p8impl/` directory afterwards.

@@ -291,9 +291,10 @@ it. Fix unit `te-tracks-p8-fix` (run `20260917T164350Z-3711107`, codex exit 0, 1
 `prompts/p8_fix.md` in twelve files; orchestrator verification (recorded in the rulings): verifier exit 0 with the new `ok child SAF
 rows` line, 159 s, peak 3,493,396,480 bytes; builds and published root byte-untouched (140 files); both symlink spellings exit 2;
 fixture coverage row recomputed; scratch through `$TE_TRACKS_REFROOT/pubtest`; `.ref` clean; reflog `cf1b150`. The orchestrator's
-own `tests/run.sh core` re-run after the fix was still running at compaction (the fix unit's run: 23 pass). Nothing is committed
-since `cf1b150`: the tree holds the phase 8 implementation with its fix and the orchestrator's records (plans 18 and 19 amended,
-the fifth round, the schema consult, the p8 prompts, reviews and rulings, `prompts/p9a_impl.md`, this record). The schema consult
+own `tests/run.sh core` re-run after the fix was still running at compaction (the fix unit's run: 23 pass). The orchestrator's records
+(plans 18 and 19 amended, the fifth round, the schema consult, the p8 prompts, reviews and rulings, `prompts/p9a_impl.md`, this
+record) are committed as `4b117f2`; the tree holds the phase 8 implementation with its fix, uncommitted (nine modified files, ten
+untracked entries), awaiting the suite result and the phase 8 commit. The schema consult
 landed as `consults/unified_te_schema_consult.md` (328 lines); its measurements were recomputed by the orchestrator (all equal; the
 census TSV's 4,367-record shortfall sits on the 20 multi-label names) and the fifth round is recorded in
 `consults/adr_rulings_2026-09-17.md`; plan 19's Dfam bullet is corrected (147 part sets and 26 missing; partial sets with

@@ -122,3 +122,33 @@ def _make_build(family, note):
     (source / "qualification.md").write_text(f"synthetic qualification: {note}\n")
     write_manifest(build, config_path, argv=["publication fixture"])
     return build
+
+
+def make_child(family, parent, annotation_note="fixture"):
+    """Create a complete child on the verified tiny core with a central exon cut."""
+    import shlex
+    from gene_child import build_child, copy_parent_inputs, write_sources
+    from manifest import validate_parent
+
+    family, parent = Path(family), Path(parent)
+    validate_parent(parent, "te_mm39", "mm39")
+    staging = family / ".staging"
+    staging.mkdir(parents=True, exist_ok=True)
+    child = Path(tempfile.mkdtemp(prefix="child-", dir=staging))
+    (child / "source").mkdir()
+    gtf = child / "source/fixture.gtf.gz"
+    gtf.write_bytes(gzip.compress((f"# {annotation_note}\n"
+        'chr1\tfixture\texon\t3\t3\t.\t-\t.\tgene_id "g"; transcript_id "t";\n').encode(), mtime=0))
+    config = {"GENOME": "mm39", "ASSEMBLY": "GRCm39", "FAMILY": "gene", "PARENT_FAMILY": "te_mm39",
+              "GENE_GTF_URL": "https://example.invalid/fixture.gtf.gz",
+              "GENE_GTF_MD5": hashlib.md5(gtf.read_bytes()).hexdigest(), "GENE_ANNOTATION_NAME": "fixture",
+              "EXON_MASK_POLICY": "all_exons_unstranded_union_v1", "MIN_RETAINED_BLOCK_BP": "1",
+              "CONTEXT_CAPABILITY": "not_computed", "CHILD_UNIVERSES": "interspersed compat_tetranscripts_mm39"}
+    config_path = family.parent / "child-fixture.env"
+    config_path.write_text("".join(f"{key}={shlex.quote(value)}\n" for key, value in config.items()))
+    write_sources(child, parent, config)
+    copy_parent_inputs(child, parent)
+    with redirect_stdout(io.StringIO()):
+        build_child(parent, child, gtf)
+    write_manifest(child, config_path, argv=["child publication fixture"], parent_dir=parent)
+    return child

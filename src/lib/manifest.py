@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path, PurePosixPath
 import platform
+import re
 import stat
 import subprocess
 import sys
@@ -250,11 +251,132 @@ def verify_export_contracts(build_dir, identity, entries, lines):
     return contracts
 
 
+CHILD_CONFIG_KEYS = ["FAMILY", "PARENT_FAMILY", "GENE_GTF_URL", "GENE_GTF_MD5", "GENE_ANNOTATION_NAME",
+                     "EXON_MASK_POLICY", "MIN_RETAINED_BLOCK_BP", "CONTEXT_CAPABILITY", "CHILD_UNIVERSES"]
+CHILD_IDENTITY_KEYS = {"parent_family", "copied_inputs", "gene_annotation", "policy_bundle", "child_universes"}
+INHERITED_KEYS = ("catalog", "species", "assembly", "declared_assembly", "contig_set_sha256",
+                  "universes", "taxonomy_rule_version")
+
+
+def validate_parent(parent_dir, family, genome, parent_build_id=None, parent_catalog_id=None):
+    """Verify one explicit core parent and require its family, assembly and optional pins."""
+    parent_dir = Path(parent_dir)
+    require("current" not in parent_dir.parts and not parent_dir.is_symlink(),
+            "parent requires an explicit build directory")
+    require(parent_dir.is_dir(), "child verification requires the parent archive")
+    parent = read_json(parent_dir / "MANIFEST.json")["identity"]
+    require(parent["parent_build_id"] is None and parent["parent_catalog_id"] is None,
+            "gene parent requires a core build")
+    require(parent["family"] == family, "parent family differs")
+    require(parent["assembly"]["ucsc"] == genome, "parent assembly differs")
+    identifier = verify_build(parent_dir, emit=lambda line: None)
+    require(parent_build_id is None or identifier == parent_build_id, "parent BUILD_ID differs")
+    require(parent_catalog_id is None or catalog_id(parent["catalog"]) == parent_catalog_id,
+            "parent CATALOG_ID differs")
+    return parent
+
+
+def resolve_parent(build_dir, identity, parent_dir=None, root=None):
+    """Resolve an explicit parent or its sibling immutable archive under a publication root."""
+    require(parent_dir is None or root is None, "parent-dir and root exclude each other")
+    for field in ("parent_build_id", "parent_catalog_id"):
+        require(isinstance(identity[field], str) and re.fullmatch(r"[0-9a-f]{64}", identity[field]),
+                f"invalid {field}")
+    genome = identity["assembly"]["ucsc"]
+    require(identity["parent_family"] == f"te_{genome}", "parent family differs from assembly")
+    require(re.fullmatch(re.escape(f"te_{genome}_") + r"[A-Za-z0-9_-]+", identity["family"]),
+            "child family differs from assembly")
+    if parent_dir is None:
+        build_dir = Path(build_dir).absolute()
+        if root is None and build_dir.parent.name in (".staging", "archive"):
+            root = build_dir.parent.parent.parent
+        require(root is not None, "child verification requires the parent archive")
+        family = Path(root).resolve() / identity["parent_family"]
+        require(not family.is_symlink() and not (family / "archive").is_symlink(),
+                "parent archive requires regular directories")
+        parent_dir = family / "archive" / identity["parent_build_id"]
+    parent_dir = Path(parent_dir)
+    parent = validate_parent(parent_dir, identity["parent_family"], genome,
+                             identity["parent_build_id"], identity["parent_catalog_id"])
+    return parent_dir, parent
+
+
+def child_sources(build_dir, sources, entries):
+    require(set(sources["sources"]) == {"gene_gtf"}, "child source roles differ")
+    source = sources["sources"]["gene_gtf"]
+    path = source_path(source)
+    entry = next(item for item in entries if item["path"] == path)
+    require(re.fullmatch(r"[0-9a-f]{32}", source["md5"]), "invalid gene_gtf md5")
+    require(digest_file(build_dir / path, "md5") == source["md5"], "gene_gtf: source md5 mismatch")
+    require(source["bytes"] == entry["bytes"], "gene_gtf: source byte count differs")
+    return {**source, "sha256": entry["sha256"]}
+
+
+def verify_child_identity(build_dir, identity, entries, parent, parent_dir):
+    from gene_child import COPIED_INPUTS, CHILD_UNIVERSES, validate_policy
+    for key in INHERITED_KEYS:
+        require(identity[key] == parent[key], f"child inherited {key} differs from parent")
+    require((build_dir / "CATALOG_ID").read_bytes() == (parent_dir / "CATALOG_ID").read_bytes(),
+            "child CATALOG_ID bytes differ from parent")
+    sources = read_json(build_dir / "source/SOURCES.json")
+    for key in ("parent_family", "parent_build_id", "parent_catalog_id", "policy_bundle", "copied_inputs", "child_universes"):
+        require(sources[key] == identity[key], f"child source {key} differs from identity")
+    require(identity["assembly"] == {"ucsc": sources["genome"], "name": sources["assembly"]},
+            "child source assembly differs")
+    source = child_sources(build_dir, sources, entries)
+    require(identity["build_sources"] == {"gene_gtf": source}, "child build_sources differs")
+    require(identity["gene_annotation"] == {"name": sources["gene_annotation_name"], **source},
+            "gene_annotation differs from retained source")
+    validate_policy(identity["policy_bundle"])
+    universes = identity["child_universes"]
+    require(isinstance(universes, list) and universes and len(set(universes)) == len(universes)
+            and set(universes) <= set(CHILD_UNIVERSES), "export universe outside CHILD_UNIVERSES")
+    parent_entries = {item["path"]: item for item in parent["inventory"]}
+    observed = {item["path"]: item for item in entries}
+    require(set(identity["copied_inputs"]) == set(COPIED_INPUTS), "child copied input paths differ")
+    for path in COPIED_INPUTS:
+        require(identity["copied_inputs"][path] == observed[path]["sha256"] == parent_entries[path]["sha256"],
+                f"copied input differs from parent: {path}")
+    for contract in identity["export_contracts"]:
+        require(contract["universe_name"] in universes and contract["variant"] == "exon_subtracted"
+                and contract["format"] == "saf" and contract["namespace"] in ("ucsc", "ensembl", "gencode")
+                and contract["feature_level"] in ("subfamily", "taxonomy_triple"),
+                "unsupported child export contract")
+
+
+def child_identity_from_payload(build_dir, config, entries, lines, parent_dir=None, root=None):
+    from gene_child import COPIED_INPUTS, child_contracts, policy_bundle
+    sources = read_json(build_dir / "source/SOURCES.json")
+    identity = {"schema_version": SCHEMA_VERSION, "family": f"te_{config['GENOME']}_{config['FAMILY']}",
+                "assembly": {"ucsc": config["GENOME"], "name": config["ASSEMBLY"]},
+                **{key: sources[key] for key in ("parent_family", "parent_build_id", "parent_catalog_id",
+                                                "copied_inputs", "policy_bundle", "child_universes")}}
+    require(identity["parent_family"] == config["PARENT_FAMILY"], "configured parent family differs")
+    parent_dir, parent = resolve_parent(build_dir, identity, parent_dir, root)
+    require(identity["assembly"] == parent["assembly"], "configured child assembly differs from parent")
+    identity.update({key: parent[key] for key in INHERITED_KEYS})
+    source = child_sources(build_dir, sources, entries)
+    require(source["url"] == config["GENE_GTF_URL"] and source["md5"] == config["GENE_GTF_MD5"],
+            "configured gene_gtf differs")
+    require(sources["gene_annotation_name"] == config["GENE_ANNOTATION_NAME"], "configured gene annotation name differs")
+    require(identity["policy_bundle"] == policy_bundle(config), "configured gene policy differs")
+    require(identity["child_universes"] == config["CHILD_UNIVERSES"].split(), "configured child universes differ")
+    expected_paths = set(COPIED_INPUTS) | {source_path(source), "source/SOURCES.json", "tables/exports.tsv",
+        "tables/export_feature_members.tsv.gz", "tables/exon_subtraction_status.tsv",
+        "tables/exon_subtraction_summary.tsv", "tables/gene_annotation_coverage.tsv"}
+    observed_paths = {entry["path"] for entry in entries if not entry["path"].startswith("exports/")}
+    require(observed_paths == expected_paths, f"child payload roster differs: {sorted(observed_paths ^ expected_paths)}")
+    identity.update(build_sources={"gene_gtf": source}, gene_annotation={"name": config["GENE_ANNOTATION_NAME"], **source},
+                    export_contracts=child_contracts(identity["child_universes"]), inventory=entries)
+    verify_export_contracts(build_dir, identity, entries, lines)
+    return identity
+
+
 def config_values(path):
     keys = ["GENOME", "ASSEMBLY", "GENOME_FA_URL", "GENOME_FA_MD5",
             *(key.upper() for key in RUN_KEYS),
-            *(prefix + suffix for prefix in SOURCE_CONFIG.values() for suffix in ("_URL", "_MD5"))]
-    command = 'source "$1"; shift; for key in "$@"; do printf "%s\\0" "${!key}"; done'
+            *(prefix + suffix for prefix in SOURCE_CONFIG.values() for suffix in ("_URL", "_MD5")), *CHILD_CONFIG_KEYS]
+    command = 'unset FAMILY; source "$1"; shift; for key in "$@"; do printf "%s\\0" "${!key-}"; done'
     result = subprocess.run(["bash", "-eu", "-c", command, "manifest-config", str(Path(path).resolve()),
                              *keys], check=True, stdout=subprocess.PIPE)
     values = result.stdout.decode().split("\0")[:-1]
@@ -262,7 +384,9 @@ def config_values(path):
     return dict(zip(keys, values))
 
 
-def identity_from_payload(build_dir, config, entries, lines):
+def identity_from_payload(build_dir, config, entries, lines, parent_dir=None, root=None):
+    if config.get("FAMILY"):
+        return child_identity_from_payload(build_dir, config, entries, lines, parent_dir, root)
     from build_taxonomy import TAXONOMY_RULE_VERSION
 
     require(TAXONOMY_RULE_VERSION in PUBLISHED_TAXONOMY_RULE_VERSIONS,
@@ -380,7 +504,7 @@ def verify_records(build_dir, identity, emit):
     emit(f"ok universe_summary all_rmsk: {count} records")
 
 
-def verify_build(build_dir, emit=print):
+def verify_build(build_dir, emit=print, parent_dir=None, root=None):
     """Verify bytes, identities and record/export invariants in place with read-only access.
 
     schema_version stays single-valued; a new manifest schema adds a verifier branch.
@@ -396,6 +520,9 @@ def verify_build(build_dir, emit=print):
     required = {"schema_version", "family", "species", "assembly", "declared_assembly",
                 "contig_set_sha256", "catalog", "build_sources", "universes", "taxonomy_rule_version",
                 "export_contracts", "parent_build_id", "parent_catalog_id", "inventory"}
+    is_child = identity.get("parent_build_id") is not None or identity.get("parent_catalog_id") is not None
+    if is_child:
+        required |= CHILD_IDENTITY_KEYS
     require(set(identity) == required, "MANIFEST.json: identity fields differ")
     expected = identity["inventory"]
     for item in expected:
@@ -418,6 +545,17 @@ def verify_build(build_dir, emit=print):
     require((build_dir / "CATALOG_ID").read_bytes() == (catalog_identifier + "\n").encode(),
             f"CATALOG_ID mismatch: recomputed {catalog_identifier}")
     emit(f"ok CATALOG_ID: {catalog_identifier}")
+    if is_child:
+        parent_dir, parent = resolve_parent(build_dir, identity, parent_dir, root)
+        verify_child_identity(build_dir, identity, entries, parent, parent_dir)
+        contracts = verify_export_contracts(build_dir, identity, entries, lines)
+        emit(f"ok parent dependency: {identity['parent_family']}/{identity['parent_build_id']}")
+        emit("ok child identity: inherited catalog, copied inputs, annotation and policy")
+        emit(f"ok export contracts: {len(contracts)} namespace paths")
+        from gene_child import verify_products
+        verify_products(build_dir, parent_dir, identity, emit)
+        emit(f"verified {identifier}")
+        return identifier
     sources = read_json(build_dir / "source/SOURCES.json")
     require(identity["catalog"] == catalog_from_payload(build_dir, sources, entries),
             "identity.catalog differs from source/SOURCES.json or canonical table digests")
@@ -458,14 +596,19 @@ def verify_build(build_dir, emit=print):
     return identifier
 
 
-def write_manifest(build_dir, config_path, argv=None):
+def write_manifest(build_dir, config_path, argv=None, parent_dir=None, root=None):
     """Write both identities and retain a successful read-only verifier summary."""
     build_dir = Path(build_dir)
     entries, lines = inventory(build_dir)
-    identity = identity_from_payload(build_dir, config_values(config_path), entries, lines)
+    identity = identity_from_payload(build_dir, config_values(config_path), entries, lines, parent_dir, root)
     invocation = argv if argv is not None else json.loads(os.environ.get("TE_TRACKS_INVOCATION", "null"))
-    sources = {**identity["catalog"]["sources"], **identity["build_sources"]}
+    sources = (identity["build_sources"] if identity["parent_build_id"] else
+               {**identity["catalog"]["sources"], **identity["build_sources"]})
     manifest = {"identity": identity, "provenance": provenance(sources, invocation or sys.argv)}
+    if identity["parent_build_id"]:
+        measurements = os.environ.get("TE_TRACKS_CHILD_STAGE_METRICS")
+        manifest["provenance"]["stage_metrics"] = json.loads(measurements) if measurements else []
+        manifest["provenance"]["peak_rss_measurement"] = "maximum child stage RUSAGE_CHILDREN" if measurements else "unavailable for this invocation"
     path = build_dir / "MANIFEST.json"
 
     def save():
@@ -477,7 +620,7 @@ def write_manifest(build_dir, config_path, argv=None):
     (build_dir / "BUILD_ID").write_text(identifier + "\n", encoding="ascii")
     (build_dir / "CATALOG_ID").write_text(catalog_identifier + "\n", encoding="ascii")
     assertions = []
-    verify_build(build_dir, emit=assertions.append)
+    verify_build(build_dir, emit=assertions.append, parent_dir=parent_dir, root=root)
     manifest["provenance"]["validation"] = {"status": "verified", "summary": assertions}
     save()
     return identifier, catalog_identifier

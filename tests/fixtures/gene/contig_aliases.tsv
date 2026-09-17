@@ -1,0 +1,4 @@
+chrom_ucsc	chrom_ensembl	chrom_gencode	chrom_genbank	chrom_refseq	length_bp
+chr1	1	chr1	CM1.1	NC1.1	3000
+chr1_GL456210v1_random	GL456210.1	GL456210.1	GL456210.1	NT1.1	1000
+chr2	2	chr2	CM2.1	NC2.1	1000
