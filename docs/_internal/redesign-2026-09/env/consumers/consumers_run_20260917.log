@@ -1,0 +1,25 @@
+pass  00_tool_inventory.required.py  supported tool_inventory reporting-only; irescue=IRescue 1.2.0; featureCounts=featureCounts v2.1.1; stellarscope=1.5; TEsingle=TEsingle 1.0; TEcount=TEcount 2.2.4; TElocal=TElocal 1.1.3; bedtools=bedtools v2.31.1; samtools=samtools 1.21
+pass  10_irescue_parser.required.py  supported irescue 1.2.0 (v1.2.0-20-g26f36fb) checkout parser; record=11, subfamily=8; comma splits one name and exporter rejects it
+unsupported  11_stellarscope_parser.py  unsupported: stellarscope right-boundary overlap defect, observed 0,1,1,1 expected 0,1,1,0; stellarscope 1.5 (1.5) checkout parser
+pass  12_tesingle_parser.required.py  supported TEsingle 1.0 (1.0-8-g655f127) checkout parser; record=11, subfamily=8; 999 distinct UR dropped, 1000 kept; duplicate/QC-fail reads skipped
+pass  13_tetranscripts_telocal_parser.required.py  supported TEtranscripts/TElocal 2.2.4 (2.2.4-13-ge7f9b93)/1.1.3 (1.1.3-4-g1a168c2) checkout parsers; TEtranscripts=8 groups; TElocal locInd record=11, subfamily=8
+pass  14_mates_parser.required.py  supported MATES 0.1.8 (v0.1.8-9-g87c1218) checkout adapter; eight-column pair; underscore stem; ?/Unknown model groups dropped
+pass  15_irescue_chrcat.py  supported irescue 1.2.0 (v1.2.0-20-g26f36fb) checkout chrcat; chrcat emitted record=11, subfamily=8 identities; mappings and feature index agree
+pass  16_family_triple_readers.required.py  supported family/triple readers bedtools v2.31.1; Python SAF column reader; family buckets and 8 SAF GeneIDs registered; three TwoLab rows share one triple
+Traceback (most recent call last):
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/consumers/../../lib/consumers.py", line 137, in run_check
+    summary = check()
+              ^^^^^^^
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/consumers/../../lib/consumers.py", line 578, in irescue_check
+    assert np.allclose([counts[key] for key in keys], fixed_point, atol=0.05, rtol=0), counts
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'SubA|chrA:1001-1200|+': 5.5, 'SubA|chrA:2001-2200|-': 3.5}
+fail  20_irescue_exec.sh
+  failed irescue: {'SubA|chrA:1001-1200|+': 5.5, 'SubA|chrA:2001-2200|-': 3.5}
+  names=8 multi_label_names=1 taxonomy_rule_version=taxonomy_rule_v1
+  universe=interspersed records=11 subfamilies=8 families=5 taxonomy_triples=8 instances=10 exports=7 registrations=88
+pass  21_featurecounts_exec.sh  supported featureCounts v2.1.1; -s 0; two fragments per subfamily and triple SAF feature; inclusive one-base overlap
+pass  22_bedtools_exec.required.sh  supported bedtools v2.31.1; duplicate names, half-open boundaries and -s/-S pass
+pass  23_samtools_fixture_integrity.required.sh  supported samtools 1.21; 11 sorted, indexed BAMs; ARC=13 OCM=26 bulk=26 alignments, 11 molecules each; tagged main UB=11 UR=12; reverse strands and duplicate/QC-fail flags pass
+pass  30_registration_duckdb.py  DuckDB registration targets and hand-computed totals pass; count 7 stays 7 at record, subfamily and family levels
+checks=13 pass=11 fail=1 unsupported=1

@@ -288,3 +288,140 @@ one later core snapshot.
 11. **18439-DM recount** on the updated universes (the owner's item under C1).
 12. **Umbrella pin**: te-tracks is at `28f2be3` and later while the umbrella pins `6bf9a22`; bump at the next
     milestone.
+
+## Third round (2026-09-17, later): rulings, answers and the consumer environment
+
+The owner read `open_questions_premises_2026-09-17.md` and ruled on the twelve items; three questions came back
+and are answered below. Evidence added this round: the Dfam classification tree
+(`../taxonomy/dfam_classes_20260917.json`, 300 nodes, 193 carrying a Wicker equivalence and 236 a RepeatMasker
+type), family records fetched for twenty representative mouse models, and the consumer-tool environment under
+`../env/consumers/`.
+
+**Ruled.**
+
+- **C4: confirmed.** Envelope 10 kb upstream and 2 kb downstream of transcript starts; `mRNA_start_NF` and
+  `Ensembl_canonical` carried per transcript; a wider window deferred. Measured for the record: vM37 flags 7,247
+  transcripts `mRNA_start_NF` and holds 60,563 transcripts shorter than 2 kb, the only ones for which the
+  downstream side adds pairs; the 10x GTF has 7,165 and 19,021.
+- **C11: confirmed in general.** Geometry only with status columns and neutral names; after the host build, batched
+  into one later core snapshot. The owner adds that the child family must serve the three current datasets on the
+  10x 2024-A annotation (GENCODE vM33 filtered) and vM37 alike, which rules item 3: two snapshots, vM37 in phase 8
+  where acceptance is pre-measured, the 10x child as the first phase 9 or post-host item, and the ARC GTF verified
+  from the 14761 run's reference path before the pilot.
+- **C7 details: confirmed** (100 and 200 pinned with cap saturation measured, 500 as a sensitivity run, forks in
+  the consuming toolkit, the three reporting tiers), with the owner's boundary: alignment parameters are the
+  consumer's responsibility; te-tracks records only the recipe its own execution fixtures run with.
+- **Item 5, consumer executables: ruled and done.** A venv without conda, reproducible from pinned sources, the base
+  venv used only where nothing conflicts; STAR 2.7.11b; cellranger 10.1.0 supplied by the owner. The environment
+  is at `/workspaces/Meta-Aging/.venv/te-consumers`, recreated by `../env/consumers/bootstrap.sh`; manifest, freeze
+  and README beside it.
+- **Item 6, the IRescue oracle: outside te-tracks' direct responsibility.** The binary settled the fact today: with
+  the shims on PATH, `20_irescue_exec.sh` observes 5.5 and 3.5 against the fixture's 6 and 3 and fails
+  (`../env/consumers/consumers_run_20260917.log`). Consequence for phase 9: the execution check asserts what
+  te-tracks guarantees, identity joins, roster and molecule conservation and unique molecules landing on their
+  feature, and records the allocation of ambiguous molecules without asserting it.
+- **Item 7, Stellarscope: downstream.** te-tracks makes no fork. The datasets compare each tool's own or
+  auto-generated annotation with te-tracks' exports and use agreement and divergence for inference on biology and
+  tool behaviour; for mm39 the natural corroboration is IRescue's automatic RepeatMasker conversion of the UCSC
+  table, which is the same source te-tracks projects.
+- **Packaging direction (owner).** IRescue, TEsingle and Stellarscope run the same reproducible way for 14616, 14782
+  and 14761, packaged so that the datasets have little say in how the tools are run; the Multiome snRNA arm runs
+  first; ATAC TE analysis uses what IRescue offers plus custom code under a peaks, motifs, TFs, GRN and TE schema
+  still to be designed, outside this discussion. The environment prepared today is the seed of that packaging;
+  its owner is the consuming toolkit.
+- **C10 details: confirmed** (lineage stored as truth; a named rank scheme derived with per-rank status;
+  `interspersed` names first; Dfam details included; the definitions relied on stated in te-tracks docs). The rank
+  vocabulary is still to be named, the dissertation's five ranks or Wicker's; the owner asked what Wicker's scheme
+  is and which reads best for the field. Answer and recommendation below.
+- **New ruling, documentation.** The package documentation must state plainly what a record, an instance and an
+  insertion are, that every per-locus count is a count per record, and the limitations of the annotation
+  endeavour. A decisions entry and an OUTPUTS section follow (the entry through the decisions unit now, the section
+  in phase 9).
+- **Item 11: 18439-DM is out of scope**; its work is done. **Item 12: the umbrella pin bumps at milestone 9.**
+- **Items 9 and 10: proceed as recommended.** C8 enters phase 9 by the round-two scope ruling with the rest of the
+  addition set; the decisions unit (`../prompts/decisions.md`, unit `te-tracks-decisions`) launches now.
+
+**Answer 1: what Dfam resolves, and when it is needed.** Dfam serves the aggregate stage of the analysis, which is
+exactly where the owner wants the statistics to live; it serves nothing per locus. Four things it settles:
+
+- *Which aggregates exist.* The tree gives one consistent nesting from class to subfamily, so a test on "all ERVs"
+  or "the Alu branch" or "MaLR" has a definition. RepeatMasker's family token is inconsistent for that purpose:
+  B1 sits under `Alu`, superfamilies survive only in hyphenated labels, and `ERVK` and `ERV2` name the same node.
+- *What full length means per subfamily.* Each model has a pinned length; L1MdA_I is the sum of its three part
+  models, 1,328 + 4,681 + 993 = 7,002 bp, where the catalog's row-implied lengths for that name range from 4,915
+  to 8,042. A record's 5′ completeness is then judged against a defined model.
+- *Age tiers with curated evidence.* Each model carries the clade it is assigned to, which is the evidence the
+  deferred "young versus old" item needs beside divergence:
+
+  | model | clade | model length | RepeatMasker type/subtype |
+  |---|---|---:|---|
+  | L1MdA_I_5end, L1MdTf_I_5end | Mus musculus | 1,328 / 1,314 | LINE/L1 |
+  | L1_Mur3_5end | Muroidea | 1,328 | LINE/L1 |
+  | B1_Mm / B1_Mus1 | Mus / Muridae | 147 / 148 | SINE/Alu |
+  | B2_Mm2 / B3 | Murinae / Muroidea | 195 / 216 | SINE/B2 |
+  | RSINE1 | Muroidea | 165 | SINE/B4 |
+  | MIRb | Mammalia | 268 | SINE/MIR |
+  | IAPEz-int / IAPLTR1a_Mm / RLTR10 | Mus / Mus musculus / Mus | 6,481 / 337 / 390 | LTR/ERVK |
+  | RLTR4_Mm | Mus musculus | 742 | LTR/ERV1 |
+  | MTA_Mm / ORR1A1 / MTD | Mus / Mus / Muroidea | 396 / 346 / 419 | LTR/ERVL-MaLR |
+  | MER5A | Eutheria | 189 | DNA/hAT-Charlie |
+  | Charlie1 / Tigger1 | Metatheria | 2,781 / 2,418 | DNA/hAT-Charlie, DNA/TcMar-Tigger |
+
+- *Stable identities across assemblies.* Accessions name the same model in mm39 and hg38, so the later human
+  comparison uses one hierarchy.
+
+  It also carries coding sequences and features per model, which a later ERV reconstruction can use. It does
+  not resolve read allocation, the record–insertion gap, or whether any copy's promoter works. Timing stays as
+  ruled, a later core snapshot; the census of all 1,220 `interspersed` names is stored, so the "never queried" risk
+  is closed, and the pilot's interim groupings come from RepeatMasker class and family.
+
+**Answer 2: "reconstruction waits for a consumer", and how to prepare.** Reconstruction means assembling
+insertion-level units from records: a full-length L1 copy with its 5′ region, a provirus from LTR, internal and
+LTR records, a solo LTR after recombination. Nobody downstream consumes such units yet: the RNA pilot counts
+records and subfamilies, the ATAC ledger counts records. Building the units now would mean choosing thresholds
+(gap, tolerance, length) that no analysis has asked for, and paying acceptance for each. When an analysis asks a
+question that needs the unit, it states the question, the parameters and the key it will join on, and te-tracks
+publishes the candidate geometry as a view with those parameters declared and a status per row. Preparation is
+mostly done: every export carries the instance id and the registration binds `instance_alias` to records; the
+catalog holds consensus coordinates, strand and divergence per record; the exon-subtracted child keys blocks to
+records, so instance joins survive; the status vocabularies and the measured shapes of all four views are in
+`structural_views_consult.md`. Three things remain: the documentation ruling above; the Dfam model lengths and
+part models as the pinned definition of full length; and a short recipe note, for the pilot's descriptive use,
+on computing instance unions, 5′ eligibility and LTR–internal adjacency from the parquet. The first consumer is
+foreseeable: the whole-cell 5′ arm's question whether molecule 5′ ends fall at retained L1 and LTR 5′ ends,
+which needs the record 5′ windows and the instance union.
+
+**Answer 3: Wicker's scheme, and the recommendation.** Wicker et al. (2007, *Nature Reviews Genetics* 8:973) is the
+field's unified classification: class I (retrotransposons, RNA intermediate) and class II (DNA transposons);
+within class II a subclass for cut-and-paste against rolling-circle and self-synthesizing elements; then order
+(LTR, DIRS, PLE, LINE, SINE; TIR, Crypton, Helitron, Maverick), superfamily (Copia, Gypsy, Bel-Pao, Retrovirus,
+ERV; R2, RTE, Jockey, L1, I; tRNA, 7SL, 5S; Tc1-Mariner, hAT, Mutator, Merlin, Transib, P, PiggyBac,
+PIF-Harbinger, CACTA), family by the 80-80-80 rule, and subfamily. It gives each element a three-letter code,
+class, order, superfamily, such as RIL for L1, RLE for ERV, RSL for 7SL-derived SINEs, DTA for hAT. The
+dissertation's five ranks are Wicker's with the order rank renamed "subclass" and Wicker's own subclass dropped.
+RepeatMasker's tokens straddle the ranks: its class is Wicker's order, its family mixes superfamily and family.
+
+Dfam settles the derivation. Each node of its tree carries `wicker_equiv` (for example `R/L (LTR)/E (ERV)` on
+`Orthoretrovirinae` and `MaLR`, `D/T (TIR)/A (hAT)` on `hAT` and `Charlie`, `R/S (SINE)/L (7SL)` on `Alu`,
+`R/I (LINE)/L (L1)` on `L1`) and the RepeatMasker type and subtype it corresponds to. Of the 1,047 exact census
+hits, 884 have a code on their own node, 110 inherit one from an ancestor within two levels, and the 53 without
+one are the `Unknown` class, where "unclassified" is the correct status. Recommendation: Wicker's rank names
+(class, subclass, order, superfamily, family, subfamily) as `rank_scheme_wicker_v1`, filled by lookup on the Dfam
+path with the Wicker code read from the nearest coded node, the Dfam node name as the family value, and the
+RepeatMasker class and family tokens beside every row; per-rank status `mapped`, `inherited`, `missing`,
+`inapplicable` (subclass outside class II) and `part_model_set` (L1); the dissertation's five names as a
+documented alias table so the thesis vocabulary reads onto the same rows. This is the most readable choice
+because reviewers know Wicker's terms, the RepeatMasker tokens stay visible for everyone who counts with them,
+and the word "subclass" keeps one meaning.
+
+**Environment.** `../env/consumers/`: `bootstrap.sh` (idempotent; `TMPDIR` under the root because `/tmp` is
+noexec), `requirements.txt` (five tools at the fixture checkouts' commits), `MANIFEST.tsv` (versions, sources,
+archive sha256), `pip-freeze.txt`, `python-version.txt`, `README.md`, `consumers_run_20260917.log`. Root
+`/workspaces/Meta-Aging/.venv/te-consumers`: venv 362 MB, STAR 14 MB, subread 151 MB, cellranger 2.6 GB.
+`duckdb` 1.5.5 went into the root-owned base venv with sudo; `gawk` 5.1.0 came from apt; both need a line in the
+devcontainer image. Suite with shims on PATH: 13 checks, 11 pass, 1 unsupported (Stellarscope boundary), 1 fail
+(IRescue allocation, see item 6); without shims the suite is unchanged at 8 pass and 5 unsupported.
+
+**Open after this round.** The rank vocabulary (Wicker recommended); the decisions entries as the unit writes them;
+a TES-side window as a later addition if the 3′ pilot needs it. Everything else on the twelve-item list is closed.
+Next: verify the decisions unit, rewrite plan 18, write `prompts/p8_impl.md`.

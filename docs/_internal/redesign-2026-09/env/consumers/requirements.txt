@@ -1,0 +1,6 @@
+# Consumer tools for the te-tracks execution checks, pinned to the fixture checkouts.
+irescue @ git+https://github.com/bodegalab/irescue.git@26f36fb391bb031a156ae8f0a77f31c125bfbe15
+stellarscope @ git+https://github.com/nixonlab/stellarscope.git@0e0d594047212afe81e3754732119975a0d2aa6f
+TEsingle @ git+https://github.com/mhammell-laboratory/TEsingle.git@655f1274de0fe5f3241219afc2ecb1c2e0830ae9
+TElocal @ git+https://github.com/mhammell-laboratory/TElocal.git@1a168c299714fc55df7dd93359f553759b95c810
+TEtranscripts @ git+https://github.com/mhammell-laboratory/TEtranscripts.git@e7f9b93f8c351b1b582cf0882aed49ffd1f0d1e9

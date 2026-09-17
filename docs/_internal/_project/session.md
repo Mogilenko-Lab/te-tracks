@@ -243,27 +243,38 @@ STARsolo GTF size arithmetic, contig dictionary, registration counts). Results a
 `consults/adr_rulings_2026-09-17.md`; two corrections landed in the synthesis and the TEsingle notes (STAR anchors
 100/200 in the scripts; TEsingle collapses identical four-tuples).
 
+**ADR discussion, third round** (2026-09-17, later): the owner ruled C4 (10 kb upstream, 2 kb downstream; `mRNA_start_NF`
+and `Ensembl_canonical` flags), C11 (geometry only, after the host build, batched; the child family serves the 10x vM33
+filtered annotation and vM37 alike, so item 3 is two snapshots with vM37 first), C7 details (100/200 with saturation, 500
+as sensitivity, forks in the consuming toolkit, three tiers; alignment parameters are the consumer's), the executables
+(a venv without conda, now prepared), the IRescue oracle (outside te-tracks' responsibility; the binary returns 5.5/3.5
+and check 20 fails until phase 9 rewrites it to conservation and identity), Stellarscope (downstream; no fork), C10
+details (lineage as truth, named rank scheme with per-rank status, interspersed first; Wicker's names recommended and
+awaiting the owner's word), a new documentation ruling on records, instances and insertions, 18439-DM out of scope, and
+the umbrella pin at milestone 9. Answers and evidence in `consults/adr_rulings_2026-09-17.md` (third round),
+`taxonomy/dfam_classes_20260917.json`, and `consults/open_questions_premises_2026-09-17.md`. Consumer environment:
+`/workspaces/Meta-Aging/.venv/te-consumers` from `redesign-2026-09/env/consumers/bootstrap.sh` (STAR 2.7.11b, subread
+2.1.1, gawk, cellranger 10.1.0, the five Python tools at the fixture checkouts' commits, duckdb in the base venv); with
+`source /workspaces/Meta-Aging/.venv/te-consumers/activate.sh` the consumers suite runs 11 pass, 1 unsupported, 1 fail
+(IRescue allocation); without it 8 pass and 5 unsupported. The decisions unit `te-tracks-decisions`
+(`prompts/decisions.md`) writes the ruled entries into `docs/DECISIONS.md`.
+
 ## Next session starts here
 
-1. **Pick up here: continue the ADR discussion from the open list.** C2 and C8 are ruled (second round in
-   `consults/adr_rulings_2026-09-17.md`); C4 and C11 stay open with plain-language explanations recorded there, and
-   the section "Open questions carried to the next session" lists twelve items the owner wants to keep discussing
-   (envelope, structural-view ordering, which GTF the child pins first, C7 ownership and STAR recipe, consumer
-   executables, the IRescue oracle, Stellarscope's defect, the Dfam rank scheme, the phase 9 addition set, the
-   DECISIONS.md entries, the 18439-DM recount, the umbrella pin). Open the session by re-reading that section with
-   the owner. The premises, routes, tradeoffs and caveats of every open item are laid out in
-   `redesign-2026-09/consults/open_questions_premises_2026-09-17.md`; its section 4 corrects the critical path:
-   C4 and C11 gate later snapshots, and phase 8 waits on the decisions unit and the GTF choice alone. Once C4 and C11 close: a codex unit writes the `docs/DECISIONS.md` entries (package file; the
-   orchestrator supplies the ruled text); the orchestrator rewrites plan `18_phase8_gene_child_seam.md` from the
-   rulings and the consults (`gene_child_consult.md`, `field_practice_consult.md`, `mask_policy_consult.md`,
-   `loci_gtf_consult.md`, `structural_views_consult.md`) and writes `prompts/p8_impl.md` aligned with
-   `reviews/{m5,p6,p7,m7}_rulings.md` (family and assembly separate, `GENOME=mm39` with `FAMILY=te_mm39_gene`,
-   parent pinned by full `BUILD_ID`, child `.staging`, alias table copied by digest, explicit variant in exporter and
-   registration, the GTF as a child source role and a parameter, verifier branch for non-null parents, context
-   `not_computed`, per-pair status backlog, the bulk-scope statement of C3, the default mask alone). Phase 9 gains
-   the C8 export, the C9 binding-rule correction and join fixture, the C10 label-surprise and constant-flag notes,
-   the RNA qualification limits in the parking handoff (TEsingle mates, UMI graph, hard ties; Stellarscope boundary
-   and overlap preselection; the IRescue 5.5/3.5 against 6/3 oracle question), and a failed-build cleanup case.
+1. **Pick up here: verify the decisions unit, then plan 18 and `prompts/p8_impl.md`.** Read the third round of
+   `consults/adr_rulings_2026-09-17.md`; every item of the open list is ruled except the rank vocabulary (Wicker
+   recommended). Verify `te-tracks-decisions` (touch list `docs/DECISIONS.md` alone; core suite exit 0; negation grep)
+   and commit it. Then the orchestrator rewrites plan `18_phase8_gene_child_seam.md` from the rulings and the consults
+   (`gene_child_consult.md`, `field_practice_consult.md`, `mask_policy_consult.md`, `loci_gtf_consult.md`,
+   `structural_views_consult.md`) and writes `prompts/p8_impl.md` aligned with `reviews/{m5,p6,p7,m7}_rulings.md`
+   (family and assembly separate, `GENOME=mm39` with `FAMILY=te_mm39_gene`, parent pinned by full `BUILD_ID`, child
+   `.staging`, alias table copied by digest, explicit variant in exporter and registration, the GTF as a child source
+   role and a parameter with vM37 first, verifier branch for non-null parents, context `not_computed`, per-pair status
+   backlog, the bulk-scope statement of C3, the default mask alone). Phase 9 gains the C8 export, the C9 binding-rule
+   correction and join fixture, the C10 label-surprise and constant-flag notes, the records/instances/insertions
+   section in OUTPUTS.md, the IRescue execution check rewritten to identity and conservation, the consumer environment
+   promoted into the package (bootstrap and lock beside `tests/`), the RNA qualification limits in the parking handoff,
+   a failed-build cleanup case, and the 10x-GTF child as the first post-host or phase 9 snapshot.
 2. Phases 8 and 9 with `p8_impl.md` and `p9_impl.md`, each aligned with the rulings in its plan file before launch;
    phase 8 opens with a codex design consult on the child family's topology, architecture and approach, recorded under
    `redesign-2026-09/consults/` and ruled by the owner before `p8_impl.md` is finalized (owner, 2026-09-16); the

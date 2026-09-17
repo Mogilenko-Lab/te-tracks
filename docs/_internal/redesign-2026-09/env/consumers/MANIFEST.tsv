@@ -1,0 +1,12 @@
+tool	version	source	sha256
+STAR	2.7.11b	https://github.com/alexdobin/STAR/releases/download/2.7.11b/STAR_2.7.11b.zip	9ec60251de46c7c83087c06f6a1acab71ad09137d991b485e02be819cb8ad136
+featureCounts	featureCounts v2.1.1	https://sourceforge.net/projects/subread/files/subread-2.1.1/subread-2.1.1-Linux-x86_64.tar.gz/download	b3faa48246425f3d67bc5c283dbe67992f8686e5b5192dba527b154a1034d3a0
+gawk	GNU Awk 5.1.0, API: 3.0 (GNU MPFR 4.1.0, GNU MP 6.2.1)	apt (system package; add to the devcontainer image)	-
+cellranger	cellranger 10.1.0	/workspaces/Meta-Aging/01_modules/cellranger-10.1.0.tar.gz	bce72f4739f2e8193758037ff52e20b85ca716ad44e729dc748d10b25b4ccb9a
+irescue	IRescue 1.2.0	git+https://github.com/bodegalab/irescue.git@26f36fb391bb031a156ae8f0a77f31c125bfbe15	-
+stellarscope	1.5	git+https://github.com/nixonlab/stellarscope.git@0e0d594047212afe81e3754732119975a0d2aa6f	-
+TEsingle	TEsingle 1.0	git+https://github.com/mhammell-laboratory/TEsingle.git@655f1274de0fe5f3241219afc2ecb1c2e0830ae9	-
+TEcount	TEcount 2.2.4		-
+TEtranscripts	TEtranscripts 2.2.4	git+https://github.com/mhammell-laboratory/TEtranscripts.git@e7f9b93f8c351b1b582cf0882aed49ffd1f0d1e9	-
+TElocal	TElocal 1.1.3	git+https://github.com/mhammell-laboratory/TElocal.git@1a168c299714fc55df7dd93359f553759b95c810	-
+duckdb (base venv module)	1.5.5	pypi duckdb==1.5.5	-
