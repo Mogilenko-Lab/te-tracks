@@ -31,15 +31,21 @@ Every export ships with a known-answer consumer fixture, a local test runner, a 
 a host-build runbook and `AGENTS.md`.
 Additional adapters enter a release together with a named consumer and a passing fixture.
 
-## 4. Gene-dependent views
+## 4. Gene annotation snapshots
 
-Gene-dependent views form a child build family `te_<assembly>_gene` that pins its parent core build
-and one gene annotation.
-The first child view is the exon-subtracted SAF: subtraction of the unstranded union of all
-annotated exons, with every retained piece registered to its record.
-The record-by-transcript context relation follows in its own design session.
-Exon subtraction guarantees exon-disjoint sequence support under the declared mask; molecule
-exclusivity between gene and TE counts is a property of the joint counting run.
+`te_<assembly>_gene` publishes immutable snapshots pinning one parent core by full `BUILD_ID`,
+one gene annotation by digest and one versioned policy bundle (mask, minimum retained block,
+context capability and later context envelope), with the parent's `CATALOG_ID`.
+Consumers match the snapshot's annotation digest to their counting annotation: the first snapshot
+pins GENCODE vM37 and the second pins the 10x 2024-A annotation (GENCODE vM33 filtered) used for
+the current single-cell counts; a mismatch requires documented geometry reconciliation or another
+snapshot.
+Each child carries an exact, digest-verified copy of the parent's contig alias and length table,
+normalizes annotation contigs through it and fails on an unmapped contig; the
+`compat_tetranscripts_mm39` exon-subtracted SAF pair stays a published family view for legacy
+reproduction.
+Peaks, motif databases and TF inference are the ATAC framework's own pinned inputs; motif content
+on TE consensus sequences belongs to another child family.
 
 ## 5. Namespace
 
@@ -75,7 +81,100 @@ replacement of `current`, and stays on disk with consumer pins to its full ID an
 The verifier judges an archive against its own declaration and the published versions so earlier
 archives stay verifiable and selectable.
 
-## 8. Wording
+## 8. Exon mask policy
+
+The default mask, `all_exons_unstranded_union_v1`, subtracts the unstranded union of every exon
+row in the pinned annotation and retains every positive-length block (`min_retained_block_bp = 1`),
+registered to its record, because an all-exon gene pass counts every exon row and the guarantee
+is exon-disjoint sequence support.
+The same-strand companion, `all_exons_stranded_union_v1`, joins in a later snapshot after a
+chemistry pilot establishes which mate is RNA-sense; protein-coding and basic masks stay measured
+alternatives admitted with a named consumer.
+EM routes use unmasked record exports with the full gene annotation; molecule exclusivity belongs
+to the joint counting run.
+
+## 9. Transcript context is geometry
+
+te-tracks publishes a sparse record-by-transcript geometry relation with per-pair status and a
+per-record roll-up, carrying exon, intron and UTR overlap, relative strand, and signed closest-base
+distance to each transcript's start and end, with gene-body distance beside transcript distance
+so consumers can derive their own labels.
+Rows cover body overlaps, the nearest start, end and exon edge on the record's contig with ties
+kept, and records overlapping a window from 10 kb upstream to 2 kb downstream of an annotated
+transcript start; narrower promoter policies are consumer filters on the stored distance.
+Each transcript carries `Ensembl_canonical` and `mRNA_start_NF` flags so consumers can exclude
+incomplete starts.
+The first child snapshot declares context `not_computed`; the relation follows in a later
+snapshot after passing the chr1 then mm39 scaling gate, and consuming ledgers key on
+`te_catalog_id` and `te_build_id`.
+
+## 10. Records, instances and insertions
+
+A record is one RepeatMasker alignment of a genome stretch to a consensus model, the unit
+underlying every export and every per-locus count.
+An instance id is RepeatMasker's grouping hypothesis for records descended from one element,
+carried on every record and registered as its own feature level; it is a starting group whose
+errors can split one insertion or combine distinct insertions.
+Insertion-level units, including full-length copies, proviruses and solo LTRs, are reconstructions
+with declared parameters and evidence, published later as candidate views.
+Documentation states the annotation's limits so consumers can interpret these units: records align
+to a pinned library, fragmentation and nesting split elements, consensus coordinates are
+model-relative, records overlap one another, and genic context depends on the annotation pin.
+
+## 11. Structural candidate views
+
+Later core snapshots publish geometry computed solely from catalog columns under declared parameters:
+the block union of an instance's records with gaps preserved, record 5′ windows with model-prefix
+eligibility, LTR–internal candidate pairs by family, strand and gap with per-pair status, and
+divergence bins with pinned thresholds.
+Views carry neutral names, support and candidate status, and enter after the host build, batched
+into a later core snapshot when a consumer names the need.
+Biological verdicts such as promoter-intact, solo LTR and young belong to consuming analyses
+because they require interpretation of the candidate evidence.
+
+## 12. Consumer boundary and qualification
+
+te-tracks ships registered intervals and identities and qualifies consumer tools at two levels:
+parser checks run each tool's own reading code on exports, and execution checks run its pinned
+binary on a fixture.
+Execution checks assert identity joins, roster and molecule conservation, and unique molecules
+landing on their feature; each tool's allocation of ambiguous molecules is recorded as observed
+behaviour outside these assertions.
+Alignment parameters, estimator choice, forks and allocation behaviour belong to the consuming
+toolkit, so te-tracks documents its observed qualification limits.
+Execution checks use a pinned, reproducible tool environment recorded with the repository and
+report `unsupported` when a binary is absent.
+
+## 13. STARsolo record profile
+
+`record_starsolo.gtf` makes each record one gene and one single-exon transcript, with `gene_id`,
+`transcript_id` and `locus` equal to the record alias, `gene_name` the RepeatMasker name,
+`gene_type` `transposable_element`, and provenance attributes kept, so gene-level counters count
+loci.
+The existing `record.gtf` keeps the subfamily grammar consumed by TEsingle and TElocal.
+The profile reuses record alias membership in registration and enters with its contract and
+fixture; an instance-level profile awaits mixed-name, mixed-strand, gap and junction tests.
+
+## 14. Matrix binding
+
+A run's matrix binds to a registration through the full key
+`(universe_name, variant, feature_level, key_grammar)` because registration holds each record
+under multiple universes and joining on level and grammar alone doubles counts.
+A join fixture over `interspersed` and `all_rmsk` proves the rule.
+
+## 15. Rank vocabulary and Dfam
+
+Raw and canonical RepeatMasker labels stay as they are; a later core view stores Dfam lineage,
+accession, model version, model length, clade and release as truth, admitting `interspersed`
+names first.
+It derives a named rank scheme with per-rank status (`mapped`, `inherited`, `missing`,
+`inapplicable`, `part_model_set`), mapping L1 whole-element names to sets of Dfam part models.
+The rank vocabulary is named at admission, with Wicker's ranks recommended and the dissertation's
+five names kept as a documented alias table so both vocabularies read onto the same rows.
+Documentation explains label surprises consumers need to interpret: B1 under `Alu`, `ERVL-MaLR`,
+hyphenated DNA superfamilies and class-less records.
+
+## 16. Wording
 
 Each decision states the chosen behaviour and its reason in two to four brief affirmative
 sentences.
@@ -85,14 +184,19 @@ Deferred work names the evidence its next decision needs.
 
 ## Recorded deferrals
 
-- Young versus old tiers: `divergence_pct` per record lands in phase 2; per-subfamily median
-  divergence lands with the phase 3 taxonomy table; curated evolutionary ages and full-length or
-  ORF status wait for a structural stage.
-- ERV units: the instance relation and consensus coordinates are prerequisites; validated
-  LTR-internal membership defines the unit later.
+- Young versus old tiers: Dfam clade assignment beside per-record divergence and per-subfamily
+  median divergence supplies age-tier evidence; full-length and ORF status need structural evidence.
+- ERV units: the LTR–internal candidate view, instance relation and consensus coordinates precede
+  reconstruction; validated LTR–internal membership defines the unit.
 - hg38: source pins and packaged-file reconciliation follow parking, using the shared schema,
   class-census gate and config shape.
-- Transcript context: a dedicated design session follows the
-  [phase 8 gene child seam](_internal/_project/plans/2026-09-16_te-tracks-redesign/18_phase8_gene_child_seam.md).
+- Transcript context: section 9 defines the relation and its chr1 then mm39 scaling gate.
+- Stranded mask companion: the chemistry pilot establishes which mate is RNA-sense before
+  `all_exons_stranded_union_v1` joins the default mask.
+- TES-side window: evidence of need from the 3′ pilot admits a later context envelope.
+- Instance-level STARsolo profile: mixed-name, mixed-strand, gap and junction tests qualify its
+  feature grammar.
+- Consumer environment: phase 9 promotes the pinned, reproducible environment into the package
+  with its source manifest and execution evidence.
 - Cross-build record correspondence on `(chrom, start_1, end_1, strand)` awaits an explicit mapping rule.
 - hg38 admission requires source-wide instance numbering or a contig-scoped instance key.
