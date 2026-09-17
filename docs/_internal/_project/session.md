@@ -304,8 +304,10 @@ and launches after the phase 8 commit with `__HEAD__` replaced by that commit.
 
 ## Next session starts here
 
-1. **Pick up here: launch phase 9a.** Phase 8 is committed as `393ca76` ("Phase 8: the gene child family, first snapshot").
-   (a) Launch `te-tracks-p9a-impl` from `prompts/p9a_impl.md` (pinned to `393ca76`; launcher as a harness background task,
+1. **Pick up here: phase 9a is running.** Phase 8 is committed as `393ca76` ("Phase 8: the gene child family, first snapshot").
+   `te-tracks-p9a-impl` was launched at 17:32 UTC (run `20260917T173249Z-3759311`, gpt-6-astra xhigh); its final message lands
+   in `/tmp/scio-delegate/te-tracks-p9a-impl/20260917T173249Z-3759311/final.md`. (a) If that run is still alive or terminal,
+   use it; otherwise launch `te-tracks-p9a-impl` from `prompts/p9a_impl.md` (pinned to `393ca76`; launcher as a harness background task,
    `--effort xhigh`, timeout 600000; the unit rebuilds the core, about 12 min and 6 GB resident, then the child, and republishes
    both into the scratch root beside the old archives; 316 GB free). If `status.sh --unit te-tracks-p9a-impl` shows a run,
    wait for it instead. When terminal, read its final message and re-verify from plan 19's 9a section: 27 export contracts, 51
