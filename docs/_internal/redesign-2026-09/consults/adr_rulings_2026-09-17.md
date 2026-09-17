@@ -470,3 +470,11 @@ The owner replied mid-turn to the third-round report.
 **Launched at the end of this round:** `te-tracks-p8-impl` from `../prompts/p8_impl.md` against plan 18 as
 rewritten; `te-tracks-schema-consult` from `../prompts/schema_consult.md`, read-only. Plan 19 gains section
 "Phase 9a: core additions before acceptance".
+
+**Dfam snapshot measured (2026-09-17, after the fetch).** `../taxonomy/dfam_interspersed_mm39_snapshot.json.gz` (278,952 bytes;
+Dfam 4.0, May 2026; 1,220 names queried, 1,263 model records without sequences, zero errors; provenance and the fetch script
+beside it). Match status by the part rule: 1,047 exact, 147 resolved through `_5end`, `_orf2` and `_3end` part models, 26 without
+a model (the LTR `-int` names such as `ERVL-B4-int`, `IAP-d-int`, `ETnERV-int`, plus `ID`). Clades of the matched models: Eutheria
+367, Mus 172, Murinae 169, Amniota 96, Mammalia 67, Theria 64, Muroidea 57, Boreoeutheria 36, Euarchontoglires 30, Muridae 29,
+Tetrapoda 19, Primates 17. Caveat for the 9a design: the clade is the model's curated assignment, so a mouse name matched to a
+primate-assigned model needs a status of its own rather than an age tier.
