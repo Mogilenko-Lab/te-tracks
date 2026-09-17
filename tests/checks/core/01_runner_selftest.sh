@@ -63,6 +63,10 @@ expect_line 'checks=2 pass=1 fail=0 unsupported=1'
 
 expect_exit 2 acceptance --refroot "$scratch"
 expect_line "runner error: missing check directory: $scratch/tests/checks/acceptance" stderr
+mkdir "$scratch/tests/checks/acceptance"
+expect_exit 2 acceptance --refroot "$scratch"
+expect_line 'checks=0 pass=0 fail=0 unsupported=0'
+expect_line 'no checks registered for mode acceptance'
 expect_exit 2
 expect_line 'usage: tests/run.sh <core|consumers|acceptance> [--refroot DIR]' stderr
 printf '%s\n' 'runner statuses, required checks, diagnostics, dangling symlinks and usage exits pass'

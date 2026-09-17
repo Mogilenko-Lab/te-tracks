@@ -558,8 +558,8 @@ bin/te-tracks-preflight <export> <bam|fai|sizes>
 
 Preflight reads contig names from BED/GTF column 1 or SAF column 2 and reference lengths from
 a BAM header through pysam, a FASTA index or a two-column sizes TSV.
-It locates the nearest `tables/contig_aliases.tsv` by walking up from the absolute export path
-as given, with symlinks unresolved.
+It walks up from the absolute export path as given, with symlinks unresolved, to the nearest
+parent directory containing `MANIFEST.json` and requires that build's `tables/contig_aliases.tsv`.
 The report prints `only_in_reference`, `only_in_export` and `length_disagreements` as JSON lists,
 then `alias_table` as a JSON path string.
 Exit 0 means every export contig is present in the reference with an agreeing length;

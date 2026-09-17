@@ -17,6 +17,8 @@ def check():
     build_fixture()
     assert declared_key("family.bed", "bedtools") == "name"
     assert declared_key("taxonomy_triple.saf", "SAF column reader") == "GeneID"
+    assert declared_key("subfamily.saf", "featureCounts") == "GeneID"
+    assert declared_key("taxonomy_triple.saf", "featureCounts") == "GeneID"
     if shutil.which("bedtools") is None:
         raise Unsupported("family reader system tool bedtools absent")
     output = command(["bedtools", "intersect", "-wa", "-wb",

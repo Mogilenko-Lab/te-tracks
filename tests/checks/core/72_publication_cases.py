@@ -90,14 +90,9 @@ with TemporaryDirectory(prefix="cases-", dir=SCRATCH) as directory:
         assert len(list(archive.iterdir())) == 4
         release("select", "--build-id", second_id)
         bad = make_build(family)
-        (bad / "policy.txt").write_text("corrupt\n")
-        release("install", "--staging", bad, "--select", status=1, message="policy.txt")
+        (bad / "source/qualification.md").write_text("corrupt\n")
+        release("install", "--staging", bad, "--select", status=1, message="source/qualification.md")
         assert bad.exists() and current.readlink() == Path("archive") / second_id
-        extra = make_build(family, extra=True)
-        extra_id = identifier(extra)
-        assert extra_id != first_id and catalog(extra) == first_catalog
-        release("install", "--staging", extra)
-        assert current.readlink() == Path("archive") / second_id
         candidates = [make_build(family, note="concurrent") for _ in range(2)]
         race_id = identifier(candidates[0])
         assert identifier(candidates[1]) == race_id
@@ -112,10 +107,10 @@ with TemporaryDirectory(prefix="cases-", dir=SCRATCH) as directory:
         assert sum("installed " + race_id in output for output in outputs) == 1
         assert sum("converged " + race_id in output for output in outputs) == 1
         assert all(not path.exists() for path in candidates)
-        assert len(list(archive.iterdir())) == 6
+        assert len(list(archive.iterdir())) == 5
         assert current.readlink() == Path("archive") / race_id
         release("verify-current", message=race_id)
-        old_payload = old / "policy.txt"
+        old_payload = old / "source/qualification.md"
         old_payload.chmod(0o644)
         old_bytes = old_payload.read_bytes()
         old_payload.write_text("damaged existing archive\n")
@@ -129,11 +124,11 @@ with TemporaryDirectory(prefix="cases-", dir=SCRATCH) as directory:
         release("select", "--build-id", first_id, status=1, message="BUILD_ID")
         (old / "BUILD_ID").write_text(first_id + "\n")
         (old / "BUILD_ID").chmod(0o444)
-        selected_payload = archive / race_id / "policy.txt"
+        selected_payload = archive / race_id / "source/qualification.md"
         selected_payload.chmod(0o644)
         original = selected_payload.read_bytes()
         selected_payload.write_text("damaged\n")
-        release("select", "--build-id", first_id, status=1, message="policy.txt")
+        release("select", "--build-id", first_id, status=1, message="source/qualification.md")
         release("verify-current", status=1, message=f"current -> archive/{race_id}: ")
         assert current.readlink() == Path("archive") / race_id
         selected_payload.write_bytes(original)
@@ -151,7 +146,7 @@ with TemporaryDirectory(prefix="cases-", dir=SCRATCH) as directory:
         assert linked.exists() and linked_target.is_symlink()
         linked_target.unlink()
         payload_link = make_build(family, note="payload-link")
-        (payload_link / "link").symlink_to("policy.txt")
+        (payload_link / "link").symlink_to("source/qualification.md")
         release("install", "--staging", payload_link, status=1, message="symlink inside build: link")
         assert payload_link.exists()
         unreadable = make_build(family, note="unreadable")
@@ -249,6 +244,6 @@ with TemporaryDirectory(prefix="cases-", dir=SCRATCH) as directory:
         assert old.is_dir() and identifier(old) == first_id
     finally:
         writable(root)
-print("identical and changed builds, export-roster evolution (4 archives), failed verification, added payload, "
-      "concurrent installs/selects (6 archives), old IDs, forged ID, corrupt current, selector and root cases, "
+print("identical and changed builds, export-roster evolution (4 archives), failed verification, "
+      "concurrent installs/selects (5 archives), old IDs, forged ID, corrupt current, selector and root cases, "
       "occupied targets, symlinks and 0444/0555 modes pass")

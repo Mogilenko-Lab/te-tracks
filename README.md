@@ -24,8 +24,9 @@ and one gene annotation.
 installs at `te_mm39/archive/<BUILD_ID>/` and selects the relative `current` symlink.
 Add `--no-select` to install while preserving the existing selection.
 `BUILD_ID` identifies the complete build; `CATALOG_ID` binds the record-producing RepeatMasker
-`.out`, run identity, source-wide instance scope and four canonical table digests for consumer
-ledger keys. [docs/RELEASES.md](docs/RELEASES.md) describes publication and transfer.
+`.out`, run identity, source-wide instance scope and decompressed canonical text tables for consumer
+ledger keys, so a serializer or compressor change moves `BUILD_ID` alone.
+[docs/RELEASES.md](docs/RELEASES.md) describes publication and transfer.
 Set `TE_TRACKS_SOURCE_CACHE` to reuse checksum-matching cached sources; in-container builds use
 a scratch directory, and host builds compare the recorded toolchain versions.
 
@@ -40,7 +41,7 @@ tests/run.sh acceptance --refroot /workspaces/Meta-Aging/_scratch/te-tracks-audi
 The default reference root is `/workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot`.
 Each mode reports `pass`, `fail` or `unsupported` per check. Core checks cover the parser fixtures,
 the qualification report, the record schema, instances, universes, the record fixtures,
-taxonomy (30 to 32) and exports (40 to 42).
+taxonomy (30 to 32), exports (40 to 42), contigs (60 to 62) and identity and publication (70 to 72).
 
 ## Outputs
 

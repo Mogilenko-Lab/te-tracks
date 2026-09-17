@@ -47,6 +47,13 @@ scratch.mkdir(parents=True, exist_ok=True)
 with TemporaryDirectory(prefix="verify-fixture-", dir=scratch) as directory:
     try:
         fixture = make_build(Path(directory) / "te_mm39")
+        stray = fixture / "tables/stray.tmp"
+        stray.write_text("stray payload\n")
+        result = subprocess.run([sys.executable, str(ROOT / "src/90_manifest.py"), str(fixture),
+                                 str(Path(directory) / "fixture.env")], capture_output=True, text=True)
+        assert result.returncode == 1, result.stdout + result.stderr
+        assert "payload roster differs" in result.stderr and "tables/stray.tmp" in result.stderr, result.stderr
+        stray.unlink()
         path = fixture / "source/mm39.chrom.sizes"
         data = path.read_bytes()
         path.write_bytes(bytes([data[0] ^ 1]) + data[1:])
@@ -76,5 +83,5 @@ with TemporaryDirectory(prefix="verify-fixture-", dir=scratch) as directory:
                 if not path.is_symlink():
                     path.chmod(0o664)
 elapsed = perf_counter() - started
-print("real build verifies unchanged; fixture flipped byte, extra file, unpublished taxonomy rule and "
+print("real build verifies unchanged; fixture stray authoring payload, flipped byte, extra file, unpublished taxonomy rule and "
       f"export roster mismatch fail with named discrepancies; fixture cases={elapsed:.3f}s")

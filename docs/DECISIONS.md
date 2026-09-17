@@ -66,8 +66,9 @@ The UCSC browser table is compared once at source qualification and the report i
 ## 7. Build identity and publication
 
 `BUILD_ID` hashes the complete manifest identity, while `CATALOG_ID` binds the record-producing
-RepeatMasker source, run identity, source-wide instance scope and four canonical table digests
-for the ledger key `(te_catalog_id, rmsk_record_id)`.
+RepeatMasker source, run identity, source-wide instance scope and decompressed canonical text
+tables for the ledger key `(te_catalog_id, rmsk_record_id)`, so a serializer or compressor change
+moves `BUILD_ID` alone.
 Builder commit and validation evidence live in the `provenance` section outside both hashes.
 A build verifies in staging, installs once into `archive/<BUILD_ID>/`, becomes selected by atomic
 replacement of `current`, and stays on disk with consumer pins to its full ID and file digests.

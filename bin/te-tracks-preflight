@@ -39,12 +39,12 @@ def reference_lengths(path):
 
 
 def export_lengths(path):
-    """Read observed contig lengths from the nearest alias table along the given path."""
+    """Read contig lengths from the nearest enclosing build's alias table."""
     path = path.absolute()
-    alias_table = next((parent / "tables/contig_aliases.tsv" for parent in path.parents
-                        if (parent / "tables/contig_aliases.tsv").is_file()), None)
-    if alias_table is None:
-        raise ValueError(f"export requires an enclosing tables/contig_aliases.tsv: {path}")
+    build = next((parent for parent in path.parents if (parent / "MANIFEST.json").is_file()), None)
+    if build is None or not (build / "tables/contig_aliases.tsv").is_file():
+        raise ValueError("export requires an enclosing build with MANIFEST.json and tables/contig_aliases.tsv")
+    alias_table = build / "tables/contig_aliases.tsv"
     lengths = {}
     with alias_table.open(encoding="utf-8") as stream:
         for row in csv.DictReader(stream, delimiter="\t"):
@@ -99,7 +99,7 @@ def main():
         if disagreements:
             return 1
         return 2 if only_export else 0
-    except (ValueError, KeyError, OSError, ImportError) as error:
+    except (ValueError, KeyError, TypeError, OSError, ImportError) as error:
         print(f"te-tracks-preflight: {error}", file=sys.stderr)
         return 1
 

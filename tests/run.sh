@@ -103,5 +103,6 @@ done
 printf 'checks=%s pass=%s fail=%s unsupported=%s\n' "${#checks[@]}" "$pass" "$fail" "$unsupported"
 if [ "${#checks[@]}" -eq 0 ]; then
   printf 'no checks registered for mode %s\n' "$mode"
+  exit 2
 fi
 exit "$runner_exit"

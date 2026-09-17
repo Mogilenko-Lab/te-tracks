@@ -2,7 +2,7 @@
 
 A core release binds one RepeatMasker catalog and its registered exports to `BUILD_ID`.
 `CATALOG_ID` binds the record-producing RepeatMasker `.out`, run identity, source-wide instance
-scope and four canonical table digests across builds.
+scope and decompressed canonical text tables across builds.
 
 ## Layout and build commands
 
@@ -52,17 +52,21 @@ The sibling `identity.build_sources` holds `rmsk_table`, `chromAlias` and `chrom
 same fields, binding these inputs to `BUILD_ID`.
 `identity.catalog` also contains the declared
 RepeatMasker version, library, run evidence and parser profile, `instance_id_scope: source_run`,
-and the digests of `rmsk_records.parquet`, `rmsk_records.tsv.gz`, `rmsk_instance_members.tsv.gz`
-and `rmsk_taxonomy.tsv`. One source-wide RepeatMasker run numbers the instances. A new export,
-universe or taxonomy rule version changes build identity while an unchanged catalog keeps its
+and `tables`, a mapping from logical names `rmsk_records.tsv`, `rmsk_instance_members.tsv`
+and `rmsk_taxonomy.tsv` to SHA-256 digests of their decompressed text bytes.
+The first two tables are stored as gzip files; `rmsk_taxonomy.tsv` is plain text.
+Parquet and compressed file bytes remain bound through the inventory to `BUILD_ID`, so a
+serializer or compressor change moves `BUILD_ID` alone. One source-wide RepeatMasker run
+numbers the instances. A new export, universe or taxonomy rule version changes build identity
+while an unchanged catalog keeps its
 catalog identity. The core family has null `parent_build_id` and `parent_catalog_id`.
 
 The 24 export contracts derive from the export writer's shared contract dictionary and job
 roster, cross-checked against `tables/exports.tsv`: path, namespace, universe, variant, format,
-feature level, identity field, attribute source mapping, consumer output keys, selectable levels
-and coordinate convention. `consumer_keys` names each reader's key column and grammar for a file,
-a fact of the file format that holds for every universe of that file, while tested routes per
-universe live in the [OUTPUTS.md route table](OUTPUTS.md#consumer-contracts-phase-5).
+feature level, identity field, attribute source mapping, selectable levels and coordinate convention.
+Reader key columns and grammars are documented in [OUTPUTS.md](OUTPUTS.md#consumer-contracts-phase-5)
+and asserted by the consumer checks against the exporter's contract table; the identity binds
+what bytes and semantics depend on.
 `universes.schema_version` owns predicate grammar; adding a predicate
 key requires a new version.
 
@@ -72,7 +76,9 @@ locations, verifier results and measured export-writer peak RSS. Image evidence 
 `/etc/os-release` and available image metadata files, with the limits of that identification.
 A standalone manifest invocation records RSS as null when the writer measurement is unavailable.
 
-Both identities use this encoding, with zero terminal whitespace in the hashed bytes:
+Both identities use this encoding, with zero terminal whitespace in the hashed bytes;
+`CATALOG_ID` binds the RepeatMasker source, run identity, source-wide instance scope and
+decompressed canonical text tables:
 
 ```python
 canonical_bytes = lambda obj: json.dumps(
@@ -101,9 +107,13 @@ The verifier reads the complete inventory from disk, checks exact file-set equal
 hashes, recomputes both identities, validates the typed record schema, unique keys and contig
 bounds, and compares observed record and export counts with their published tables. It leaves
 build bytes and directories unchanged and uses memory for its working state.
-It judges an archive against its own manifest and the published schema, taxonomy-rule and
-predicate-grammar versions, recomputing `catalog.sources` for `rmsk_out` and `build_sources` for
-`rmsk_table`, `chromAlias` and `chrom_sizes` from `source/SOURCES.json` and the inventory.
+It judges taxonomy rule versions, predicate schemas and each schema's predicate keys against
+published sets, and export contract fields against a required core that declarations may extend.
+The manifest schema version stays single-valued; a new schema adds a verifier branch.
+The feature-level tuple only grows; renaming a level is a contract break.
+The verifier recomputes `catalog.sources` for `rmsk_out` and `build_sources` for `rmsk_table`,
+`chromAlias` and `chrom_sizes` from `source/SOURCES.json` and the inventory, and streams the
+decompressed canonical text tables to verify `catalog.tables`.
 
 Installation verifies staging before acquiring an advisory lock on the `archive/` directory.
 Cooperating publishers hold that lock across destination checks, `os.rename` and selection,
@@ -127,19 +137,21 @@ it guarantees atomic visibility. Power-loss durability depends on the host files
 
 ## Transfer and recovery
 
-Resolve the source `current` once and record its full ID and raw manifest SHA-256. Create a
-fresh directory under the destination family's `.staging/`, copy the resolved archive contents
+Resolve the source `current` once and record its full ID and raw `MANIFEST.json` SHA-256 as the
+transfer-integrity check. Create a fresh directory under the destination family's `.staging/`,
+copy the resolved archive contents
 there, and compare the manifest's raw SHA-256 with the source pin. Run `99_verify.py` on that
 staging directory, then run `release.py install` with the destination root and family.
 An existing identical archive retains its first manifest on convergence; compare the installed
-manifest checksum with the consumer pin before `release.py select`. Keep the source archive
+manifest checksum with the transfer pin before `release.py select`. Keep the source archive
 and destination staging paths explicit in the copy command.
 Required parent archives transfer and verify before selecting their child.
 The publication checks leave interrupted transfer into staging, readers during selector replacement,
 disk exhaustion during rename, staging on another filesystem and ACL access for consumers to host qualification.
 
-An interrupted build or transfer leaves its staging directory for inspection. Remove abandoned
-staging by hand after confirming that its builder or transfer process has exited. A complete
+Publication proceeds from a fresh complete `--root` build; a staging directory left by an
+interruption is for inspection and is removed before republication.
+Remove abandoned staging by hand after confirming that its builder or transfer process has exited. A complete
 unselected archive is a valid state; verify it and select its full ID to finish publication.
 A selector discrepancy requires a human decision after verifying a candidate independently and
 preserving the damaged archive for diagnosis. A leftover `current.tmp.<pid>` can be removed after
@@ -148,8 +160,8 @@ confirming that publisher has exited.
 ## Consumer pins and retention
 
 A consumer resolves `current` once and reads every input from that immutable archive. It pins
-the full `BUILD_ID`, `CATALOG_ID`, raw `MANIFEST.json` SHA-256, relative export paths and their
-SHA-256 digests, universe, feature level and required parent IDs. Record ledgers use
+the full `BUILD_ID`, `CATALOG_ID`, relative export paths and their SHA-256 digests, universe,
+feature level and required parent IDs. Record ledgers use
 `(te_catalog_id, rmsk_record_id)` and retain `te_build_id` as provenance. Historical builds resolve
 directly at `archive/<BUILD_ID>/` after newer selections.
 

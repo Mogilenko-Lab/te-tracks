@@ -1,5 +1,5 @@
 Milestone review after phase 7 of the te-tracks redesign: numbers and checks. Repository:
-/workspaces/Meta-Aging/01_modules/te-tracks (git branch redesign-2026-09, commit __HEAD__). You are read-only:
+/workspaces/Meta-Aging/01_modules/te-tracks (git branch redesign-2026-09, commit 9d16506). You are read-only:
 no edits, no git writes anywhere (the eleven consumer checkouts under /workspaces/Meta-Aging/01_modules/.ref/ are
 git repositories too: DfamTEBrowser, irescue, mascarade, MATES, mLLMCelltype, scTE, scTEfinder, stellarscope,
 TElocal, TEsingle, TEtranscripts; the directory also holds 14839-DM-cGAS and sene/, the owner's copies, which you leave alone), no installs, no
@@ -41,7 +41,7 @@ Do, with your own code (write it from the contracts; import nothing from src/ or
     converge, changed payload, added export under an extended roster, corrupt staging, dangling and removed current,
     forged BUILD_ID, concurrent installs and selects, modes 0444/0555/2775, and the CATALOG_ID stability under a
     chromAlias byte change.
-(f) Confirm no git write happened: git reflog -3 shows __HEAD__ as the latest entry and a clean tree; each checkout
+(f) Confirm no git write happened: git reflog -3 shows 9d16506 as the latest entry and a clean tree; each checkout
     under .ref shows a clean status and no __pycache__.
 
 Report as:

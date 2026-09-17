@@ -41,7 +41,7 @@ def export_names(path):
 
 
 def run(export, names, reference, reference_lengths, code, table=alias_table,
-        exported_lengths=lengths, unreadable=False, stderr=False):
+        exported_lengths=lengths, unreadable=False, stderr=False, error_line=None):
     """Compare exact ordered reports and exit codes with independent set arithmetic."""
     global cases
     cases += 1
@@ -64,7 +64,8 @@ def run(export, names, reference, reference_lengths, code, table=alias_table,
     except ValueError:
         observed = result.stdout
     if (result.returncode != code or result.stdout != expected_stdout
-            or observed != ({} if unreadable else expected) or (stderr and not result.stderr.strip())):
+            or observed != ({} if unreadable else expected) or (stderr and not result.stderr.strip())
+            or (error_line is not None and result.stderr != f"te-tracks-preflight: {error_line}\n")):
         errors.append(f"{export} vs {reference.name}: expected exit={code}, report={expected}; "
                       f"observed exit={result.returncode}, report={observed}; stderr={result.stderr!r}")
 
@@ -129,6 +130,7 @@ with TemporaryDirectory(prefix="te-tracks-preflight-") as directory:
     run(export.with_name("missing.bed"), set(), fixture, fasta, 1, unreadable=True, stderr=True)
     linked = scratch / "linked"
     (linked / "tables").mkdir(parents=True)
+    (linked / "MANIFEST.json").write_text("{}\n")
     local_aliases = linked / "tables/contig_aliases.tsv"
     local_aliases.write_bytes(alias_table.read_bytes())
     (linked / "exports").symlink_to(build / "exports", target_is_directory=True)
@@ -138,6 +140,9 @@ with TemporaryDirectory(prefix="te-tracks-preflight-") as directory:
     (nested / "tables").mkdir(parents=True)
     (nested / "record.bed").symlink_to(export)
     run(nested / "record.bed", names, fixture, fasta, 0, table=local_aliases)
+    (nested / "MANIFEST.json").write_text("{}\n")
+    enclosing_error = "export requires an enclosing build with MANIFEST.json and tables/contig_aliases.tsv"
+    run(nested / "record.bed", names, fixture, fasta, 1, unreadable=True, error_line=enclosing_error)
     nearest = nested / "tables/contig_aliases.tsv"
     changed = [{**row, "length_bp": str(int(row["length_bp"]) + (row["chrom_ucsc"] == "chr1"))}
                for row in aliases]
@@ -147,10 +152,20 @@ with TemporaryDirectory(prefix="te-tracks-preflight-") as directory:
         writer.writerows(changed)
     run(nested / "record.bed", names, fixture, fasta, 1, table=nearest,
         exported_lengths={**lengths, "chr1": lengths["chr1"] + 1})
+    unbound = scratch / "unbound"
+    (unbound / "tables").mkdir(parents=True)
+    (unbound / "tables/contig_aliases.tsv").write_bytes(alias_table.read_bytes())
+    detached = unbound / "nested/record.bed"
+    detached.parent.mkdir()
+    detached.write_text("chr1\t0\t1\tprobe\t0\t+\n")
+    run(detached, {"chr1"}, fixture, fasta, 1, unreadable=True, error_line=enclosing_error)
+    nearest.write_text("\t".join(aliases[0]) + "\nchr1\n")
+    run(nested / "record.bed", names, fixture, fasta, 1, unreadable=True,
+        error_line="int() argument must be a string, a bytes-like object or a real number, not 'NoneType'")
 if errors:
     print("preflight contract deviations:")
     print("\n".join(errors))
     raise SystemExit(1)
 print(f"{cases} preflight cases; both universes, three namespaces, BED/GTF/SAF and sizes/FAI/BAM; "
-      "covered=0, export-only=2, empty/shared-length/input errors=1; exact reports and nearest alias paths pass")
+      "covered=0, export-only=2, empty/shared-length/input errors=1; exact reports and enclosing build aliases pass")
 PY

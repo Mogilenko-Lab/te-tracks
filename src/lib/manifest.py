@@ -2,6 +2,7 @@
 
 import csv
 from datetime import datetime, timezone
+import gzip
 import hashlib
 import json
 import os
@@ -25,12 +26,21 @@ from records_io import RECORD_SCHEMA
 
 SCHEMA_VERSION = "te-tracks-manifest-1"
 PUBLISHED_TAXONOMY_RULE_VERSIONS = ("taxonomy_rule_v1",)
-PUBLISHED_PREDICATE_SCHEMAS = (1,)
+PUBLISHED_PREDICATE_KEYS = {1: {"class_in", "family_prefix_excluded"}}
 EXCLUDED = {"MANIFEST.json", "BUILD_ID", "CATALOG_ID"}
-CATALOG_TABLES = (
-    "tables/rmsk_records.parquet", "tables/rmsk_records.tsv.gz",
-    "tables/rmsk_instance_members.tsv.gz", "tables/rmsk_taxonomy.tsv",
-)
+CATALOG_TABLES = {
+    "rmsk_records.tsv": "tables/rmsk_records.tsv.gz",
+    "rmsk_instance_members.tsv": "tables/rmsk_instance_members.tsv.gz",
+    "rmsk_taxonomy.tsv": "tables/rmsk_taxonomy.tsv",
+}
+CORE_PAYLOAD_PATHS = {
+    "source/SOURCES.json", "source/qualification.md", "tables/contig_aliases.tsv",
+    "tables/contig_coverage.tsv", "tables/export_feature_members.tsv.gz", "tables/exports.tsv",
+    "tables/rmsk_instance_members.tsv.gz", "tables/rmsk_records.parquet",
+    "tables/rmsk_records.tsv.gz", "tables/rmsk_taxonomy.tsv", "tables/taxonomy_canonical.tsv",
+    "tables/taxonomy_resolution_report.tsv", "tables/universe_members.tsv.gz",
+    "tables/universe_summary.tsv", "universes.json",
+}
 RUN_KEYS = ("rm_version", "rm_library", "rm_run_evidence", "rmsk_out_profile")
 SOURCE_CONFIG = {"rmsk_out": "RMSK_OUT", "rmsk_table": "RMSK_TABLE",
                  "chromAlias": "CHROMALIAS", "chrom_sizes": "CHROM_SIZES"}
@@ -150,12 +160,16 @@ def sources_from_payload(build_dir, sources, entries, roles):
 
 
 def catalog_from_payload(build_dir, sources, entries):
-    """Bind the record-producing source, run identity and canonical table digests."""
-    by_path = {entry["path"]: entry for entry in entries}
+    """Bind the record-producing source, run identity and decompressed canonical text tables."""
     observed = sources_from_payload(build_dir, sources, entries, ("rmsk_out",))
+    tables = {}
+    for name, path in CATALOG_TABLES.items():
+        opener = gzip.open if path.endswith(".gz") else open
+        with opener(build_dir / path, "rb") as stream:
+            tables[name] = hashlib.file_digest(stream, "sha256").hexdigest()
     return {"sources": observed, "run_identity": {key: sources[key] for key in RUN_KEYS},
             "instance_id_scope": "source_run",
-            "tables": {path: by_path[path]["sha256"] for path in CATALOG_TABLES}}
+            "tables": tables}
 
 
 def export_contracts(build_dir, entries, lines):
@@ -171,7 +185,8 @@ def export_contracts(build_dir, entries, lines):
                 expected[path] = {"export_path": path, "namespace": namespace,
                                   "universe_name": universe, "variant": "full",
                                   "format": filename.rsplit(".", 1)[1],
-                                  **EXPORT_CONTRACTS[filename]}
+                                  **{key: value for key, value in EXPORT_CONTRACTS[filename].items()
+                                     if key != "consumer_keys"}}
                 require(expected[path]["feature_level"] == level, f"export job level differs: {path}")
     rows = read_tsv(build_dir / "tables/exports.tsv")
     paths = [relative_path(row["export_path"]) for row in rows]
@@ -195,13 +210,12 @@ def verify_export_contracts(build_dir, identity, entries, lines):
     """Verify declared export contracts against the archive's roster, rows and digests."""
     contracts = identity["export_contracts"]
     require(isinstance(contracts, list), "identity.export_contracts requires a list")
-    keys = {"export_path", "namespace", "universe_name", "variant", "format", "feature_level",
-            "feature_identity", "attribute_sources", "consumer_keys", "selectable_levels",
-            "coordinate_convention"}
+    required_keys = {"export_path", "namespace", "universe_name", "variant", "format", "feature_level",
+                     "feature_identity", "attribute_sources", "selectable_levels", "coordinate_convention"}
     universes = {universe["name"] for universe in identity["universes"]["universes"]}
     paths = []
     for contract in contracts:
-        require(isinstance(contract, dict) and set(contract) == keys, "export contract fields differ")
+        require(isinstance(contract, dict) and required_keys <= set(contract), "export contract fields differ")
         path = relative_path(contract["export_path"])
         parts = path.split("/")
         require(len(parts) == 5 and parts[0] == "exports", f"invalid export path: {path}")
@@ -253,6 +267,11 @@ def identity_from_payload(build_dir, config, entries, lines):
 
     require(TAXONOMY_RULE_VERSION in PUBLISHED_TAXONOMY_RULE_VERSIONS,
             "unsupported taxonomy_rule_version")
+    expected_paths = CORE_PAYLOAD_PATHS | {
+        source_path({"url": config[prefix + "_URL"]}) for prefix in SOURCE_CONFIG.values()}
+    observed_paths = {entry["path"] for entry in entries if not entry["path"].startswith("exports/")}
+    require(observed_paths == expected_paths,
+            f"payload roster differs: {sorted(observed_paths ^ expected_paths)}")
     sources = read_json(build_dir / "source/SOURCES.json")
     genome = config["GENOME"]
     require(genome in SPECIES, f"species admission required for {genome}")
@@ -364,7 +383,8 @@ def verify_records(build_dir, identity, emit):
 def verify_build(build_dir, emit=print):
     """Verify bytes, identities and record/export invariants in place with read-only access.
 
-    A future manifest schema adds a verifier branch; archives declaring published versions stay verifiable.
+    schema_version stays single-valued; a new manifest schema adds a verifier branch.
+    The feature-level tuple only grows; renaming a level is a contract break.
     """
     build_dir = Path(build_dir)
     entries, lines = inventory(build_dir)
@@ -406,8 +426,12 @@ def verify_build(build_dir, emit=print):
         "identity.build_sources differs from source/SOURCES.json or inventory")
     require(identity["assembly"] == {"ucsc": sources["genome"], "name": sources["assembly"]},
             "identity.assembly differs from source/SOURCES.json")
-    require(identity["family"] == "te_" + sources["genome"] and
-            identity["species"] == SPECIES.get(sources["genome"]), "identity family or species differs")
+    species = identity["species"]
+    admitted = SPECIES.get(sources["genome"])
+    require(identity["family"] == "te_" + sources["genome"] and admitted is not None
+            and isinstance(species, dict)
+            and all(key in species and species[key] == admitted[key] for key in ("name", "taxon_id")),
+            "identity family or species differs")
     require(identity["parent_build_id"] is None and identity["parent_catalog_id"] is None,
             "core identity requires null parent ids")
     require(identity["declared_assembly"] == sources["declared_assembly"], "declared_assembly differs")
@@ -418,10 +442,11 @@ def verify_build(build_dir, emit=print):
     emit("ok catalog, source_run scope, assembly, contig digest and taxonomy rule")
     universes = read_json(build_dir / "universes.json")
     require(identity["universes"] == universes, "universes.json differs from identity.universes")
-    require(universes["schema_version"] in PUBLISHED_PREDICATE_SCHEMAS,
+    require(universes["schema_version"] in PUBLISHED_PREDICATE_KEYS,
             "universes.json: unsupported predicate grammar version")
+    predicate_keys = PUBLISHED_PREDICATE_KEYS[universes["schema_version"]]
     for universe in universes["universes"]:
-        require(set(universe["predicate"]) <= {"class_in", "family_prefix_excluded"},
+        require(set(universe["predicate"]) <= predicate_keys,
                 f"universes.json: unsupported predicate in {universe['name']}")
     emit("ok universe definitions and predicate grammar")
     contracts = verify_export_contracts(build_dir, identity, entries, lines)

@@ -1,7 +1,7 @@
 # te-tracks phase 8 design consult: the gene child family (codex, read-only)
 
 You are consulted on design, before any implementation prompt exists. Working directory:
-`/workspaces/Meta-Aging/01_modules/te-tracks`, git branch `redesign-2026-09`, commit `__HEAD__`. You write exactly
+`/workspaces/Meta-Aging/01_modules/te-tracks`, git branch `redesign-2026-09`, commit `9d16506`. You write exactly
 one file: `docs/_internal/redesign-2026-09/consults/gene_child_consult.md`. You change nothing else. No git writes
 anywhere (the eleven consumer checkouts under `/workspaces/Meta-Aging/01_modules/.ref/` are git repositories too:
 DfamTEBrowser, irescue, mascarade, MATES, mLLMCelltype, scTE, scTEfinder, stellarscope, TElocal, TEsingle, TEtranscripts; the

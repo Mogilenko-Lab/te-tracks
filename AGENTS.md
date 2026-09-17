@@ -21,7 +21,7 @@ The default `TE_TRACKS_REFROOT` is `/workspaces/Meta-Aging/_scratch/te-tracks-au
 Checks are `tests/checks/<mode>/*.sh` and `*.py`, run in name order through `bash` or `python3`
 regardless of file mode. A check exit of 0 is pass, 3 is unsupported and any other exit is fail.
 A failing check makes the runner exit 1, as does an unsupported check whose name ends in
-`.required.sh` or `.required.py`. Bad usage and a missing check directory exit 2.
+`.required.sh` or `.required.py`. Bad usage, a missing check directory and a mode with no checks exit 2.
 
 ## Review
 

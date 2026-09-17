@@ -200,22 +200,26 @@ ties); the seven other UCSC interspersed digests equal the phase 4 inventory.
 
 ## Next session starts here
 
-1. Phase 7 is committed ("Phase 7: identity and publication"): `src/lib/manifest.py`, `90_manifest.py`, `99_verify.py`,
-   `release.py`, `build.sh --root`, checks 70 to 72 and the publication fixture. Reviews: codex BLOCKING and Opus FAIL
-   (`reviews/p7_codex.md`, `p7_opus.md`), converging on a verifier locked to the running builder's roster and taxonomy
-   constant and on `du`-derived retention figures; rulings and the fix loop in `reviews/p7_rulings.md` (verifier judges
-   an archive against its own declaration with published-version tuples; `CATALOG_ID` binds `rmsk_out` alone with the
-   other sources under `identity.build_sources`; `14761 ATAC` leaves `consumer_keys`; measured file sums; floor near
-   6.0 GB with a 5.5 to 6.0 GB range; check 71 on a fixture; one verification per archive per command; selector-scoped
-   messages; evolution and selector cases in check 72). Identities after the fix: `BUILD_ID`
-   `0e053139fea4fba3e819d333b4eec1f8998f1d79f34da82360a69311a4bb8c9a`, `CATALOG_ID`
-   `0c0a959dea69e397890b590b640162d5bd45e71a88f6468cadd4b7615022b4a4`; payload unchanged. Orchestrator verification
-   (`_scratch/te-tracks-audit/p7_verify/verify_b.log`): identities in both roots, 43/43 digests, scratch-builder
-   independence probe, core 19 pass, consumers 8/5. Next: milestone 7 review with `prompts/m7_{codex,opus,divergent}.md`
-   (eleven checkouts under `.ref` now include scTE and scTEfinder; `sene/` is the owner's), rulings in
-   `reviews/m7_rulings.md`, fix loop, commit, umbrella pin bump. The gene-context dossier
-   `consults/gene_context_material.md` is verified (section 8); `prompts/p8_consult.md` is drafted for the phase 8
-   codex design consult that precedes the owner's ADR discussion.
+1. Milestone 7 is committed ("Milestone 7: identity hardening after the publication review") on top of phase 7
+   (`9d16506`). Three reviewers (`reviews/m7_codex.md` PASS WITH ADVISORIES, `reviews/m7_opus.md` PASS WITH ADVISORIES,
+   `reviews/m7_divergent.md` 5 High) and the rulings in `reviews/m7_rulings.md` produced the fix: species admission by
+   name and taxon, contract fields as a required core, reader labels out of the identity, `CATALOG_ID` over the
+   decompressed canonical text tables (a serializer change moves `BUILD_ID` alone), a core payload roster at authoring,
+   preflight bound to the enclosing build with `MANIFEST.json`, runner exit 2 for an empty mode, predicate keys per
+   schema, consumer pins without the raw manifest digest, plan 19's oracle corrected to the packaged
+   `GRCm39_Ensembl_rmsk_TE.gtf.gz` (3,799,629 records). Identities after the fix: `BUILD_ID`
+   `9ddf36220830761e74cf1fa5ce02fd993dff8214075ee094e973ed8bfdd1fd8d`, `CATALOG_ID`
+   `90cc18be5d4ee9342b57b58e4b8ad19e59f9e6b48b9a94bab9db615db1091b5e`; the 43 payload files are unchanged since phase 6.
+   Orchestrator verification `_scratch/te-tracks-audit/p7_verify/verify_c.log`: core 19 pass, consumers 8/5. After the
+   commit: the scratch root is republished from the clean tree, the umbrella pin bumped to the milestone commit.
+   Gene context: the phase 8 codex consult is in (`consults/gene_child_consult.md`, measurements reproduced by
+   bedtools), the owner's ADR brief is drafted (`consults/gene_context_adr_brief.md`, six candidate decisions with the
+   points only the owner settles), and the owner's dissertation excerpts, the TEsingle paper excerpts and the scTE,
+   scTEfinder and TEsingle readings are recorded (`consults/thesis_2023_excerpts.md`, `tesingle_notes.md`,
+   `sctefinder_scte_notes.md`); the TEsingle paper's RepeatMasker filter equals the `interspersed_plus_satellites`
+   universe on mm39. A field-practice consult (`prompts/field_consult.md`, codex) with bioinf and divergent reviewers
+   (`prompts/field_bioinf.md`, `field_divergent.md`) runs against the milestone commit; its synthesis joins the ADR
+   brief before the owner's discussion and the phase 8 implementation prompt.
 2. Phases 8 and 9 with `p8_impl.md` and `p9_impl.md`, each aligned with the rulings in its plan file before launch;
    phase 8 opens with a codex design consult on the child family's topology, architecture and approach, recorded under
    `redesign-2026-09/consults/` and ruled by the owner before `p8_impl.md` is finalized (owner, 2026-09-16); the

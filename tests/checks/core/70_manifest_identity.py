@@ -41,6 +41,14 @@ assert identities(changed)[0] != original[0] and identities(changed)[1] == origi
 changed = deepcopy(manifest)
 changed["identity"]["taxonomy_rule_version"] = "taxonomy_rule_v2"
 assert identities(changed)[0] != original[0] and identities(changed)[1] == original[1]
+changed = deepcopy(manifest)
+parquet = next(item for item in changed["identity"]["inventory"]
+               if item["path"] == "tables/rmsk_records.parquet")
+parquet["sha256"] = "0" * 64
+assert identities(changed)[0] != original[0] and identities(changed)[1] == original[1]
+changed = deepcopy(manifest)
+changed["identity"]["catalog"]["tables"]["rmsk_records.tsv"] = "0" * 64
+assert all(left != right for left, right in zip(identities(changed), original))
 entries = manifest["identity"]["inventory"]
 paths = [item["path"] for item in entries]
 assert paths == sorted(set(paths))
@@ -59,4 +67,10 @@ for entry in entries:
 assert manifest["identity"]["catalog"]["instance_id_scope"] == "source_run"
 assert manifest["identity"]["taxonomy_rule_version"] == "taxonomy_rule_v1"
 assert len(manifest["identity"]["export_contracts"]) == 24
+identity_fields = {"export_path", "namespace", "universe_name", "variant", "format", "feature_level",
+                   "feature_identity", "attribute_sources", "selectable_levels", "coordinate_convention"}
+for contract in manifest["identity"]["export_contracts"]:
+    assert set(contract) == identity_fields and "consumer_keys" not in contract
+assert set(manifest["identity"]["catalog"]["tables"]) == {
+    "rmsk_records.tsv", "rmsk_instance_members.tsv", "rmsk_taxonomy.tsv"}
 print(f"BUILD_ID={original[0]} CATALOG_ID={original[1]}; {len(entries)} payloads; identity mutations pass")

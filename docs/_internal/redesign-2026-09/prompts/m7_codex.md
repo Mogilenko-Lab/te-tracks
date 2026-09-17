@@ -1,7 +1,7 @@
 # te-tracks milestone review after phase 7: publication seam (codex, read-only)
 
 You review the committed state of the te-tracks redesign after phases 0 to 7. Working directory:
-`/workspaces/Meta-Aging/01_modules/te-tracks`, git branch `redesign-2026-09`, commit `__HEAD__`. You write
+`/workspaces/Meta-Aging/01_modules/te-tracks`, git branch `redesign-2026-09`, commit `9d16506`. You write
 exactly one file: `docs/_internal/redesign-2026-09/reviews/m7_codex.md`. You change nothing else. No git writes
 anywhere (the eleven consumer checkouts under `/workspaces/Meta-Aging/01_modules/.ref/` are git repositories too:
 DfamTEBrowser, irescue, mascarade, MATES, mLLMCelltype, scTE, scTEfinder, stellarscope, TElocal, TEsingle, TEtranscripts; the

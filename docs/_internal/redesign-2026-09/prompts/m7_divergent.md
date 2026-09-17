@@ -1,5 +1,5 @@
 Milestone review after phase 7 of the te-tracks redesign: what identity and publication still assume. Repository:
-/workspaces/Meta-Aging/01_modules/te-tracks (git branch redesign-2026-09, commit __HEAD__). You are a read-only
+/workspaces/Meta-Aging/01_modules/te-tracks (git branch redesign-2026-09, commit 9d16506). You are a read-only
 reviewer working from the documented artifacts, the build and the published root; write exactly one file,
 docs/_internal/redesign-2026-09/reviews/m7_divergent.md, and change nothing else. No git writes (the checkouts
 under /workspaces/Meta-Aging/01_modules/.ref/ are git repositories too). Export PYTHONDONTWRITEBYTECODE=1.

@@ -51,12 +51,12 @@ def export_roster(added_export):
         yield
 
 
-def make_build(family, note="first", extra=False, added_export=False):
+def make_build(family, note="first", added_export=False):
     with export_roster(added_export):
-        return _make_build(family, note, extra)
+        return _make_build(family, note)
 
 
-def _make_build(family, note, extra):
+def _make_build(family, note):
     family = Path(family)
     staging = family / ".staging"
     staging.mkdir(parents=True, exist_ok=True)
@@ -119,8 +119,6 @@ def _make_build(family, note, extra):
         build_taxonomy(build)
         exporter.build_exports(build, "mm39", jobs=exporter.EXPORT_JOBS)
         contigs.build_namespaces(build, "mm39")
-    (build / "policy.txt").write_text(note + "\n")
-    if extra:
-        (build / "additional.txt").write_text("additional delivered payload\n")
+    (source / "qualification.md").write_text(f"synthetic qualification: {note}\n")
     write_manifest(build, config_path, argv=["publication fixture"])
     return build
