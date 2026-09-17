@@ -425,3 +425,48 @@ devcontainer image. Suite with shims on PATH: 13 checks, 11 pass, 1 unsupported 
 **Open after this round.** The rank vocabulary (Wicker recommended); the decisions entries as the unit writes them;
 a TES-side window as a later addition if the 3′ pilot needs it. Everything else on the twelve-item list is closed.
 Next: verify the decisions unit, rewrite plan 18, write `prompts/p8_impl.md`.
+
+## Fourth round (2026-09-17, later): packaging, Dfam now, Wicker ruled, the schema consult
+
+The owner replied mid-turn to the third-round report.
+
+- **Packaging: ruled.** The joint run of IRescue, TEsingle and Stellarscope is packaged at the umbrella root as
+  `/workspaces/Meta-Aging/01_modules/te-consumers/` (environment recipe under `env/`, run recipes under `recipes/`
+  as the pilot settles them); the environment itself stays at `/workspaces/Meta-Aging/.venv/te-consumers`. The
+  datasets keep the D2 outline (`02_analysis/scripts/00_foundation_peak_atlas` … `40_transposable_elements` …
+  `90_integration_exports`) and call the module from `40_transposable_elements/`; the scRNA-seq datasets run the
+  RNA part without ATAC. The D1 schema discussion is separate and downstream. The module directory is untracked in
+  the umbrella until the owner commits it or asks for a repository.
+- **Dfam: ruled, admitted now.** "No deferral, packaging now": the lineage, rank and clade view enters the core in
+  phase 9a, before the host build, because the clade per model with divergence beside it is the evidence for the
+  young-versus-old question the programme needs answered: the evolutionary origin of TE-driven aging signal. The
+  build reads an offline snapshot of the Dfam metadata (fetched by the orchestrator on 2026-09-17: summaries for
+  the 1,220 `interspersed` names, full records without sequences for every exact hit and L1 part model, the
+  classification tree and the release string; provenance beside it under `../taxonomy/`). `docs/DECISIONS.md`
+  section 15 says "a later core view" and is amended to phase 9 by the phase 9a unit.
+- **Wicker: ruled.** Wicker's rank names as the named scheme, filled from the Dfam path with the Dfam node name as
+  the family value, the RepeatMasker class and family tokens beside every row and per-rank status, so the scheme is
+  fully programmatically derivable, uses the terms reviewers know, and every word keeps one meaning.
+- **Reconstruction as a consumer: the owner names the consumer.** An interactive tool projecting onto genome
+  coordinates where the remnants of a lineage lie, lighting up where the current dataset sees them, then filtering
+  the unified schema down a funnel (L1 remnants → RNA support in the nuclei → open chromatin → TF families and motifs
+  inside → the subset under the studied conditions that needs validation). This overlaps with the design of the
+  unified schema queryable by plain SQL, interactively, or for statistical modelling, and must separate what the
+  Multiome sustains within one nucleus from what needs the unpaired whole-cell runs. A dedicated consult at the
+  highest reasoning effort is assigned: `../prompts/schema_consult.md`, unit `te-tracks-schema-consult`, one file
+  `unified_te_schema_consult.md`.
+- **IRescue criticality, answered.** The failing check is te-tracks' own expectation about IRescue's arithmetic,
+  and the tool behaves as its authors designed, so nothing is broken in te-tracks or in IRescue. For te-tracks the
+  fix is one test in phase 9: assert identity joins and conservation, record the allocation. For the science the
+  finding characterizes IRescue: unique molecules are exact, ambiguous molecules are allocated by an EM that starts
+  even and ignores unique support; when every ambiguous molecule shares one candidate set the EM cannot move and
+  splits evenly, and in real data it learns only from how ambiguity sets differ across molecules. Subfamilies with
+  strong unique evidence therefore receive less of the ambiguous share than a unique-seeded EM would give them,
+  which is the conservative behaviour C7 wants from IRescue, and the young high-copy subfamilies, whose molecules
+  are mostly ambiguous, are where the estimator choice matters. The difference between IRescue and TEsingle on the
+  same molecules is a reported quantity of the pilot, and the ambiguous share per subfamily is one of its
+  measurements.
+
+**Launched at the end of this round:** `te-tracks-p8-impl` from `../prompts/p8_impl.md` against plan 18 as
+rewritten; `te-tracks-schema-consult` from `../prompts/schema_consult.md`, read-only. Plan 19 gains section
+"Phase 9a: core additions before acceptance".

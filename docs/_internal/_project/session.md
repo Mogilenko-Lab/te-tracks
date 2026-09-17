@@ -259,22 +259,25 @@ the umbrella pin at milestone 9. Answers and evidence in `consults/adr_rulings_2
 (IRescue allocation); without it 8 pass and 5 unsupported. The decisions unit `te-tracks-decisions`
 (`prompts/decisions.md`) writes the ruled entries into `docs/DECISIONS.md`.
 
+**Fourth round and launches** (2026-09-17, later): the owner ruled the packaging module at
+`/workspaces/Meta-Aging/01_modules/te-consumers/` (untracked in the umbrella; environment stays under `.venv/`), Dfam
+admitted now as a phase 9a core view (offline snapshot fetched; `redesign-2026-09/taxonomy/`), Wicker's rank names, and asked
+for the unified-schema and reconstruction consult (`prompts/schema_consult.md`). Plan 18 was rewritten and `prompts/p8_impl.md`
+written from the rulings; plan 19 gained "Phase 9a: core additions before acceptance". `docs/DECISIONS.md` carries the ruled
+entries (sections 4, 8 to 15, deferrals) from unit `te-tracks-decisions`, verified and committed. Launched: `te-tracks-p8-impl`
+(package files, builds the child into `$TE_TRACKS_REFROOT/te_mm39_gene/build` and publishes it into the scratch pubroot) and
+`te-tracks-schema-consult` (one consult file). The IRescue execution check fails by design until phase 9a rewrites it.
+
 ## Next session starts here
 
-1. **Pick up here: verify the decisions unit, then plan 18 and `prompts/p8_impl.md`.** Read the third round of
-   `consults/adr_rulings_2026-09-17.md`; every item of the open list is ruled except the rank vocabulary (Wicker
-   recommended). Verify `te-tracks-decisions` (touch list `docs/DECISIONS.md` alone; core suite exit 0; negation grep)
-   and commit it. Then the orchestrator rewrites plan `18_phase8_gene_child_seam.md` from the rulings and the consults
-   (`gene_child_consult.md`, `field_practice_consult.md`, `mask_policy_consult.md`, `loci_gtf_consult.md`,
-   `structural_views_consult.md`) and writes `prompts/p8_impl.md` aligned with `reviews/{m5,p6,p7,m7}_rulings.md`
-   (family and assembly separate, `GENOME=mm39` with `FAMILY=te_mm39_gene`, parent pinned by full `BUILD_ID`, child
-   `.staging`, alias table copied by digest, explicit variant in exporter and registration, the GTF as a child source
-   role and a parameter with vM37 first, verifier branch for non-null parents, context `not_computed`, per-pair status
-   backlog, the bulk-scope statement of C3, the default mask alone). Phase 9 gains the C8 export, the C9 binding-rule
-   correction and join fixture, the C10 label-surprise and constant-flag notes, the records/instances/insertions
-   section in OUTPUTS.md, the IRescue execution check rewritten to identity and conservation, the consumer environment
-   promoted into the package (bootstrap and lock beside `tests/`), the RNA qualification limits in the parking handoff,
-   a failed-build cleanup case, and the 10x-GTF child as the first post-host or phase 9 snapshot.
+1. **Pick up here: verify the phase 8 implementer and the schema consult.** If `te-tracks-p8-impl` has finished
+   (`status.sh --unit te-tracks-p8-impl`; report at `/tmp/scio-delegate/te-tracks-p8-impl/<run>/final.md`), re-verify from the
+   plan's acceptance table (`18_phase8_gene_child_seam.md`), then run the codex review and the Opus re-review per
+   `02_orchestration.md`, fix loop, and commit the phase. Read `consults/unified_te_schema_consult.md` when
+   `te-tracks-schema-consult` lands, verify its measurements, and bring its recommendations to the owner. Then phase 9a
+   (`prompts/p9a_impl.md`, to write from plan 19's new section) and 9b, the milestone review, the host build, the umbrella pin.
+   Open with the owner: nothing on the twelve-item list; the Dfam snapshot's move into the package and the DECISIONS 15
+   amendment happen in 9a.
 2. Phases 8 and 9 with `p8_impl.md` and `p9_impl.md`, each aligned with the rulings in its plan file before launch;
    phase 8 opens with a codex design consult on the child family's topology, architecture and approach, recorded under
    `redesign-2026-09/consults/` and ruled by the owner before `p8_impl.md` is finalized (owner, 2026-09-16); the

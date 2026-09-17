@@ -20,5 +20,6 @@ without conda, reproducible from pinned sources, with the base venv used only wh
   fixture expects 6 and 3, confirming the loci consult's reading of IRescue's EM. The owner ruled the
   allocation outside te-tracks' responsibility; phase 9 rewrites that check to assert identity joins and
   molecule conservation and to record the allocation.
+- Canonical home of this recipe: `/workspaces/Meta-Aging/01_modules/te-consumers/env/` (owner ruling, fourth round).
 - Phase 9 promotes this into the package (a tracked bootstrap and lock beside `tests/`, and the runner's
   documentation) through a codex unit; until then these files are the orchestrator's record.
