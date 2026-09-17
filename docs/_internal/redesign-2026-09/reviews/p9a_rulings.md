@@ -134,3 +134,20 @@ verifier comparison and publication case, the enumerated source layouts, the cla
 documentation, the restored producer range, the fetch script's output name, the stale contigs message, and
 the cellranger wording. Items that move `BUILD_ID` are the retained provenance and the recorded rank
 scheme, so the unit rebuilds the core and then the child and republishes both into the scratch root.
+
+## Full-scale consumer validation (orchestrator, after the reviews)
+
+Both reviews exercised the consumer grammars on the eleven-record fixture, which is what the checks cover.
+The parking claim is that a downstream consumer can read the published exports, so the orchestrator ran the
+two readers that parse a whole export at genome scale. Scratch under
+`_scratch/te-tracks-audit/scale-check/`, removed with Python `shutil.rmtree`.
+
+| reader | input | result |
+|---|---|---|
+| `cellranger mkgtf` 10.1.0 | `exports/gencode/interspersed/full/record_starsolo.gtf`, 1.6 GB | exit 0 in 64.6 s, all 3,764,949 rows retained under `gene_type:transposable_element` |
+| `featureCounts` v2.1.1 | the child's `exports/ucsc/interspersed/exon_subtracted/subfamily.saf`, 3,684,935 lines | annotation loaded as 3,684,934 features, 1,220 meta-features, 59 contigs, in 4.4 s; three reads placed on the first three chr1 blocks assigned at 100% |
+
+The first establishes that the record-as-gene grammar survives cellranger's reference filter at full scale,
+with `|` and `:` in every `gene_id`, which the eleven-record fixture cannot establish. The second
+establishes that the bulk product's `GeneID` grouping collapses to exactly the 1,220 subfamilies over the 59
+contigs the catalog carries.
