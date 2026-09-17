@@ -194,3 +194,97 @@ the path to bin universes.
 
 **Corrections applied to the records from these consults:** `field_practice_synthesis.md` (STAR anchor values;
 TEsingle four-tuple collapse) and `tesingle_notes.md` (same two facts).
+
+## Second round (2026-09-17, later): rulings, explanations and the open list
+
+**C2 (mask policy): ruled, agreed.** Phase 8 ships `all_exons_unstranded_union_v1` with `min_retained_block_bp
+= 1` alone; `all_exons_stranded_union_v1` joins in the first later snapshot beside it, after the pilot has
+measured which mate is RNA-sense for each chemistry; protein-coding and basic masks stay measured alternatives;
+the two intron-retention region sets are an optional later view; the EM routes take the unmasked record
+exports and the full gene GTF.
+
+**C8 (loci GTF): scope agreed.** `record_starsolo.gtf` enters phase 9 by scope amendment (roster 24 to 27,
+payload about 15.30 GB per build). The owner asked what three phrases imply; the answers are recorded here for
+the next session:
+
+- *"Execution gates recorded as unsupported in the container."* te-tracks has two kinds of consumer checks.
+  Parser checks run a tool's own reading code against our exports inside the container and pass or fail.
+  Execution checks run the tool's binary end to end on a fixture BAM. STAR, cellranger, IRescue, Stellarscope,
+  TEsingle, TEcount and featureCounts are absent from the container, so every execution check exits 3,
+  "unsupported", and the suite records that instead of a pass. For the new GTF this means shape, identity,
+  registration and parser semantics are verified now, while "STARsolo counts one locus per record from it" is
+  verified only when someone runs STAR on the fixture, on the host or after installing the binaries. Whether to
+  install them is the owner's standing decision.
+- *IRescue 5.5/3.5 against 6/3.* The te-tracks executable fixture for IRescue feeds a designed input, four
+  molecules unique to feature A, two unique to B, three ambiguous between them, and expects A = 6 and B = 3,
+  which assumes the ambiguous molecules are split in proportion to the unique support. The loci consult called
+  IRescue's counting and EM functions directly and obtained 5.5 and 3.5: IRescue fixes the unique counts, runs
+  its EM over the ambiguous molecules only, from a uniform start, and adds the result, so the three split 1.5
+  and 1.5. Two implications. The fixture's expectation is probably wrong about IRescue's algorithm and will fail
+  when the binary first runs, so a later authorized unit must settle the oracle against the executable. And
+  IRescue's locus-level allocation of ambiguous molecules does not use unique evidence, which is why it is the
+  conservative subfamily counter in C7 and not the locus resolver.
+- *TEsingle collapses identical four-tuples, TElocal does not.* TEsingle turns every GTF row into a competitor
+  named by `transcript_id:gene_id:family_id:class_id`; rows with the same four values become one competitor.
+  te-tracks' `record.gtf` gives every record its own `transcript_id`, so nothing collapses today. The finding
+  matters only for a later instance view that repeats one alias across the fragments of an insertion: TEsingle
+  would then count the fragments as one feature, TElocal would keep them apart. It is a design note for C11
+  and a documentation line, with no action in phase 8 or 9.
+
+**C4 (promoter windows): still open; plain explanation recorded.** The context relation is a table. Each row
+pairs one TE record, a genomic interval on mm39, with one gene transcript, also a genomic interval from the
+GTF, and stores how the two relate: whether the TE overlaps that transcript's exons, introns or UTRs, whether
+the two are on the same strand, and the signed distance from the TE to the transcript's start and to its end.
+Which pairs get a row is the whole question. Every TE overlapping a transcript body gets one row per
+transcript it overlaps (921,233 rows on chr1). Every TE also gets rows for its nearest transcript start, end
+and exon edge on its contig, however far away, with ties kept, so "distance to the nearest gene" is always
+answerable. A *window* adds one more kind of row: a stretch of genome U bases upstream and D bases downstream
+of a transcript's annotated start; there is one window per transcript (278,369 in vM37), all in genome
+coordinates; a TE that overlaps a window gets a row with that transcript even though it touches no part of the
+transcript body. Nothing is computed inside a window; the window only decides whether a pair exists, and the
+row then carries the same geometry as every other row. The size of U and D therefore decides how far from a
+gene start te-tracks bothers to record neighbours: with (10000, 2000), TEs up to 10 kb upstream or 2 kb
+downstream of any start get rows, about 300,000 more on chr1 than body overlaps alone. A consumer wanting a
+2 kb promoter definition filters those rows by the stored distance; a consumer wanting 20 kb cannot, because
+those TEs never got rows. That is the only reason to prefer the wide envelope. The recommendation stands at
+(10000, 2000) and awaits the owner's word.
+
+**C11 (structural views): still open; the boundary recorded.** te-tracks' concern is the geometry that is a
+pure function of its own catalog columns under declared parameters: the union of an instance's fragments with
+gaps preserved, the first N bases of a record in its own orientation with the consensus-prefix eligibility, the
+LTR–internal candidate pairs from family, strand and distance with their status, and the divergence bins.
+These need identities, registration and acceptance like every other export, so they are te-tracks products,
+published when a consumer names the need, after the one host build. Downstream are the biological calls and
+anything that needs reads or outside evidence: which candidate pairs are real proviruses, which L1 copies keep
+a working promoter, whether 5′ read ends pile up in a window, and any activity or age claim. Under the owner's
+"one component, one thing", te-tracks ships the candidate tables with neutral names and status columns, and
+the consuming analysis makes the calls. The ordering recommendation stands: after the host build, batched into
+one later core snapshot.
+
+## Open questions carried to the next session
+
+1. **C4**: confirm the (10000, 2000) envelope for the first context snapshot, or name another.
+2. **C11**: confirm "after the host build, batched", and that te-tracks publishes candidate geometry only.
+3. **Which GTF the child pins first**: vM37 (the acceptance fixture and the refcache pin) or the 10x
+   vM33-filtered GTF (what cellranger counted with, and the recommended index for the STARsolo re-alignment
+   so gene counts stay comparable); or both as two snapshots. The ARC reference's GTF is still unverified; the
+   GEX one is `gencode.vM33.primary_assembly.annotation.gtf.filtered`, md5 `7a998f670d6d0bdf599c046284da051b`.
+4. **C7 details**: who owns the TEsingle qualification and the 14761 RNA pilot; the STAR recipe to pin
+   (`outFilterMultimapNmax 100` with `winAnchorMultimapNmax` 100, 150 or 200, and `outSAMmultNmax -1`); the
+   reporting contract in tiers (cross-tissue replicated, single-tissue replicated, Multiome descriptive).
+5. **Consumer executables**: whether to install STAR, cellranger, IRescue, Stellarscope, TEsingle, TEcount and
+   featureCounts in the container or run the execution gates on the host; until then those checks stay
+   "unsupported".
+6. **IRescue oracle**: the 6/3 fixture expectation against the 5.5/3.5 behaviour, settled only by the binary.
+7. **Stellarscope**: a pinned corrected consumer for the boundary defect and the largest-overlap preselection
+   before any ERV locus claim leans on it.
+8. **C10 details**: the rank scheme (Dfam path as published, the dissertation's five ranks, or Wicker's) and
+   the admission scope (the 1,220 interspersed names first); the L1 part-model rule.
+9. **Phase 9 additions** to confirm as a set: C8 export; C9 binding rule and join fixture; C10 label-surprise
+   and constant-flag notes; a failed-build cleanup case; the RNA qualification limits in the parking handoff;
+   the host retention budget at about 15.3 GB per build.
+10. **`docs/DECISIONS.md` entries** for every ruled item, written by a codex unit from the ruled text once C4
+    and C11 close.
+11. **18439-DM recount** on the updated universes (the owner's item under C1).
+12. **Umbrella pin**: te-tracks is at `28f2be3` and later while the umbrella pins `6bf9a22`; bump at the next
+    milestone.
