@@ -251,7 +251,9 @@ STARsolo GTF size arithmetic, contig dictionary, registration counts). Results a
    (envelope, structural-view ordering, which GTF the child pins first, C7 ownership and STAR recipe, consumer
    executables, the IRescue oracle, Stellarscope's defect, the Dfam rank scheme, the phase 9 addition set, the
    DECISIONS.md entries, the 18439-DM recount, the umbrella pin). Open the session by re-reading that section with
-   the owner. Once C4 and C11 close: a codex unit writes the `docs/DECISIONS.md` entries (package file; the
+   the owner. The premises, routes, tradeoffs and caveats of every open item are laid out in
+   `redesign-2026-09/consults/open_questions_premises_2026-09-17.md`; its section 4 corrects the critical path:
+   C4 and C11 gate later snapshots, and phase 8 waits on the decisions unit and the GTF choice alone. Once C4 and C11 close: a codex unit writes the `docs/DECISIONS.md` entries (package file; the
    orchestrator supplies the ruled text); the orchestrator rewrites plan `18_phase8_gene_child_seam.md` from the
    rulings and the consults (`gene_child_consult.md`, `field_practice_consult.md`, `mask_policy_consult.md`,
    `loci_gtf_consult.md`, `structural_views_consult.md`) and writes `prompts/p8_impl.md` aligned with
