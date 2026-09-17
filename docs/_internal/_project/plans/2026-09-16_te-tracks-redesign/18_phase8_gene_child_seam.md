@@ -23,7 +23,8 @@ A1 and A2; phase 6 A2; phase 7 A3; milestone 7 A1 and A2; the ADR discussion rul
    `<root>/te_mm39/archive/<id>`; in `--build-dir` mode `--parent-dir <verified core build dir>` names the scratch
    core build directly, and the two forms exclude each other. The parent is verified before any read: `verify_build`
    recomputes both ids, and family `te_mm39` and assembly `mm39` are checked against the child config. A `current`
-   symlink is refused as a parent argument; the runbook obtains the id from `release.py verify-current`. The child
+   symlink is refused as a parent argument, judged on the lexical path with trailing slashes removed before symlink
+   resolution (phase 8 review B2); the runbook obtains the id from `release.py verify-current`. The child
    copies `universes.json` and `tables/contig_aliases.tsv` byte for byte, recording their digests as copied inputs,
    and copies nothing else; it reads the parent's `tables/rmsk_records.parquet`, `tables/taxonomy_canonical.tsv`
    and universe definitions at build time.
@@ -72,8 +73,9 @@ A1 and A2; phase 6 A2; phase 7 A3; milestone 7 A1 and A2; the ADR discussion rul
    `export_contracts` is the child roster (two contracts, two universes, three namespaces). `verify_build`
    branches on non-null parent ids: family `te_<assembly>_<kind>`; well-formed parent ids; catalog equal to the
    resolved parent's; copied inputs digest-equal to the parent's inventory entries; every registration record id
-   present in the parent catalog with its blocks inside the record bounds; SAF rows equal registration rows per
-   grouping and universe; status conservation on a sample; the coverage table consistent with the retained GTF.
+   present in the parent catalog with its blocks inside the record bounds; each SAF's rows equal, as a multiset, the registration rows of its universe and
+   grouping joined to the record's strand and contig renamed for the namespace, and each SAF is sorted by the declared
+   order (phase 8 review B1); status conservation on a sample; the coverage table consistent with the retained GTF.
    The parent resolves from `--parent-dir`, or from the sibling `te_mm39/archive/<parent_build_id>` under the root
    that encloses a `.staging` or `archive` build; a child without a resolvable parent fails verification.
    `release.py install`, `select` and `verify-current` for a child family require the parent archive present and
@@ -87,7 +89,8 @@ A1 and A2; phase 6 A2; phase 7 A3; milestone 7 A1 and A2; the ADR discussion rul
      row; a record on a contig without annotation stays `unchanged` and its coverage row holds zeros; GTF `chr1` and
      scaffold `GL456210.1` map through the alias table to `chr1` and `chr1_GL456210v1_random`, an exon on the
      scaffold included, and the same split appears in all three namespaces; a one-base remainder; touching exon
-     endpoints; an opposite-strand exon masks; adjacent exons merge; duplicate exon rows change nothing; an unknown
+     endpoints; an opposite-strand exon masks; adjacent exons merge; duplicate exon rows change nothing; nested exons and
+     overlapping exons of different extents merge; a record cut into four blocks (phase 8 review A2); an unknown
      GTF contig fails the build.
    - Dependency and identity cases through `tests/fixtures/publication/build_fixture.py` extended with a tiny child
      on the tiny core: missing parent; wrong parent id; one corrupt parent byte; a parent of another family or

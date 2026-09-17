@@ -478,3 +478,70 @@ a model (the LTR `-int` names such as `ERVL-B4-int`, `IAP-d-int`, `ETnERV-int`, 
 367, Mus 172, Murinae 169, Amniota 96, Mammalia 67, Theria 64, Muroidea 57, Boreoeutheria 36, Euarchontoglires 30, Muridae 29,
 Tetrapoda 19, Primates 17. Caveat for the 9a design: the clade is the model's curated assignment, so a mouse name matched to a
 primate-assigned model needs a status of its own rather than an age tier.
+
+## Fifth round (2026-09-17, later): the unified schema consult
+
+**Landed.** `unified_te_schema_consult.md` (codex gpt-6-astra at xhigh, second run after a capacity refusal, 328 lines,
+read-only, scratch removed): seven answers, a schema sketch of twenty-four table groups with owners, five SQL examples
+(SQL 1 executed against the build: 36 L1 records in chr1:3,000,000–3,100,000), the ordered list of te-tracks views and
+measurements M1 to M3.
+
+**Measurements recomputed by the orchestrator** with its own pandas and pyarrow code over the snapshot and
+`tables/rmsk_records.parquet`; the consult's figure first, the orchestrator's second.
+
+| quantity | consult | orchestrator |
+|---|---|---|
+| snapshot payload sha256 equals the provenance | verified | verified |
+| names / models / classification nodes / nodes with a Wicker code | 1,220 / 1,263 / 300 / 193 | same |
+| match status by the strict suffix rule | 1,047 exact / 147 part sets / 26 missing | same |
+| part sets with three parts / fewer | 30 / 117 | 30 / 117 (9 with two, 108 with one) |
+| part roles present | — | `_3end` 100, `_5end` 76, `_orf2` 40 |
+| L2/CR1 part sets | L2a, L2b, L2c, L2d, L2d2, L3b | same |
+| chosen accessions lacking a full record | 0 | 0 |
+| multi-clade models / models with a Primates branch | 9 / 33 | 9 / 33; 31 names carry such a model |
+| `interspersed` records and names | 3,764,949 / 1,220, names equal to the snapshot | same |
+| records by match status | 2,797,852 exact / 928,528 part / 38,569 missing | same |
+| census TSV record sum against the catalog | 3,760,582 against 3,764,949, short by 4,367 | same; the shortfall sits on the 20 multi-label names (check 22's 20 names and 6,517 records), the census counting one raw class/family triple per name: MER53 7 against 1,640, MER63D 111 against 1,046, MER63A 1 against 715 |
+| L1 records / names / at consensus base 1 / invalid consensus extents | 877,139 / 149 / 588 / 2 | same; the two invalid extents are the only two in the catalog |
+
+The fourth round's "Primates 17" counted one clade per matched name; the consult's 33 counts models and the orchestrator's
+31 counts names whose chosen models carry a Primates branch. The 9a view carries every clade of every matched model, so the
+question dissolves into a status.
+
+**Corrections to plan 19 applied in this round.** The phase 9a census anchor read "143 part sets, 30 other misses"; the
+strict rule gives 147 and 26. The part rule admits L2/CR1 part models beside L1, and 117 of the 147 sets are partial, so the
+view carries `available_part_count`, the roles present and `model_length_sum_bp` as a metadata summary, never a full-length
+denominator. Record weights come from the catalog by name; the census TSV's `record_count` stays a record of the fetch.
+Every clade of every matched model is kept, with a `clade_compatibility` status beside it; age tiers are consumer policy read
+from the clade path and the record divergence. Normalized companions join the one-row-per-name table so SQL reads keyed rows
+instead of splitting `;`-joined strings: `tables/taxonomy_dfam_models.tsv` (name × model with role), `tables/dfam_lineage_nodes.tsv`
+(one row per classification node with parent path and Wicker and RepeatMasker equivalents) and `tables/dfam_model_clades.tsv`
+(model × clade path). The consult recommended the companions; the orchestrator adopts them for 9a; the owner may overturn.
+
+**Recommendations for the owner**, the consult's open items with the orchestrator's stance.
+1. First contrast: Young_Control against Old_Control, subfamily and lineage discovery in the replicated whole-cell RNA of
+   the twenty animals, descriptive spatial corroboration in the Multiome. Agree.
+2. Row-level evidence vocabulary for the D2 and D3 tables: `pairing_level`, `rna_attribution`, `spatial_scope`,
+   `replication_tier`, `inference_source`; the strict funnel (a unique locus molecule with an aligned block inside the
+   TE–peak intersection and a cut in the same nucleus) displayed beside an allocated-support sensitivity. Agree; this is the
+   14761 schema discussion's material, outside te-tracks.
+3. Reconstruction calibration: L1 prefix and completeness first, then ERV configurations; sweep prefix tolerance 0, 10 and
+   100 bp and adjacency gaps 100, 1,000 and 5,000 bp; te-tracks publishes catalog-only geometry after the host build, the
+   analysis publishes runs, candidates, evidence and verdicts. Agree.
+4. Part-match scope: retain every strict metadata match with its type and partial-coverage status. Adopted above.
+5. Projection tool: marimo as the controller with two to four jscatter panels and an embedded genome-browser prototype
+   (igv.js or JBrowse as candidates), DuckDB over manifest-pinned Parquet, a track service only if latency demands it, a
+   warm viewport under one second as the provisional target. Agree; the browser choice belongs to D2, and te-tracks supplies
+   intervals and identities alone.
+
+**The ordered te-tracks views** (consult, consistent with the rulings): 9a Dfam lineage, ranks, parts and clades; 9a
+`record_starsolo.gtf` with the four-field binding and consumer fixtures, then 9b acceptance and host publication; the
+10x-matched child, then the context relation in a later child snapshot; after the host build one structural batch in
+this order: instance block union, record 5′ windows, LTR–internal candidate pairs, divergence-bin membership.
+
+**What the consult changes in te-tracks scope: the shape of the 9a Dfam tables alone.** Cells, matrices, peaks, motifs,
+GRN edges, reconstruction candidates, aggregates and effects are dataset and integration ownership under
+`40_transposable_elements` and `te-consumers`. The unified schema itself is the owner's separate D1 discussion, for which
+the consult's sketch and SQL examples are the material.
+
+**Next.** `../prompts/p9a_impl.md` is written from plan 19 as amended and launches after the phase 8 commit.

@@ -13,20 +13,34 @@ no second core baseline is retained soon after. Every item changes `BUILD_ID` an
   as two genes; gene–TE overlap allocation; gap-only read; collision preflight against a gene GTF; namespaces and
   one-base endpoints); STAR and cellranger execution gates run when the binaries are on PATH
   (`/workspaces/Meta-Aging/01_modules/te-consumers/env/activate.sh`) and report `unsupported` otherwise.
-- **Dfam lineage, rank and clade view** (C10; DECISIONS 15 amended from "a later core view" to this phase): source
-  role `dfam_snapshot`, the offline metadata snapshot fetched 2026-09-17 (`redesign-2026-09/taxonomy/
-  dfam_interspersed_mm39_snapshot.json.gz` with its provenance), moved into the package as a tracked pinned source
-  with a fetch script that documents its production; `tables/taxonomy_dfam.tsv`, one row per `interspersed` name:
-  RepeatMasker tokens and canonical labels; `match_status` (`exact`, `part_model_set`, `missing`, `ambiguous`);
-  Dfam accessions, names, model versions and lengths (set-valued, `;`-joined) and their sum; the classification
-  path and its leaf node; the clade and its lineage; the release; `wicker_code` and the ranks `wicker_class`,
-  `wicker_subclass`, `wicker_order`, `wicker_superfamily`, `wicker_family` (the Dfam leaf node) and `subfamily`
-  (the name) each with a status `mapped`, `inherited`, `missing`, `inapplicable` or `part_model_set`; the node's
-  RepeatMasker type and subtype equivalents. L1 whole-element names map to the set of their `_5end`, `_orf2` and
-  `_3end` part models. Acceptance from the census: 1,047 exact, 143 part sets, 30 other misses of which 53 rows in
-  total lack a Wicker code, all `Unknown`; a documentation section defines every rank in Wicker's terms with the
-  dissertation's five names as an alias table and the label surprises (B1 under `Alu`, `ERVL-MaLR`, hyphenated DNA
-  superfamilies, class-less records).
+- **Dfam lineage, rank and clade view** (C10; DECISIONS 15 amended from "a later core view" to this phase; measured
+  2026-09-17 by the orchestrator and the schema consult, `consults/unified_te_schema_consult.md` M1). Source role
+  `dfam_snapshot`: the offline metadata snapshot fetched 2026-09-17 (`redesign-2026-09/taxonomy/
+  dfam_interspersed_mm39_snapshot.json.gz`, its provenance and its fetch script) moves into the package under
+  `data/dfam/` as a tracked pinned input past the `*.gz` ignore rule, is retained under `source/` at build time and
+  listed in `build_sources` with its sha256, so `BUILD_ID` moves and `CATALOG_ID` stays. `tables/taxonomy_dfam.tsv`, one
+  row per `interspersed` name: RepeatMasker tokens and canonical labels; `record_count` measured from the catalog by
+  name; `match_status` (`exact`, `part_model_set`, `missing`); Dfam accessions, model names, versions and lengths
+  (`;`-joined in a fixed role order) with `available_part_count`, `part_roles_present` and `model_length_sum_bp` as a
+  metadata summary, never a full-length denominator; the classification path and its leaf node; every clade of every
+  matched model, `;`-joined, with `clade_compatibility` (`compatible`, `primate_branch`, `multi_clade`, `missing`); the
+  release; `wicker_code` and the ranks `wicker_class`, `wicker_subclass`, `wicker_order`, `wicker_superfamily`,
+  `wicker_family` (the Dfam leaf node) and `subfamily` (the name), each with a status `mapped`, `inherited`, `missing`,
+  `inapplicable` or `part_model_set`; the node's RepeatMasker type and subtype equivalents. Normalized companions for
+  SQL: `tables/taxonomy_dfam_models.tsv` (one row per name × model: accession, model name, version, length, role
+  `whole`, `5end`, `orf2` or `3end`, classification path, clades), `tables/dfam_lineage_nodes.tsv` (one row per
+  classification node: full path, parent path, name, Wicker equivalent, RepeatMasker type and subtype equivalents) and
+  `tables/dfam_model_clades.tsv` (one row per model × clade path). A name without a model of its own maps to the set of
+  its `_5end`, `_orf2` and `_3end` part models; the rule admits L1 and L2/CR1 sets alike. Acceptance from the snapshot
+  and the catalog: 1,047 exact names, 147 part sets (30 with three parts, 9 with two, 108 with one; six L2/CR1 sets:
+  L2a, L2b, L2c, L2d, L2d2, L3b), 26 missing (the LTR `-int` names, `ID`, `L1M`, `L1P5`, `Tigger1a_Art`,
+  `Tigger1a_Mars`); records 2,797,852 exact, 928,528 part, 38,569 missing of 3,764,949; 1,263 models, 300 classification
+  nodes of which 193 carry a Wicker code; 9 multi-clade models and 33 models with a Primates branch across 31 names; of
+  the exact names 884 take their Wicker code at the leaf, 110 inherit it and 53 sit under `Unknown` with `missing` at
+  every Wicker rank. A documentation section defines every rank in Wicker's terms with the dissertation's five names as
+  an alias table and the label surprises (B1 under `Alu`, `ERVL-MaLR`, hyphenated DNA superfamilies, class-less
+  records), and states that a model's clade is its curated assignment, so age tiers are consumer policy read from the
+  clade path with the record divergence beside it.
 - **Matrix binding** (C9; DECISIONS 14): the OUTPUTS sentence reads `(universe_name, variant, feature_level,
   key_grammar)`; a join fixture over `interspersed` and `all_rmsk` proves that a join on the pair alone doubles.
 - **Records, instances and insertions** (DECISIONS 10): an OUTPUTS section stating what a record, an instance and an
@@ -44,6 +58,14 @@ no second core baseline is retained soon after. Every item changes `BUILD_ID` an
 - **Parking handoff**: the RNA qualification limits (TEsingle mates, UMI graph and hard ties; Stellarscope boundary
   and preselection; IRescue's even-start EM), and the host retention budget at about 15.3 GB per build.
 
+- **Constraints carried from the phase 8 review** (`reviews/p8_rulings.md`, codex A3): the core verifier keeps
+  admitting archives declaring the four URL-fetched source roles, so `dfam_snapshot` enters `build_sources` as a
+  role the archive declares (a tracked package file with its sha256, outside `SOURCE_CONFIG`'s fetched set and outside
+  `catalog.sources`); the child verifier keeps admitting the vM37 policy bundle and payload roster while later
+  snapshots add branches; the 9a core changes move the core `BUILD_ID` and the child's `parent_build_id` while
+  `CATALOG_ID` holds, so the unit rebuilds the core and then the child in scratch and republishes both into the scratch
+  root; the pair-only binding sentence at `docs/OUTPUTS.md` line 436 is the C9 amendment above.
+
 Phase 9b is the acceptance, runbook and parking content below, run after 9a with the core and the child rebuilt in
 scratch; the milestone review follows 9b.
 
@@ -52,6 +74,11 @@ Deliverables
 - `tests/run.sh acceptance` against a full in-container build into `_scratch`: every number in
   phases 1 to 8 re-measured and compared to `tests/expectations/mm39/<universe>/`; fixture tables
   independently authored, never copied from the build under test.
+- Independent geometry oracle for the gene child (`reviews/p8_rulings.md`, codex A2): an acceptance check recomputes
+  the exon union and the exon-subtracted blocks with `bedtools merge` and `bedtools subtract` for two whole chromosomes
+  and one unannotated contig from the retained GTF and the parent's `interspersed` record BED, and requires the block
+  multiset (start, end, strand, name) to equal the child's `ucsc/interspersed/exon_subtracted/subfamily.saf` rows
+  there; it reports `unsupported` naming `bedtools` when the binary is absent.
 - Host runbook `docs/RUNBOOK.md`: prerequisites and versions, writable host root versus the
   read-only container mount, source cache, `build.sh` invocation for `te_mm39` then
   `te_mm39_gene`, verification, publication, transfer to the CRI root, interruption recovery,
