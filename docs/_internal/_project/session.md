@@ -268,16 +268,37 @@ entries (sections 4, 8 to 15, deferrals) from unit `te-tracks-decisions`, verifi
 (package files, builds the child into `$TE_TRACKS_REFROOT/te_mm39_gene/build` and publishes it into the scratch pubroot) and
 `te-tracks-schema-consult` (one consult file). The IRescue execution check fails by design until phase 9a rewrites it.
 
+**Phase 8 in progress and the schema consult running** (2026-09-17, at compaction): `te-tracks-p8-impl` (run
+`20260917T150935Z`, gpt-6-astra xhigh) had built the child into `$TE_TRACKS_REFROOT/te_mm39_gene/build`, verified it with the
+parent resolved (child `BUILD_ID 1804f94e51df733c9a2da078a0a4ec943763dddd24f01a260f8e029fa201880b`; `CATALOG_ID` bytes equal to
+the parent's `90cc18be…`), published it into the scratch root (`$TE_TRACKS_REFROOT/pubroot/te_mm39_gene/`, same identity as the
+scratch build) and was running the tail of its acceptance commands; its package changes sit uncommitted in the tree (`build.sh`,
+`src/90_manifest.py`, `src/99_verify.py`, `src/lib/manifest.py`, `src/release.py`, `tests/fixtures/publication/build_fixture.py`
+modified; new `config/mm39_gene.env`, `src/gene/`, `src/lib/gene_child.py`, `tests/checks/core/80_…83_…`,
+`tests/expectations/mm39/exon_subtraction_summary.tsv`, `tests/fixtures/gene/`; docs and README edits expected). Nothing of it
+is verified by the orchestrator yet. `te-tracks-schema-consult` (run `20260917T152435Z`) is the relaunch after a first run ended
+with the server's "Selected model is at capacity" refusal and no output; it writes `consults/unified_te_schema_consult.md`.
+Commits since the third round: `829e0ad` (decisions record), `cea3756` (plan 18 rewrite, `prompts/p8_impl.md`,
+`prompts/schema_consult.md`, plan 19 phase 9a, fourth-round record), `bb8fcbe` (Dfam snapshot), `940da67` (prompt note).
+
 ## Next session starts here
 
-1. **Pick up here: verify the phase 8 implementer and the schema consult.** If `te-tracks-p8-impl` has finished
-   (`status.sh --unit te-tracks-p8-impl`; report at `/tmp/scio-delegate/te-tracks-p8-impl/<run>/final.md`), re-verify from the
-   plan's acceptance table (`18_phase8_gene_child_seam.md`), then run the codex review and the Opus re-review per
-   `02_orchestration.md`, fix loop, and commit the phase. Read `consults/unified_te_schema_consult.md` when
-   `te-tracks-schema-consult` lands, verify its measurements, and bring its recommendations to the owner. Then phase 9a
-   (`prompts/p9a_impl.md`, to write from plan 19's new section) and 9b, the milestone review, the host build, the umbrella pin.
-   Open with the owner: nothing on the twelve-item list; the Dfam snapshot's move into the package and the DECISIONS 15
-   amendment happen in 9a.
+1. **Pick up here: close phase 8, then read the schema consult.** (a) `status.sh --unit te-tracks-p8-impl`; when terminal,
+   read `/tmp/scio-delegate/te-tracks-p8-impl/20260917T150935Z-3523193/final.md` (the launcher's exit 32 is the known false
+   positive; `codex_exit` is the truth). Re-verify yourself from plan 18's acceptance table: the summary table for `all_rmsk`,
+   `interspersed` and compat; twelve SAF files with 3,684,934 and 3,717,740 data rows; registration groups 7,369,868 and
+   7,435,480; `CATALOG_ID` bytes equal to the parent's; `99_verify.py` with and without `--parent-dir`; the scratch root child
+   archive and `verify-current` for both families; `tests/run.sh core` (checks 80 to 83 added); `git status --short` against the
+   touch list; every `.ref` checkout clean; scratch `p8impl/` removed. Then the loop per `02_orchestration.md`: write
+   `prompts/p8_review.md` from `prompts/review_template.md`, codex review, Opus re-review from `prompts/opus_template.md`,
+   rulings in `reviews/p8_rulings.md`, fix unit, re-verify, commit "Phase 8: the gene child family, first snapshot".
+   (b) `status.sh --unit te-tracks-schema-consult`; read `consults/unified_te_schema_consult.md`, recompute its measurements,
+   record rulings needed from the owner in `consults/adr_rulings_2026-09-17.md` (a fifth round), and bring the schema, the
+   projection-tool options and the ordered te-tracks views to the owner. (c) Write `prompts/p9a_impl.md` from plan 19's
+   "Phase 9a" section (C8 export; Dfam view with the Wicker scheme, the part rule, the primate-assigned-model status and the
+   snapshot moved into the package past the `*.gz` ignore rule; matrix binding; records and instances section; IRescue check
+   rewrite; environment promotion; failed-build case; handoff items; DECISIONS 15 amended to phase 9), run its loop, then 9b,
+   the milestone review, the owner's host build, the umbrella pin.
 2. Phases 8 and 9 with `p8_impl.md` and `p9_impl.md`, each aligned with the rulings in its plan file before launch;
    phase 8 opens with a codex design consult on the child family's topology, architecture and approach, recorded under
    `redesign-2026-09/consults/` and ruled by the owner before `p8_impl.md` is finalized (owner, 2026-09-16); the
@@ -290,16 +311,21 @@ entries (sections 4, 8 to 15, deferrals) from unit `te-tracks-decisions`, verifi
 Prompts p5 to p9 carry pre-measured acceptance numbers; the plan files are authoritative where a prompt and a plan
 file disagree, and the disagreement is a deviation to report. Rulings the owner may overturn: instance weighting
 (`p3_rulings.md` H1), `CATALOG_ID` (`m2_rulings.md` H5), `subfamily.gtf` (H2), compat as membership (H1),
-`gene_context` deferred (H3), pandas as the in-container conservation proof (`p4_rulings.md` B1).
+`gene_context` deferred (H3), pandas as the in-container conservation proof (`p4_rulings.md` B1), the compat exon-subtracted pair as a published child view
+(C1), the child's copied alias and universe inputs (C6), Wicker's rank names (round four).
 
 ## Open at handoff
 
-- ADR discussion: ruled C1 (adopted; compat kept, 18439-DM to be recounted), C2 (default mask alone in phase 8;
-  stranded companion later), C3 and C5 (geometry only, consumers derive; context `not_computed` in phase 8), C6
-  (confirmed; GENCODE), C7 (STARsolo re-alignment; IRescue, TEsingle, Stellarscope for loci; 14761 RNA pilot first;
-  ATAC direct counts, no ATAC EM at first), C8 (scope agreed: `record_starsolo.gtf` in phase 9), C9 (confirmed)
-  and C10 (note now, rank view later; Dfam census 1,047 of 1,220 exact). Open: C4 (envelope), C11 (ordering and
-  boundary) and the twelve-item list in `consults/adr_rulings_2026-09-17.md`.
+- ADR discussion: every item of the twelve-item list is ruled (`consults/adr_rulings_2026-09-17.md`, rounds one to four):
+  C1 to C11, the envelope 10 kb/2 kb with `mRNA_start_NF` and `Ensembl_canonical`, geometry-only structural views after the host
+  build, two GTF snapshots (vM37 first, the 10x vM33-filtered child in phase 9 or post-host), STAR 100/200 as the fixture
+  recipe with alignment parameters the consumer's, the consumer environment as a venv (done), the IRescue oracle and
+  Stellarscope as downstream, Wicker's rank names filled from the Dfam path, Dfam admitted now (phase 9a), the packaging
+  module at `/workspaces/Meta-Aging/01_modules/te-consumers/`, 18439-DM out of scope, the umbrella pin at milestone 9. The owner
+  has not yet read the decisions text as written (`docs/DECISIONS.md`, commit `829e0ad`); invite that reading. Pending design
+  inputs: the schema consult's recommendations; the Dfam clade caveat (17 matched names carry a Primates-assigned model,
+  9 models carry several clades); a TES-side window if the 3′ pilot needs it. The `te-consumers` directory is untracked in the
+  umbrella until the owner commits it or asks for a repository.
 - Rulings the owner may overturn (recorded where made): instance weighting; `CATALOG_ID` scope (`rmsk_out` alone,
   decompressed text tables, `p7_rulings.md` Opus A2 and `m7_rulings.md` divergent H3); reader labels outside the
   identity (`m7_rulings.md` divergent H2); `subfamily.gtf`; compat as membership; `gene_context` deferred; pandas
@@ -334,6 +360,18 @@ file disagree, and the disagreement is a deviation to report. Rulings the owner 
   `01_modules/.ref/` explicitly (DfamTEBrowser, irescue, mascarade, MATES, mLLMCelltype, scTE, scTEfinder,
   stellarscope, TElocal, TEsingle, TEsingle_benchmarking_scripts, TEsingle_Martirosyan_analysis_code, TEtranscripts,
   Thesis_2023; `14839-DM-cGAS` and `sene/` are the owner's plain directories).
+- Consumer tools: `source /workspaces/Meta-Aging/.venv/te-consumers/activate.sh` before `tests/run.sh consumers` (11 pass, 1
+  unsupported, 1 fail on the IRescue allocation until phase 9a); recreate with
+  `bash /workspaces/Meta-Aging/01_modules/te-consumers/env/bootstrap.sh` (sudo for duckdb into the root-owned base venv and
+  for gawk; `TMPDIR` under the root because `/tmp` is noexec).
+- Launching: one `launch.sh` per harness background task, never chained with `&` in one shell (a chained launch lost its
+  variable scope and the second launcher never started). A run ending with "Selected model is at capacity" writes no
+  `final.md` and is relaunched as is. `--parallel-ok` only for units with disjoint write scopes (an implementer and a read-only
+  consult qualify).
+- Dfam: the API is reachable from the container; the offline snapshot for builds is
+  `redesign-2026-09/taxonomy/dfam_interspersed_mm39_snapshot.json.gz` (force-added past `*.gz`), fetched by
+  `taxonomy/dfam_snapshot_fetch_20260917.py`; the classification tree with `wicker_equiv` per node is
+  `taxonomy/dfam_classes_20260917.json`.
 - Protocol: `plans/2026-09-16_te-tracks-redesign/02_orchestration.md` (loop, standing authorizations, milestone
   reviews, umbrella pin bumps); package files change only through codex units, records and prompts under
   `docs/_internal/` are the orchestrator's; commits on `redesign-2026-09` without push; no AI attribution in
