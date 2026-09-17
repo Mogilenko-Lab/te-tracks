@@ -122,6 +122,20 @@ case, literal `Unknown` and empty strings. Every phase 2 field is required; sour
 be free of embedded tabs and line endings. Readers supply explicit schemas, including text
 instance IDs. The reserved null token for future nullable companion fields is `\N`.
 
+`universes.json` uses insertion order, indent 2, `ensure_ascii=False`, UTF-8 and one final LF.
+Its `schema_version` owns predicate semantics; adding a predicate key requires a version bump.
+
+Readers use the column schemas above, including text `rmsk_instance_id`, signed int64 numeric
+fields and literal empty strings. TSV quoting is disabled. Each nullable column declares its
+null literal before publication.
+
+| Reader | Explicit settings |
+|---|---|
+| pandas | `read_csv(path, sep="\t", dtype=types, quoting=csv.QUOTE_NONE, keep_default_na=False, na_filter=False)`; `types` maps text to `str`, integers to `"int64"`, floats to `"float64"` and booleans to `bool`. |
+| DuckDB | `read_csv(path, delim='\t', header=true, auto_detect=false, columns=types, quote='', escape='', nullstr='\N')`; `types` maps text to `VARCHAR`, integers to `BIGINT`, floats to `DOUBLE` and booleans to `BOOLEAN`. |
+| R data.table | `fread(path, sep="\t", header=TRUE, quote="", na.strings=NULL, strip.white=FALSE, colClasses=types, integer64="integer64")`; `types` maps text to `character`, int64 fields to `integer64`, floats to `numeric` and booleans to `logical`. |
+| R arrow | `read_delim_arrow(path, delim="\t", col_types=types, quote="", escape_double=FALSE, escape_backslash=FALSE, na=character(), as_data_frame=FALSE)`; the Arrow schema uses `utf8()`, `int64()`, `float64()` and `boolean()`. `read_parquet(path, as_data_frame=FALSE)` retains the embedded typed schema. |
+
 Gzip files have `mtime=0` and an empty embedded filename. Parquet uses an explicit required
 schema with int64, float64, bool and UTF-8 string types. Both record serializations load to equal
 typed rows. Identical input produces byte-identical tables and universe definitions under the

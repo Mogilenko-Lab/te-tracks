@@ -11,7 +11,7 @@ from types import SimpleNamespace
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
 from consumers import (CELL, EXPECTED, FIXTURES, build_fixture, checkout_import, checkout_version,
-                       assert_registered, expected_tuples, export_path, run_check, source_tree)
+                       assert_registered, declared_key, expected_tuples, export_path, run_check, source_tree)
 
 
 def check_alignment_filter(alignment, index, counters, cutoff):
@@ -62,6 +62,7 @@ def check():
     alignment = checkout_import("TEsingle", "TEtools.AlignmentIO")
     build_fixture()
     for level, number in (("record", EXPECTED["records"]), ("subfamily", EXPECTED["names"])):
+        assert declared_key(f"{level}.gtf", "TEsingle") == "transcript_id:gene_id:family_id:class_id"
         index = teindex.TEfeatures()
         index.build(str(export_path(f"{level}.gtf")))
         observed = index.getElements()

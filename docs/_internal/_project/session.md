@@ -193,21 +193,35 @@ after the fix: 24 inventory digests and row counts recomputed; the interspersed 
 the three `all_rmsk` BEDs regenerated from the parquet byte-identically under either tiebreak; every renamed file equal
 to its UCSC source as a row multiset after mapping the contig back, and sorted by the documented keys; the fixture's six
 catalog rows and six registration rows derived independently; preflight reads the alias table of the root named on the
-command line (symlink case); nine consumer checkouts clean; reflog at `c2a7a43`. Exports measure 3,021,713,838 /
-2,926,268,559 / 3,021,138,299 bytes per namespace and the registration 347,526,106 bytes; one build is 10,461,962,113
-bytes before the child family. Stage 30 peaks at 5,891,116 KiB resident and stage 35 at 3,853,776 KiB (per-stage `RUSAGE_CHILDREN`, this container, 200 s and 100 s); a rebuild of stages 30 and 35 reproduced all 24 inventory digests and the registration digest `0726aa7b…`; `tests/run.sh core` 16 pass, `tests/run.sh consumers` 8 pass and 5 unsupported, both exit 0. Only the `ucsc` `family.bed` digest changed in the fix (4 rows at 3 coordinate
+command line (symlink case); nine consumer checkouts clean; reflog at `c2a7a43`. Exports measure 3,021,714,346 /
+2,926,266,953 / 3,021,140,740 bytes per namespace as sums of regular file sizes and the registration 347,526,106 bytes; one build is 10,461,884,289
+bytes over 43 payload files before the child family. Stage 30 peaks at 5,891,116 KiB resident and stage 35 at 3,853,776 KiB (per-stage `RUSAGE_CHILDREN`, this container, 200 s and 100 s); a rebuild of stages 30 and 35 reproduced all 24 inventory digests and the registration digest `0726aa7b…`; `tests/run.sh core` 16 pass, `tests/run.sh consumers` 8 pass and 5 unsupported, both exit 0. Only the `ucsc` `family.bed` digest changed in the fix (4 rows at 3 coordinate
 ties); the seven other UCSC interspersed digests equal the phase 4 inventory.
 
 ## Next session starts here
 
-1. Phase 7: align `p7_impl.md` with `reviews/p6_rulings.md` once more (export contracts from `EXPORT_JOBS`, the
-   24-path inventory, the measured sizes), launch `te-tracks-p7-impl`, verify, codex review then Opus, fix loop, commit
-   "Phase 7: identity and publication"; then the milestone 7 review with three reviewers (prompts name the nine
-   consumer checkouts under `.ref` explicitly and set `PYTHONDONTWRITEBYTECODE=1`).
+1. Phase 7 is committed ("Phase 7: identity and publication"): `src/lib/manifest.py`, `90_manifest.py`, `99_verify.py`,
+   `release.py`, `build.sh --root`, checks 70 to 72 and the publication fixture. Reviews: codex BLOCKING and Opus FAIL
+   (`reviews/p7_codex.md`, `p7_opus.md`), converging on a verifier locked to the running builder's roster and taxonomy
+   constant and on `du`-derived retention figures; rulings and the fix loop in `reviews/p7_rulings.md` (verifier judges
+   an archive against its own declaration with published-version tuples; `CATALOG_ID` binds `rmsk_out` alone with the
+   other sources under `identity.build_sources`; `14761 ATAC` leaves `consumer_keys`; measured file sums; floor near
+   6.0 GB with a 5.5 to 6.0 GB range; check 71 on a fixture; one verification per archive per command; selector-scoped
+   messages; evolution and selector cases in check 72). Identities after the fix: `BUILD_ID`
+   `0e053139fea4fba3e819d333b4eec1f8998f1d79f34da82360a69311a4bb8c9a`, `CATALOG_ID`
+   `0c0a959dea69e397890b590b640162d5bd45e71a88f6468cadd4b7615022b4a4`; payload unchanged. Orchestrator verification
+   (`_scratch/te-tracks-audit/p7_verify/verify_b.log`): identities in both roots, 43/43 digests, scratch-builder
+   independence probe, core 19 pass, consumers 8/5. Next: milestone 7 review with `prompts/m7_{codex,opus,divergent}.md`
+   (eleven checkouts under `.ref` now include scTE and scTEfinder; `sene/` is the owner's), rulings in
+   `reviews/m7_rulings.md`, fix loop, commit, umbrella pin bump. The gene-context dossier
+   `consults/gene_context_material.md` is verified (section 8); `prompts/p8_consult.md` is drafted for the phase 8
+   codex design consult that precedes the owner's ADR discussion.
 2. Phases 8 and 9 with `p8_impl.md` and `p9_impl.md`, each aligned with the rulings in its plan file before launch;
    phase 8 opens with a codex design consult on the child family's topology, architecture and approach, recorded under
-   `redesign-2026-09/consults/` and ruled by the owner before `p8_impl.md` is finalized (owner, 2026-09-16);
-   milestone review after 9; the owner runs the host build at phase 9 (`docs/RUNBOOK.md`; host floor 6 GB resident,
+   `redesign-2026-09/consults/` and ruled by the owner before `p8_impl.md` is finalized (owner, 2026-09-16); the
+   orchestrator gathers the gene-context material (consult, D2 ledger needs, the lab's combined-mode counting,
+   divergent H3) and then holds an ADR discussion with the owner on the transcript-context relation and
+   `gene_context` before any child implementation (owner, 2026-09-16, second instruction); milestone review after 9; the owner runs the host build at phase 9 (`docs/RUNBOOK.md`; host floor 6 GB resident,
    10.5 GB disk per build), the orchestrator verifies the published bytes and records `BUILD_ID` and `CATALOG_ID`
    here; then the umbrella pin bumps and D2/D3 resume.
 

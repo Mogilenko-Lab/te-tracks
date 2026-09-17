@@ -419,6 +419,14 @@ def export_path(name):
     return FIXTURES / "exports/ucsc/interspersed/full" / name
 
 
+def declared_key(export, consumer):
+    """Read the export writer's declared key column or grammar for a consumer."""
+    sys.path.insert(0, str(ROOT / "src/lib"))
+    from build_exports import EXPORT_CONTRACTS
+
+    return EXPORT_CONTRACTS[export]["consumer_keys"][consumer]
+
+
 def command(args, **kwargs):
     """Retain complete command diagnostics on a failed executable check."""
     result = subprocess.run([str(arg) for arg in args], capture_output=True, text=True, **kwargs)

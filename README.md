@@ -18,11 +18,16 @@ and one gene annotation.
 
 ## Build
 
-`./build.sh --genome mm39 --build-dir <dir>` runs the registered stages and writes four pinned
-sources under `source/`, `source/SOURCES.json`, `source/qualification.md`, the canonical tables
-under `tables/`, `universes.json` and the registered files under `exports/`.
+`./build.sh --genome mm39 --build-dir <dir>` runs the registered stages, writes
+`MANIFEST.json`, `BUILD_ID` and `CATALOG_ID`, and verifies the completed directory in place.
+`./build.sh --genome mm39 --root <refroot>` builds in a unique staging directory, verifies,
+installs at `te_mm39/archive/<BUILD_ID>/` and selects the relative `current` symlink.
+Add `--no-select` to install while preserving the existing selection.
+`BUILD_ID` identifies the complete build; `CATALOG_ID` binds the record-producing RepeatMasker
+`.out`, run identity, source-wide instance scope and four canonical table digests for consumer
+ledger keys. [docs/RELEASES.md](docs/RELEASES.md) describes publication and transfer.
 Set `TE_TRACKS_SOURCE_CACHE` to reuse checksum-matching cached sources; in-container builds use
-a scratch directory, and host publication lands in phase 7.
+a scratch directory, and host builds compare the recorded toolchain versions.
 
 Tests run in-container against a scratch reference root:
 
@@ -39,9 +44,9 @@ taxonomy (30 to 32) and exports (40 to 42).
 
 ## Outputs
 
-Published legacy releases in the reference cache carry `te_loci.tsv.gz`, `te_dim.tsv`,
-`MANIFEST.json` and `BUILD_ID`; the current build produces `source/`, `tables/`, `universes.json`
-and `exports/`, and phases 6 to 9 supply the remaining artifacts.
+Each build contains `source/`, `tables/`, `universes.json`, `exports/`, `MANIFEST.json`,
+`BUILD_ID` and `CATALOG_ID`. Publication installs that directory under `archive/<BUILD_ID>/`
+and selects it through the relative `current` symlink.
 
 The truth table tracks the redesign artifacts: `delivered` means generated, `tested` means
 verified against their contract, and `deferred` names the phase that supplies them.
@@ -66,7 +71,7 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 | `tests/lib/consumers.py` | delivered, tested | 5 |
 | `tests/lib/records.py` | delivered, tested | 2 |
 | `tests/fixtures/contigs/` | delivered, tested | 6 |
-| `tests/fixtures/publication/` | deferred | 7 |
+| `tests/fixtures/publication/` | delivered, tested | 7 |
 | `tables/rmsk_records.tsv.gz` | delivered, tested | 2 |
 | `tables/rmsk_records.parquet` | delivered, tested | 2 |
 | `tables/rmsk_instance_members.tsv.gz` | delivered, tested | 2 |
@@ -109,11 +114,12 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 | `te_mm39_gene`: `exports/gencode/interspersed/exon_subtracted/subfamily.saf` | deferred | 8 |
 | `te_mm39_gene`: `exports/{ucsc,ensembl,gencode}/interspersed/exon_subtracted/taxonomy_triple.saf` | deferred | 8 |
 | `te_mm39_gene`: `tables/exon_subtraction_status.tsv` | deferred | 8 |
-| `MANIFEST.json` | deferred | 7 |
-| `BUILD_ID` | deferred | 7 |
+| `MANIFEST.json` | delivered, tested | 7 |
+| `BUILD_ID` | delivered, tested | 7 |
+| `CATALOG_ID` | delivered, tested | 7 |
 | `bin/te-tracks-preflight` | delivered, tested | 6 |
 | `docs/RUNBOOK.md` | deferred | 9 |
-| `docs/RELEASES.md` | deferred | 7 |
+| `docs/RELEASES.md` | delivered, tested | 7 |
 
 [docs/OUTPUTS.md](docs/OUTPUTS.md) specifies the schemas, serialization and deferred export contracts.
 
@@ -145,8 +151,9 @@ The redesign contract establishes these guarantees as the listed phases land:
 
 ## Genomes
 
-mm39 is built in the legacy layout. Its redesign artifacts follow the phases above. hg38 is
-deferred; source pins, a class census and packaged-file reconciliation follow the mm39 release.
+mm39 builds and publishes through `build.sh --genome mm39 --root <refroot>`; admitting a genome
+config requires its `SPECIES` entry in `src/lib/manifest.py`. hg38 is deferred pending source pins,
+a class census, packaged-file reconciliation and source-wide instance numbering or a contig-scoped instance key.
 
 ## Design
 

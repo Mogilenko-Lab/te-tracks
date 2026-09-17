@@ -69,4 +69,6 @@ orchestrator reads reviews and diffs, never whole artifacts.
   pin or many views in one child; exon mask, piece registration and transcript-context relation; what the
   consuming projects' combined-mode counting needs), records it under `redesign-2026-09/consults/`, and the
   owner rules on it; plan 18 is rewritten to the ruled design before `p8_impl.md` is finalized (owner,
-  2026-09-16).
+  2026-09-16). The consult is followed by an ADR discussion between the orchestrator and the owner on the
+  transcript-context relation and `gene_context`, held once the orchestrator has gathered the material;
+  candidate ADRs are drafted for that discussion and land in `docs/DECISIONS.md` only by the owner's ruling.

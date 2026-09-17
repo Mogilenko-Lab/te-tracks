@@ -21,12 +21,90 @@ from records_io import RECORD_KEY, tsv_stream, write_tsv
 
 COMPONENT = re.compile(r"[A-Za-z0-9_.+?()-]+")
 IDENTIFIER = re.compile(r"[A-Za-z0-9_.+?()|:/-]+")
-EXPORTS = (
-    ("record.bed", "record"), ("subfamily.bed", "subfamily"),
-    ("family.bed", "family"), ("record.gtf", "record"),
-    ("subfamily.gtf", "subfamily"), ("subfamily.saf", "subfamily"),
-    ("taxonomy_triple.saf", "taxonomy_triple"),
-)
+_RECORD_ALIAS = "R|{assembly.ucsc}|{rmsk_records.rmsk_name}|{rmsk_records.chrom}|{rmsk_records.start_1}|{rmsk_records.end_1}|{rmsk_records.strand}"
+_INSTANCE_ALIAS = "I|{assembly.ucsc}|{rmsk_records.rmsk_instance_id}"
+_GTF_SOURCES = {
+    "gene_id": "rmsk_records.rmsk_name",
+    "family_id": "taxonomy_canonical.canonical_family; unresolved: unresolved_family_{rmsk_name}",
+    "class_id": "taxonomy_canonical.canonical_class; unresolved: unresolved_class_{rmsk_name}",
+    "rmsk_family": "rmsk_records.rmsk_family",
+    "rmsk_class": "rmsk_records.rmsk_class",
+}
+FEATURE_LEVELS = ("record", "subfamily", "family", "taxonomy_triple", "instance")
+EXPORT_CONTRACTS = {
+    "record.bed": {
+        "feature_level": "record", "feature_identity": "name",
+        "attribute_sources": {"name": "rmsk_records.rmsk_record_id"},
+        "consumer_keys": {"IRescue": "name", "bedtools": "name"},
+        "selectable_levels": {"name": "record"},
+        "coordinate_convention": "0-based half-open",
+    },
+    "subfamily.bed": {
+        "feature_level": "subfamily", "feature_identity": "name",
+        "attribute_sources": {"name": "rmsk_records.rmsk_name"},
+        "consumer_keys": {"IRescue": "name"},
+        "selectable_levels": {"name": "subfamily"},
+        "coordinate_convention": "0-based half-open",
+    },
+    "family.bed": {
+        "feature_level": "family", "feature_identity": "name",
+        "attribute_sources": {"name": "{class_id}/{family_id}",
+                              "class_id": _GTF_SOURCES["class_id"],
+                              "family_id": _GTF_SOURCES["family_id"]},
+        "consumer_keys": {"bedtools": "name"},
+        "selectable_levels": {"name": "family"},
+        "coordinate_convention": "0-based half-open",
+    },
+    "record.gtf": {
+        "feature_level": "record", "feature_identity": "locus",
+        "attribute_sources": {
+            **_GTF_SOURCES, "transcript_id": _RECORD_ALIAS, "locus": _RECORD_ALIAS,
+            "instance_id": _INSTANCE_ALIAS, "rmsk_record_id": "rmsk_records.rmsk_record_id",
+        },
+        "consumer_keys": {
+            "Stellarscope": {"default": "locus", "--attribute instance_id": "instance_id"},
+            "TEsingle": "transcript_id:gene_id:family_id:class_id",
+            "TElocal": "transcript_id:gene_id:family_id:class_id",
+            "TEtranscripts": "gene_id:family_id:class_id",
+        },
+        "selectable_levels": {"locus": "record", "instance_id": "instance",
+                              "transcript_id:gene_id:family_id:class_id": "record",
+                              "gene_id:family_id:class_id": "taxonomy_triple"},
+        "coordinate_convention": "1-based inclusive",
+    },
+    "subfamily.gtf": {
+        "feature_level": "subfamily", "feature_identity": "locus",
+        "attribute_sources": {**_GTF_SOURCES, "transcript_id": "rmsk_records.rmsk_name",
+                              "locus": "rmsk_records.rmsk_name"},
+        "consumer_keys": {
+            "Stellarscope": "locus",
+            "TEsingle": "transcript_id:gene_id:family_id:class_id",
+            "TElocal": "transcript_id:gene_id:family_id:class_id",
+            "TEtranscripts": "gene_id:family_id:class_id",
+        },
+        "selectable_levels": {"locus": "subfamily",
+                              "transcript_id:gene_id:family_id:class_id": "subfamily",
+                              "gene_id:family_id:class_id": "taxonomy_triple"},
+        "coordinate_convention": "1-based inclusive",
+    },
+    "subfamily.saf": {
+        "feature_level": "subfamily", "feature_identity": "GeneID",
+        "attribute_sources": {"GeneID": "rmsk_records.rmsk_name"},
+        "consumer_keys": {"featureCounts": "GeneID"},
+        "selectable_levels": {"GeneID": "subfamily"},
+        "coordinate_convention": "1-based inclusive",
+    },
+    "taxonomy_triple.saf": {
+        "feature_level": "taxonomy_triple", "feature_identity": "GeneID",
+        "attribute_sources": {"GeneID": "{rmsk_records.rmsk_name}:{family_id}:{class_id}",
+                              "class_id": _GTF_SOURCES["class_id"],
+                              "family_id": _GTF_SOURCES["family_id"]},
+        "consumer_keys": {"featureCounts": "GeneID", "SAF column reader": "GeneID"},
+        "selectable_levels": {"GeneID": "taxonomy_triple"},
+        "coordinate_convention": "1-based inclusive",
+    },
+}
+EXPORTS = tuple((name, contract["feature_level"]) for name, contract in EXPORT_CONTRACTS.items())
 EXPORT_JOBS = (("interspersed", EXPORTS), ("all_rmsk", (("record.bed", "record"),)))
 MEMBER_COLUMNS = [
     "universe_name", "variant", "feature_level", "key_grammar", "emitted_feature_id",

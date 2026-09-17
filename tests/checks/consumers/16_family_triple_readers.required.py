@@ -10,11 +10,13 @@ import sys
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
 from consumers import (EXPECTED, ROSTER, Unsupported, assert_registered, build_fixture,
-                       command, discover, export_path, record_key, run_check)
+                       command, declared_key, discover, export_path, record_key, run_check)
 
 
 def check():
     build_fixture()
+    assert declared_key("family.bed", "bedtools") == "name"
+    assert declared_key("taxonomy_triple.saf", "SAF column reader") == "GeneID"
     if shutil.which("bedtools") is None:
         raise Unsupported("family reader system tool bedtools absent")
     output = command(["bedtools", "intersect", "-wa", "-wb",

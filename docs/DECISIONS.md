@@ -65,13 +65,14 @@ The UCSC browser table is compared once at source qualification and the report i
 
 ## 7. Build identity and publication
 
-`BUILD_ID` is the SHA-256 of the manifest's `identity` section: schema version, sources, declared
-run identity, universe predicates, export contracts and the complete file inventory.
-Builder commit and validation evidence live in the `provenance` section outside the hash.
-A build completes and verifies in staging, installs once into `archive/<BUILD_ID>/`, and becomes
-selected by an atomic replacement of the single `current` symlink.
-Every published build stays on disk, and consumers pin the full id and the digests of the files
-they read.
+`BUILD_ID` hashes the complete manifest identity, while `CATALOG_ID` binds the record-producing
+RepeatMasker source, run identity, source-wide instance scope and four canonical table digests
+for the ledger key `(te_catalog_id, rmsk_record_id)`.
+Builder commit and validation evidence live in the `provenance` section outside both hashes.
+A build verifies in staging, installs once into `archive/<BUILD_ID>/`, becomes selected by atomic
+replacement of `current`, and stays on disk with consumer pins to its full ID and file digests.
+The verifier judges an archive against its own declaration and the published versions so earlier
+archives stay verifiable and selectable.
 
 ## 8. Wording
 
@@ -92,3 +93,5 @@ Deferred work names the evidence its next decision needs.
   class-census gate and config shape.
 - Transcript context: a dedicated design session follows the
   [phase 8 gene child seam](_internal/_project/plans/2026-09-16_te-tracks-redesign/18_phase8_gene_child_seam.md).
+- Cross-build record correspondence on `(chrom, start_1, end_1, strand)` awaits an explicit mapping rule.
+- hg38 admission requires source-wide instance numbering or a contig-scoped instance key.

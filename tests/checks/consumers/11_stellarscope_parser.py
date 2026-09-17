@@ -7,7 +7,7 @@ import sys
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
 from consumers import (EXPECTED, FIXTURES, ROSTER, Unsupported, build_fixture,
-                       assert_registered, checkout_import, checkout_version, export_path,
+                       assert_registered, checkout_import, checkout_version, declared_key, export_path,
                        record_alias, record_key, run_check)
 
 
@@ -17,6 +17,9 @@ def check():
     import pysam
 
     build_fixture()
+    assert declared_key("record.gtf", "Stellarscope") == {
+        "default": "locus", "--attribute instance_id": "instance_id"}
+    assert declared_key("subfamily.gtf", "Stellarscope") == "locus"
     gtf = export_path("record.gtf")
     features = [utils.GTFFeature(line) for line in gtf.read_text().splitlines()]
     required = {"gene_id", "transcript_id", "locus", "family_id", "class_id",

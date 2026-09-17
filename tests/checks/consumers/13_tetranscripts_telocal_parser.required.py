@@ -11,7 +11,7 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
 from consumers import (EXPECTED, FIXTURES, build_fixture, checkout_import,
                        assert_registered, checkout_version, execute_source_nodes, expected_tuples, export_path,
-                       run_check, source_tree)
+                       declared_key, run_check, source_tree)
 
 
 def load_telocal(path):
@@ -33,6 +33,8 @@ def check():
     build_fixture()
     triples = {name + ":" + ":".join(ranks) for name, ranks in EXPECTED["taxonomy"].items()}
     for level, number in (("record", EXPECTED["records"]), ("subfamily", EXPECTED["names"])):
+        assert declared_key(f"{level}.gtf", "TEtranscripts") == "gene_id:family_id:class_id"
+        assert declared_key(f"{level}.gtf", "TElocal") == "transcript_id:gene_id:family_id:class_id"
         gtf = str(export_path(f"{level}.gtf"))
         transcript_index = transcripts.TEfeatures()
         transcript_index.build(gtf)

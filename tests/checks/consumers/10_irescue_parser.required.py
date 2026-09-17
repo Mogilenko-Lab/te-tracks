@@ -7,7 +7,7 @@ import sys
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
 from consumers import (EXPECTED, FIXTURES, ROSTER, build_fixture, checkout_import,
-                       checkout_version, export_path, gzip_text, record_key, run_check)
+                       checkout_version, declared_key, export_path, gzip_text, record_key, run_check)
 
 
 def check():
@@ -15,6 +15,7 @@ def check():
     counting = checkout_import("irescue", "irescue.count")
     build_fixture()
     for level, number in (("record", EXPECTED["records"]), ("subfamily", EXPECTED["names"])):
+        assert declared_key(f"{level}.bed", "IRescue") == "name"
         bed = export_path(f"{level}.bed")
         loaded = mapping.makeRmsk(str(bed), None, {}, str(FIXTURES), locus="instance")
         assert loaded == str(bed)

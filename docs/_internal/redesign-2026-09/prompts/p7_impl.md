@@ -124,8 +124,8 @@ Prints one line per assertion and a final `verified <BUILD_ID>`.
 4. README truth table: `MANIFEST.json`, `BUILD_ID`, `CATALOG_ID` to `tested`, phase 7; Build section states the
    two modes. `docs/RELEASES.md` restates retention from the measured sizes (exports 3,021,713,838 / 2,926,268,559 /
    3,021,138,299 bytes for `ucsc` / `ensembl` / `gencode`, registration 347,526,106 bytes, 10,461,962,113 bytes per
-   build before the child) and names the host floor (5.7 GB resident for the
-   export writer) and the requirement that the host build runs inside the same devcontainer image. Recorded
+   build before the child) and names the host floor (5.9 GB resident for the export writer, 5,891,116 KiB measured at the phase 6 fix
+   verification; stage 35 3,853,776 KiB) and the requirement that the host build runs inside the same devcontainer image. Recorded
    deferrals in `docs/DECISIONS.md`'s deferred list (one sentence each): cross-build record correspondence on
    `(chrom, start_1, end_1, strand)`; hg38 admission needs a source-wide instance numbering or a contig-scoped
    instance key.
@@ -148,7 +148,7 @@ for f in build.sh lib/common.sh src/*.sh tests/run.sh; do bash -n "$f" && echo "
 python3 src/90_manifest.py "$TE_TRACKS_REFROOT/te_mm39/build" config/mm39.env && cat "$TE_TRACKS_REFROOT/te_mm39/build/BUILD_ID" "$TE_TRACKS_REFROOT/te_mm39/build/CATALOG_ID"
 python3 -c "import json;m=json.load(open('$TE_TRACKS_REFROOT/te_mm39/build/MANIFEST.json'));print(sorted(m));print(sorted(m['identity']));print(len(m['identity']['inventory']))"
 python3 src/99_verify.py "$TE_TRACKS_REFROOT/te_mm39/build"; echo "exit=$?"
-rm -rf "$TE_TRACKS_REFROOT/pubroot" && time ./build.sh --genome mm39 --root "$TE_TRACKS_REFROOT/pubroot"; echo "exit=$?"
+python3 -c "import os,shutil;shutil.rmtree(os.environ['TE_TRACKS_REFROOT']+'/pubroot', ignore_errors=True)" && time ./build.sh --genome mm39 --root "$TE_TRACKS_REFROOT/pubroot"; echo "exit=$?"
 ls -la "$TE_TRACKS_REFROOT/pubroot/te_mm39/" "$TE_TRACKS_REFROOT/pubroot/te_mm39/archive/"
 readlink "$TE_TRACKS_REFROOT/pubroot/te_mm39/current"; cat "$TE_TRACKS_REFROOT/pubroot/te_mm39/current/BUILD_ID"
 diff <(cat "$TE_TRACKS_REFROOT/te_mm39/build/BUILD_ID") <(cat "$TE_TRACKS_REFROOT/pubroot/te_mm39/current/BUILD_ID") && echo "same id from both modes"

@@ -18,10 +18,10 @@ Deliverables
   `docs/OUTPUTS.md`; `schema_version` owns predicate semantics and a new key bumps it (rulings A2, A3).
 - `provenance` records Python, pandas, pyarrow and zlib versions and the devcontainer image identity;
   the host build runs inside the same image (ruling H6). Retention is restated from a measured build
-  size (ruling M4): the eight full exports measure 3,021,713,838 bytes (`ucsc`), 2,926,268,559 (`ensembl`) and
-  3,021,138,299 (`gencode`) uncompressed, of which the `all_rmsk` record BED is 318 MB per namespace, and
-  `export_feature_members.tsv.gz` 348 MB (eight registration rows per interspersed record plus one per `all_rmsk` record), so three namespaces plus the canonical
-  tables measure 10,461,962,113 bytes per build before the child family (exports 8.97 GB, tables 1.2 GB, source 0.3 GB). The export writer peaks at 5.9 GB resident for mm39 (5,891,116 KiB at the phase 6 fix verification; 5,698,908 KiB at the milestone 5 fix) and stage 35 at 3.9 GB (3,853,776 KiB)
+  size (ruling M4; codex B2 of the phase 7 review corrected the figures to sums of regular file sizes): the eight full exports measure 3,021,714,346 bytes (`ucsc`), 2,926,266,953 (`ensembl`) and
+  3,021,140,740 (`gencode`) uncompressed, of which the `all_rmsk` record BED is 332,554,184 / 316,524,255 / 332,461,688 bytes per namespace, and
+  `export_feature_members.tsv.gz` 347,526,106 bytes (eight registration rows per interspersed record plus one per `all_rmsk` record), so three namespaces plus the canonical
+  tables and sources measure 10,461,884,289 bytes over the 43 payload files per build before the child family (directory entries add 77,824 bytes on ext4). The export writer peaks at 6.0 GB resident for mm39 (5,891,116 KiB, 6.03 GB, at the phase 6 fix verification; 5,698,908 KiB at the milestone 5 fix; 5,968,367,616 bytes in the phase 7 build's provenance and 5,498,744,832 bytes in the phase 7 fix's published build, so 5.5 to 6.0 GB across builds) and stage 35 at 3.9 GB (3,853,776 KiB)
   (phase 4 Opus A5), the host floor the runbook states beside the disk figure.
 - `docs/OUTPUTS.md` publishes reader settings for pandas, DuckDB and R (`data.table`, `arrow`): text
   instance ids, signed int64 fields, no quoting, empty strings literal; a nullable column defines its
