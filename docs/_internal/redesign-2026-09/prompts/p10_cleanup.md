@@ -75,21 +75,29 @@ full suite run from a clean tree leaves `git status --short` empty of anything t
 ## 3. `README.md`
 
 Rewrite it as the document a downstream consumer reads first. It currently speaks in the project's in-flight
-voice, with "the redesign contract below lands in phases 1–9" and "as the listed phases land"; the phases are
-done, so the README states what the package is. Keep it affirmative, keep it under about 150 lines, and let
-it answer these six questions in this order, each in its own short section:
+voice, with "the redesign contract below lands in phases 1-9" and "as the listed phases land"; the phases are
+done, so the README states what the package is.
+
+**Open with the problem that started the package, in the owner's own terms.** Transposable-element
+annotation is fiddly and goes stale. Keeping it current across several projects by hand produced a different
+annotation in each one, so the projects needed one way of building a TE annotation. That is the first thing a
+reader meets, in three or four short sentences, before any description of the package. Ground it in the
+facts this repository measured, so the difficulty is shown rather than asserted: RepeatMasker's three tokens
+straddle the field's ranks, so 558,808 records sit under family `Alu` and a filter for `SINE/B1` returns
+nothing; each counting tool builds its features from a different key, so two tools' numbers for one locus do
+not join; and an annotation that changes between two analyses makes their counts incomparable with no
+symptom.
+
+Then, each in its own short section, in this order:
 
 1. **What this is.** One paragraph: a reference projection of one RepeatMasker run for one assembly into
    canonical tables, named universes and registered exports, with every emitted feature joined back to its
-   source record.
-2. **Why it exists.** The problem it removes from a consuming analysis: the field's tools each build their
-   counting features from a different key, so counts from different tools cannot be compared or joined
-   without a registration; and a reference that moves silently makes a count irreproducible, so every input
-   is pinned by digest and every published build is immutable and addressable by its full id.
-3. **Inputs.** The pinned sources with their roles, and the gene annotation as the child family's parameter.
-4. **Outputs.** What is published, at which grain, in which contig namespace, in which coordinate
+   source record. State the two guarantees as facts: every input is pinned by digest, and every published
+   build is immutable and addressable by its full id.
+2. **Inputs.** The pinned sources with their roles, and the gene annotation as the child family's parameter.
+3. **Outputs.** What is published, at which grain, in which contig namespace, in which coordinate
    convention.
-5. **What each output supports.** One table binding each artifact to the consumer that reads it and the
+4. **What each output supports.** One table binding each artifact to the consumer that reads it and the
    counting question it serves. It must state plainly that the exon-subtracted SAF is the bulk
    featureCounts product; that the expectation-maximization routes take the unmasked record exports with the
    full gene annotation; that `record.gtf` carries the subfamily grammar TEsingle and TElocal consume; that
@@ -98,7 +106,7 @@ it answer these six questions in this order, each in its own short section:
    chromatin-accessibility ledger keys on; and that the Dfam view supplies the lineage, rank and clade
    vocabulary for aggregate reporting. Name the universe each serves. If `docs/OUTPUTS.md` already carries
    this table, the README carries the short form and points to it.
-6. **Which biological questions the outputs support, and which they do not.** Affirmative and precise. They
+5. **Which biological questions the outputs support, and which they do not.** Affirmative and precise. They
    support: how much transposable-element RNA a cell or sample holds at record, subfamily, family and class
    grain; which lineages and divergence strata that signal sits in; which annotated intervals are accessible
    and which of their sequence is exon-disjoint. They do not settle: whether a copy transcribed from its own
@@ -106,12 +114,32 @@ it answer these six questions in this order, each in its own short section:
    age or activity verdict. Each of those is named in `docs/DECISIONS.md` with the evidence its next
    decision needs, and the README points there rather than restating it.
 
-State the guarantees as facts rather than as a contract that lands. Keep the build, test and genome
-sections. Keep every link that resolves and add none that does not.
+Keep the build, test and genome sections. Keep every link that resolves and add none that does not.
+
+## 3b. The prose standard, for `README.md` and every file under `docs/`
+
+The owner's standard, and it binds this whole pass:
+
+- **Laconic.** `README.md` comes in under 120 lines. A section that can be three sentences is three
+  sentences. Delete a sentence that repeats its neighbour at a different length.
+- **Simple and direct.** Short sentences, one idea each, present tense, concrete nouns. A number or a path
+  in place of an adjective wherever one exists.
+- **Affirmative only.** Every sentence states what a thing is. Remove contrastive negation everywhere,
+  including the reflexive "X, not Y" and "rather than" constructions used for emphasis. Keep a negative
+  clause only where it carries a contract, as in a guarantee's stated boundary or a "they do not settle"
+  list.
+- **No in-flight voice.** No phases, no roadmap, no "will", no "currently", no apology for scope.
+
+Apply the same standard to `docs/*.md` as a wording pass with a hard constraint: change no claim, number,
+path, identifier, command, table row or contract. Compress and clarify sentences only. Where a sentence
+reads as wrong rather than as verbose, leave it and report it; a false claim is the next pass's subject and
+rewriting it here hides it.
 
 ## Rules
 - Touch only: `README.md`, `AGENTS.md`, `tests/fixtures/**`, `tests/checks/**`, `tests/lib/**`, `src/**`,
-  `config/**`, `build.sh`, `lib/**`, and `docs/*.md` only where a sentence is made wrong by a fixture rename.
+  `config/**`, `build.sh`, `lib/**`, and `docs/*.md`. In `docs/*.md` the licence is wording alone: every
+  claim, number, path, identifier, command, table row and contract survives the pass byte-identical in
+  meaning. Leave `docs/_internal/**` alone.
 - No behaviour change. No git writes. No installs. No network. Never write into
   `/data2/users/shared/refcache`.
 - Weaken or delete no check. Every case a removed fixture covered must still be covered; name the check that
@@ -136,7 +164,8 @@ tests/run.sh acceptance; echo "exit=$?"
 for a in "$TE_TRACKS_REFROOT"/pubroot/te_mm39/archive/*; do python3 src/99_verify.py "$a"; echo "exit=$? $a"; done
 python3 src/release.py verify-current --root "$TE_TRACKS_REFROOT/pubroot" --family te_mm39; echo "exit=$?"
 python3 src/release.py verify-current --root "$TE_TRACKS_REFROOT/pubroot" --family te_mm39_gene; echo "exit=$?"
-wc -l README.md
+wc -l README.md docs/*.md
+grep -rniE "not just|rather than a|instead of a| not a | not an |isn't|aren't" README.md docs/*.md | grep -v _internal
 git status --short
 ```
 Every archive must still verify and every suite must pass with no new unsupported check.
@@ -144,5 +173,9 @@ Every archive must still verify and every suite must pass with no new unsupporte
 ## Final message
 Every file created, changed, renamed or removed; for each removed fixture the check that still covers its
 case; every comment or docstring removed for provenance or history rather than reworded, counted by file;
-the README's new section list with its line count; any config key or single-value knob you found and left
-alone; the four archive verifications and the three suite results verbatim; every deviation.
+the README's new section list with its line count, and its opening paragraph quoted in full; the line count
+of every `docs/*.md` before and after the wording pass; every sentence you left because it reads as wrong
+rather than verbose, quoted with its file and line; each contrastive-negation hit the grep returns, with
+either the rewrite or the reason the negative clause carries a contract; any config key or single-value
+knob you found and left alone; the four archive verifications and the three suite results verbatim;
+every deviation.

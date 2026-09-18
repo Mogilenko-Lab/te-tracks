@@ -454,3 +454,26 @@ false positive seen on every unit today; the final message is in `/tmp/scio-dele
 calls that `cd` move the persistent working directory; use absolute paths and `git -C`. A codex run that prints
 `Reconnecting... 5/5` can still finish; judge a stall by the stream's mtime, and relaunch only when the launcher records a
 failure without a final message.
+
+## Owner directive on the README and the docs prose (2026-09-18)
+
+The README opens with the problem that started the package: transposable-element annotation is fiddly and
+goes stale, and maintaining it by hand across several projects produced a different annotation in each one,
+so the projects needed one way of building a TE annotation. The reader meets that before any description of
+the package. The measured facts in this repository ground it: RepeatMasker's three tokens straddle the
+field's ranks, each counting tool keys its features differently, and an annotation that changes between two
+analyses makes their counts incomparable with no symptom.
+
+The prose standard for `README.md` and every file under `docs/`: laconic, under 120 lines for the README,
+short sentences with one idea each, present tense, a number or a path in place of an adjective, every
+sentence stating what a thing is. Contrastive negation is removed, including "X, not Y" and emphatic
+"rather than"; a negative clause stays only where it carries a contract, as in a guarantee's boundary or the
+list of questions the outputs do not settle. No phases, no roadmap, no "currently".
+
+`prompts/p10_cleanup.md` sections 3 and 3b carry this as the parking pass's instruction, with the `docs/*.md`
+licence limited to wording: every claim, number, path, identifier, command, table row and contract survives
+unchanged in meaning, and a sentence that reads as wrong is reported rather than rewritten, since
+`prompts/p11_validate_template.md` is where a false claim gets settled.
+
+Standing goal for this window: parked, validated te-tracks by morning, moving along the plan without
+stopping except where a new ADR needs the owner's decision.
