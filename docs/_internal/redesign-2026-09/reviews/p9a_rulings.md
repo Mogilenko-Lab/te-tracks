@@ -285,3 +285,28 @@ runner_exit=0
 Three independent runs of the fixed tree therefore pass at 26 of 26 with the runner exiting 0: the
 implementer's, the reviewer's and this one. The earlier single failure in a concurrent run is transient and
 unattributable, as recorded above.
+
+## The second fix, and its verification
+
+`te-tracks-p9a-fix2` implemented all five advisories across seven files without rebuilding, as the prompt
+required. The orchestrator verified each independently.
+
+| item | verified |
+|---|---|
+| A1, the verifier contract | `docs/RELEASES.md` now conditions the provenance comparison on retention and states the threat model beside it: the verifier detects corruption and accidental drift in an archive judged against its own declaration, a consumer protects against a deliberately edited archive by pinning the full `BUILD_ID` and the digests it reads, and every archive this builder writes retains the provenance. Archive `763815187e…` still verifies. |
+| A2, the census back in the suite line | check 33 prints the census first and appends refusals, matching checks 34 and 71; the suite line carries the full Dfam census again. |
+| A3, named rank refusals | the rank comparison runs before the aggregate assertions, and all ten column mutations refuse with `Dfam rank cell differs: <name>: <column>`, including the uncoded-row case. |
+| A4, the provenance pin at the input | `config/mm39.env` carries `DFAM_PROVENANCE_SHA256=a5e0eb4920fc1f9e…`, which the orchestrator confirmed equals the file's own digest, and `src/00_fetch_sources.sh` refuses with `dfam_provenance sha256 mismatch` or `dfam_snapshot sha256 mismatch`; check 11 gained both cases. The pin is absent from `identity`, as required, so no id moved. |
+| A5, the provenance key set | the packaged fetch script takes a required census argument and records its digest; an offline refresh retained all fourteen shipped keys plus the two the script adds, and reproduced both snapshot digests. A mismatched census refuses. The shipped provenance bytes are unchanged, which A4's pin now enforces. |
+| identity | core `5e2a156362cddc58…`, child `198f39f0ef168751…`, `CATALOG_ID` `90cc18be5d4ee934…`, 52 inventory entries, 27 contracts, `rank_scheme_wicker_v1`, all unchanged. |
+| suites | core 26 of 26, consumers 15 pass with Stellarscope's boundary defect the only unsupported check; all six archives verify. |
+
+**A4 is the item that closes the substance of A1.** The verifier can only judge an archive against its own
+declaration, so the guarantee belongs at the input: an edited provenance file is now refused at the fetch
+stage before it can become an identity. That is stronger than any verifier branch, and it is why the
+verifier was left as it is.
+
+**One process defect was the orchestrator's own.** `prompts/p9a_fix2.md` asked for the suite logs to be
+written to files and printed whole, correcting the earlier `tail` mistake, but named no path, so the unit
+wrote `core.log` and `consumers.log` into the repository root, where they appeared as untracked files. The
+orchestrator removed them. A prompt that asks for a log file names a path outside the working tree.
