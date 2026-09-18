@@ -373,6 +373,20 @@ file disagree, and the disagreement is a deviation to report. Rulings the owner 
 `gene_context` deferred (H3), pandas as the in-container conservation proof (`p4_rulings.md` B1), the compat exon-subtracted pair as a published child view
 (C1), the child's copied alias and universe inputs (C6), Wicker's rank names (round four).
 
+## Compaction record, 2026-09-18
+
+`consults/state_and_open_questions_2026-09-18.md` is the current state and open-question record, written at
+the owner's request. It carries where each of the three layers stands, the biology re-oriented after the
+sixth round of rulings into five remaining problems (attribution, origin, stratification, intactness,
+co-detection), four premises earned this session, the five genuinely open questions with their routes, and a
+question-class coverage table answering how much of a consumer's need the parked state meets. It supersedes
+`open_questions_premises_after_phase8_2026-09-17.md`, nine of whose ten questions are ruled.
+
+The short form: ten of eighteen consumer question classes are served outright, four are derivable by the
+consumer from published intervals, and four are absent by ruling, being the structural and initiation
+questions. Remaining work is one more working session of delegated units with a review after each, and the
+gate on calling it parked is the owner's host build.
+
 ## Open at handoff
 
 - ADR discussion: every item of the twelve-item list is ruled (rounds one to four) and the schema consult's fifth round is
