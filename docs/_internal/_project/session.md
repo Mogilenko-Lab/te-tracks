@@ -333,31 +333,25 @@ the guard belongs to the scio toolkit.
 
 ## Next session starts here
 
-1. **Pick up here: the phase 9a fix has landed and is reviewed; commit it, then run 9b.** The fix unit
-   `te-tracks-p9a-fix` implemented all eleven items of `prompts/p9a_fix.md` in 15 files and republished both
-   families: core `BUILD_ID` `5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813`, child
-   `198f39f0ef16875121fa65e1b1301f0d58c894488cc557765ce7f50c57a38bd1`, `CATALOG_ID` unchanged at
-   `90cc18be5d4ee9342b57b58e4b8ad19e59f9e6b48b9a94bab9db615db1091b5e` in both, payload roster 52 entries and
-   15,301,538,537 bytes, `rank_scheme_wicker_v1` now recorded in `identity` and inherited by the child, three
-   archives per family with `current` on the new builds. The orchestrator verified the identity, the archives,
-   the retained provenance and both new guards by reading them: the IRescue guard binds matrix shape to both
-   rosters, feature-name uniqueness and total mass before any dictionary exists, with the expected total
-   derived from the fixture's own molecules; the STARsolo guard derives each case's allowed gene set from the
-   combined GTF against the fixture's molecule coordinates. `opus-p9a-fix` reports PASS WITH ADVISORIES, zero
-   blocking, five advisory, all eleven items biting under 64 mutations of which 57 refused by name, ids
-   recomputed independently, all six archives verifying. Read its final report at
-   `_scratch/te-tracks-audit/opus-p9a-fix-report.md`, copy it to `reviews/p9a_fix_opus.md`, rule the five
-   advisories in `reviews/p9a_rulings.md`, re-run the suite cleanly with
-   `TE_TRACKS_CONSUMER_FIXTURES` pointed at your own scratch, and commit the whole of phase 9a as
-   "Phase 9a: core additions before acceptance". Then launch 9b from `prompts/p9b_impl.md` with `__HEAD__`
-   replaced by that commit. Every later prompt is written and committed: `m9_seam_review.md`,
-   `p10_cleanup.md`, `p11_validate_template.md`. Remaining sequence: 9b, its Opus review, the milestone 9
-   seam review, the parking pass, the three-way claim validation, the owner's host build, the umbrella pin.
-   Two facts measured for the runbook: Stellarscope's interval tree needs about 10.1 GB resident to load the
-   full record profile and TElocal's index about 3.9 GB. Full-scale consumer validation passed: cellranger
-   mkgtf accepted all 3,764,949 record rows, and featureCounts loaded the child SAF as 1,220 meta-features
-   over 59 contigs. Do not run a suite concurrently with a mutation-testing reviewer against one reference
-   root: the generated fixture directory is a fixed path under it.
+1. **Pick up here: phase 9a is committed as `d28336f` and phase 9b is running.** Phase 9a landed whole,
+   42 files, after an implementation, two independent reviews, an eleven-item fix, an Opus review of that fix
+   with 64 mutations, and a five-item second fix for its advisories. Final verification by the orchestrator
+   alone with an isolated fixture directory and output captured whole: core 26 of 26 exit 0, consumers 15
+   pass with only Stellarscope's boundary defect unsupported, all six published archives verifying at exit 0,
+   ids unmoved at core `5e2a156362cddc58…`, child `198f39f0ef168751…`, `CATALOG_ID` `90cc18be5d4ee934…`, 52
+   inventory entries, 27 contracts, `rank_scheme_wicker_v1` recorded and inherited.
+   `te-tracks-p9b-impl` was launched from `prompts/p9b_impl.md` pinned to `d28336f`; its acceptance build of
+   both families takes about fifty minutes on top of the implementation, so expect several hours. When it is
+   terminal, verify the acceptance suite's checks are independently authored rather than comparing the build
+   with itself, that the acceptance build reproduces the development ids, that the child geometry oracle ran
+   its own bedtools pipeline, and that the runbook is followable; then the Opus review, the milestone 9 seam
+   review from `prompts/m9_seam_review.md`, rulings, a fix, the parking pass from `prompts/p10_cleanup.md`,
+   its Opus review, and the three-way claim validation from `prompts/p11_validate_template.md`. Then the
+   umbrella pin bump and the owner's host build.
+   Downstream work was handed to the 14761 agents this session: `handoffs/te_handover_to_14761.md` plus
+   `handoffs/d2_agent_chromatin_readouts.md` and `handoffs/d3_agent_rna_seam_and_grn.md`. The TE branch is
+   te-tracks' own in `40_transposable_elements/`, and `90_integration_exports/` is a planned decision point
+   for how results leave the dataset.
 2. Phases 8 and 9 with `p8_impl.md` and `p9_impl.md`, each aligned with the rulings in its plan file before launch;
    phase 8 opens with a codex design consult on the child family's topology, architecture and approach, recorded under
    `redesign-2026-09/consults/` and ruled by the owner before `p8_impl.md` is finalized (owner, 2026-09-16); the
