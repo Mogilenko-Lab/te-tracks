@@ -165,3 +165,31 @@ Measured on this image from a 50,000-row head of `exports/ucsc/interspersed/full
 A consumer loading the whole record profile therefore needs about 10 GB resident for Stellarscope and about
 4 GB for TElocal, against the producer's own peak of 9.0 GB for the core build. These are the figures the
 runbook states, so phase 9b reproduces rather than re-derives them.
+
+## An orchestration hazard found while verifying the fix
+
+The orchestrator ran `tests/run.sh core` while the Opus fix reviewer was running its mutation tests against
+the same reference root, and that run recorded 26 checks with 25 passing and 1 failing, against the
+implementer's and the orchestrator's earlier clean runs. The failing check's name was lost because the
+command piped through `tail`, which also masked the runner's exit status.
+
+Investigated rather than retried. The build directory and the current core archive both verify clean at exit
+0 afterwards, and every publication check isolates its own work in a `TemporaryDirectory` under
+`$TE_TRACKS_REFROOT/pubtest`, so neither the artifact nor the checks' shared scratch explains it. The
+remaining explanation is the reviewer's method: the earlier Opus pass reported mutating "a hardlinked copy"
+of the build, and a hardlink shares its inode, so a write to the copy writes through to the real build for
+as long as the mutation is live. A concurrent reader sees a corrupted payload and one check fails, and the
+build verifies clean again once the mutation is reverted.
+
+Three consequences, recorded so the remaining reviews do not repeat it.
+
+- A read-only contract is not violated by this, and the reviewer did nothing outside its instructions; the
+  hazard is that "copy then mutate" is only safe when the copy is real. Reviewer prompts from here on require
+  a real copy and forbid `cp -al`, `cp -l` and `shutil.copytree` with a linking copy function, and ask the
+  reviewer to verify the build and every archive as its last step.
+- The orchestrator does not run a verification suite concurrently with a mutation-testing reviewer against
+  the same reference root. Either the suite waits, or the reviewer is given its own `TE_TRACKS_REFROOT`.
+- Capturing a suite run through `tail` discards the failing check's identity and the runner's exit status.
+  Suite output is captured whole.
+
+The clean re-run after the reviewer finishes is the record of the fix's suite result.
