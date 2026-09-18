@@ -151,3 +151,17 @@ The first establishes that the record-as-gene grammar survives cellranger's refe
 with `|` and `:` in every `gene_id`, which the eleven-record fixture cannot establish. The second
 establishes that the bulk product's `GeneID` grouping collapses to exactly the 1,220 subfamilies over the 59
 contigs the catalog carries.
+
+## Consumer annotation floors (orchestrator, for the milestone 5 ruling H3 anchor)
+
+Measured on this image from a 50,000-row head of `exports/ucsc/interspersed/full/record.gtf`, with
+`resource.getrusage` around the annotation load alone. Scratch removed with Python `shutil.rmtree`.
+
+| reader | resident bytes for 50,000 rows | seconds | bytes per row | projected to 3,764,949 rows |
+|---|---:|---:|---:|---|
+| Stellarscope 1.5 `IntervalTreeAnnotation(gtf, 'locus', 'exon')` | 134,418,432 | 1.79 | 2,688 | 10.1 GB, 2.2 min |
+| TElocal 1.1.3 `TEfeatures.build` | 51,904,512 | 12.21 | 1,038 | 3.9 GB, 15.3 min |
+
+A consumer loading the whole record profile therefore needs about 10 GB resident for Stellarscope and about
+4 GB for TElocal, against the producer's own peak of 9.0 GB for the core build. These are the figures the
+runbook states, so phase 9b reproduces rather than re-derives them.

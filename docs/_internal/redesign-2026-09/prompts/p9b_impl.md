@@ -80,7 +80,13 @@ archives from phases 8 and 9a; leave every one of them in place and build accept
    recovery; resolving `current` once per consumer operation and pinning the resolved id; a measured floor
    per consumer projected from a 50,000-row head of `record.gtf` through Stellarscope's
    `IntervalTreeAnnotation` and TElocal's `TEindex`, stating the per-row cost and the projection (milestone 5
-   ruling H3); consumer installs pinned to the vendored checkout commits from `git describe`, or the
+   ruling H3). The orchestrator measured both on this image, so reproduce them and report a deviation rather
+   than re-deriving from scratch: Stellarscope's `IntervalTreeAnnotation(gtf, 'locus', 'exon')` takes
+   134,418,432 resident bytes and 1.79 s for 50,000 rows, which is 2,688 bytes and 0.036 ms per row and
+   projects to 10.1 GB and 2.2 minutes for the full 3,764,949-row `record.gtf`; TElocal's `TEfeatures.build`
+   takes 51,904,512 resident bytes and 12.21 s for the same head, which is 1,038 bytes and 0.244 ms per row
+   and projects to 3.9 GB and 15.3 minutes. State that a consumer loading the whole record profile needs
+   about 10 GB resident for Stellarscope; consumer installs pinned to the vendored checkout commits from `git describe`, or the
    divergence recorded (ruling M4); the barcode-threshold audit named as the consumer's (ruling M6).
 6. **A consumer map** in `docs/OUTPUTS.md`: one table binding each published artifact to the consumer that
    reads it and the counting question it serves. It must state plainly that the exon-subtracted SAF is the
