@@ -333,18 +333,31 @@ the guard belongs to the scio toolkit.
 
 ## Next session starts here
 
-1. **Pick up here: the phase 9a fix is running.** Commits on `redesign-2026-09`: `393ca76` phase 8, `0bb9b6d`,
-   `1a3c123`, `30431bb` and `99a14b2` records, `0354c6a` the 9a review prompts, `4046ce6` the 9a reviews, rulings and the
-   9a fix and 9b implementer prompts. Phase 9a's own package files are not committed yet, by design: the fix lands on top
-   and the two commit together. `te-tracks-p9a-fix` was launched from `prompts/p9a_fix.md`; it rebuilds the core and the
-   child and republishes both, so expect about ninety minutes. When it is terminal, re-verify each of the eleven items
-   with your own evidence, especially that the three new negative cases refuse by name, that the payload roster moved
-   from 51 to 52 with `BUILD_ID` moving and `CATALOG_ID` holding at `90cc18be…`, and that both earlier core archives still
-   verify; then run an Opus review of the fix, rule it, and commit the whole of phase 9a as "Phase 9a: core additions
-   before acceptance". Then 9b from `prompts/p9b_impl.md` with `__HEAD__` replaced by that commit, which supersedes
-   `p9_impl.md`: the acceptance suite over a fresh build of both families, the bedtools child-geometry oracle, the host
-   runbook section, the consumer map in OUTPUTS, and the parking handoff. Then the milestone 9 review, the owner's host
-   build, the umbrella pin bump, and last the cleanup pass and its validation fan-out.
+1. **Pick up here: the phase 9a fix has landed and is reviewed; commit it, then run 9b.** The fix unit
+   `te-tracks-p9a-fix` implemented all eleven items of `prompts/p9a_fix.md` in 15 files and republished both
+   families: core `BUILD_ID` `5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813`, child
+   `198f39f0ef16875121fa65e1b1301f0d58c894488cc557765ce7f50c57a38bd1`, `CATALOG_ID` unchanged at
+   `90cc18be5d4ee9342b57b58e4b8ad19e59f9e6b48b9a94bab9db615db1091b5e` in both, payload roster 52 entries and
+   15,301,538,537 bytes, `rank_scheme_wicker_v1` now recorded in `identity` and inherited by the child, three
+   archives per family with `current` on the new builds. The orchestrator verified the identity, the archives,
+   the retained provenance and both new guards by reading them: the IRescue guard binds matrix shape to both
+   rosters, feature-name uniqueness and total mass before any dictionary exists, with the expected total
+   derived from the fixture's own molecules; the STARsolo guard derives each case's allowed gene set from the
+   combined GTF against the fixture's molecule coordinates. `opus-p9a-fix` reports PASS WITH ADVISORIES, zero
+   blocking, five advisory, all eleven items biting under 64 mutations of which 57 refused by name, ids
+   recomputed independently, all six archives verifying. Read its final report at
+   `_scratch/te-tracks-audit/opus-p9a-fix-report.md`, copy it to `reviews/p9a_fix_opus.md`, rule the five
+   advisories in `reviews/p9a_rulings.md`, re-run the suite cleanly with
+   `TE_TRACKS_CONSUMER_FIXTURES` pointed at your own scratch, and commit the whole of phase 9a as
+   "Phase 9a: core additions before acceptance". Then launch 9b from `prompts/p9b_impl.md` with `__HEAD__`
+   replaced by that commit. Every later prompt is written and committed: `m9_seam_review.md`,
+   `p10_cleanup.md`, `p11_validate_template.md`. Remaining sequence: 9b, its Opus review, the milestone 9
+   seam review, the parking pass, the three-way claim validation, the owner's host build, the umbrella pin.
+   Two facts measured for the runbook: Stellarscope's interval tree needs about 10.1 GB resident to load the
+   full record profile and TElocal's index about 3.9 GB. Full-scale consumer validation passed: cellranger
+   mkgtf accepted all 3,764,949 record rows, and featureCounts loaded the child SAF as 1,220 meta-features
+   over 59 contigs. Do not run a suite concurrently with a mutation-testing reviewer against one reference
+   root: the generated fixture directory is a fixed path under it.
 2. Phases 8 and 9 with `p8_impl.md` and `p9_impl.md`, each aligned with the rulings in its plan file before launch;
    phase 8 opens with a codex design consult on the child family's topology, architecture and approach, recorded under
    `redesign-2026-09/consults/` and ruled by the owner before `p8_impl.md` is finalized (owner, 2026-09-16); the
