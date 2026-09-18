@@ -65,13 +65,6 @@ reconciled against the tall evidence grammar is a good design and it is not this
 the owner takes once these tables exist. Your reconciliation argument is worth keeping in writing for that
 conversation.
 
-## The namespace question
-
-The owner's message names `10_requantify_embed/`, `20_chromatin_readouts/` and `30_grn/` directly, so create
-those as named. The rename of the existing `scripts/foundation/` to `00_foundation_peak_atlas/` is a
-separate matter and stays with D1: do not perform it as part of this work, because it touches literal paths
-across a frozen arc and deserves its own sitting.
-
 ## What is not yours
 
 The gene-regulatory-network rework is the other agent's, and so is the harmonization of 14616-DM's
@@ -82,13 +75,13 @@ letting them discover it.
 
 The transposable-element concern is not yours; see the handover section above.
 
-## Two prerequisites, one of which needs the owner
+## Two prerequisites
 
-DuckDB is absent from both the Python environment and R, and Arrow is absent from R. **Installing anything is
-the owner's decision and you do not have it yet, so ask rather than install.** Note that nothing in the four
-analyses above requires it: pyarrow and polars exist in Python, and every universal table can be written and
-read without a query engine. DuckDB becomes necessary when the ledger becomes real, which is after this work,
-so the install is worth requesting in its own right rather than as a blocker on these runs.
+Environments are yours to build under the three conditions in the shared handover: frozen and reproducible,
+the container's environment state documented as it now stands, and an environment beside the scripts it
+serves where that is practical. DuckDB is absent from both Python and R and Arrow is absent from R; note that
+none of the four analyses needs a query engine, since pyarrow and polars exist and every universal table
+writes and reads without one, so install it for the ledger on its own merits rather than as a blocker here.
 
 The motif collection is a pinned external input and needs a release, a digest and a recorded provenance
 entry, the same way the registry inputs already have. Name it before you scan with it.

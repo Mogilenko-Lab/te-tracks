@@ -74,19 +74,16 @@ The transposable-element concern is not yours; see the handover section above. I
 TE dimension into the regulatory tables. When TE evidence joins a regulatory region it will join through
 peak coordinates and a pinned reference build, and that join is designed later.
 
-## The namespace question
-
-Create `30_grn/` as the owner named it. The rename of the existing `scripts/foundation/` stays with D1 and is
-not part of this work.
-
 ## Two prerequisites
 
-The cisTarget snapshot, the motif collection and any database the run pins are external inputs that need a
-release, a digest and a provenance entry before a run consumes them. One of them already sits in the shared
+The cisTarget snapshot, the motif collection and any database a run pins are external inputs needing a
+release, a digest and a provenance entry before a run consumes them. One already sits in the shared
 reference cache; name what you use.
 
-Installing software is the owner's decision. If a route needs a package that is absent, ask for it with the
-reason rather than installing, and say whether a route without it exists.
+Environments are yours to build under the three conditions in the shared handover: frozen and reproducible,
+the container's environment state documented as it now stands, and an environment beside the scripts it
+serves where that is practical. If a route needs a package that is absent, document it and install it, and
+say whether a route without it exists.
 
 ## How to open
 

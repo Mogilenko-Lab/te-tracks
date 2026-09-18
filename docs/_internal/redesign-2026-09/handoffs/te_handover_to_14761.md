@@ -1,102 +1,115 @@
-# The transposable-element concern moves to te-tracks (handover from the TE orchestrator)
+# Shared handover to the 14761 agents (from the te-tracks orchestrator)
 
-Paste this section into both the D2 and the D3 agent. It is the part of their brief that only the te-tracks
-side can write, and it replaces two beliefs their re-orientation recorded.
+Paste this into both the D2 and the D3 agent, before their own brief. It is the part only the te-tracks side
+can write. The namespace and the environment policy in it are the owner's, confirmed 2026-09-18.
 
-## What changed
+## Why the separation, for the record
 
-The transposable-element concern is no longer yours. A separate session owns it and has been building it for
-several days. Two things you concluded are now out of date.
+Four boundaries, each of a different kind.
+
+**A reference is not an analysis.** te-tracks pins one RepeatMasker run into identities and intervals and
+knows nothing about what reads it. It is built once, published immutably and pinned by digest. Inside an
+analysis namespace every analysis rerun becomes a potential reference change, which is the failure the
+package exists to prevent, so it arrives in `40_transposable_elements/` as a pinned dependency rather than
+as code the dataset owns.
+
+**Only one of the two downstream lines has a dependency.** Requantification gates the chromatin readouts and
+the paired network run. The 14616 label crosswalk gates the unpaired network run and nothing else. One agent
+doing both serializes the crosswalk behind work it does not need; two agents put the only unblocked
+critical-path item in flight immediately.
+
+**The split matches accumulated context.** One agent has been reasoning about the peak ledger, sub-peak grain
+and the admission law; the other holds the paired-against-unpaired measurement and the inference-source
+design. Each receives the runs that produce the evidence its own design question needs.
+
+**Export format is a decision, not a byproduct.** `90_integration_exports/` exists so that how results leave
+this dataset is settled once, deliberately, after the tables exist.
+
+## The namespace, settled
+
+`02_analysis/scripts/` becomes `00_foundation_peak_atlas/` for the frozen arc from raw through annotated
+object to the v2 atlas, `10_requantify_embed/` for peak by cell on v2 with embeddings and the
+weighted-nearest-neighbour refresh, `20_chromatin_readouts/` for motif work, footprinting and peak-gene
+links on v2 coordinates, `30_grn/` for the network rework, `40_transposable_elements/` for the TE branch, and
+`90_integration_exports/` for cross-dataset handoff surfaces. Create the folders your own work needs. The
+rename of the existing `scripts/foundation/` is ruled and belongs to D1's migration, performed against the
+literal-path checklist in one sitting rather than piecemeal during a run.
+
+## `40_transposable_elements/` is not yours
+
+A separate session owns the whole TE endeavour: acquiring, pinning, parsing, qualifying, exporting and
+publishing the mm39 RepeatMasker projection, and later the branch that lands in that folder. Two statements
+in your re-orientation are now out of date.
 
 **"No RepeatMasker mm39 annotation exists anywhere on disk, in the lake or under references, so the TE
-dimension has no source yet."** That is no longer true. A complete, tested reference projection of the mm39
-RepeatMasker run exists at `/workspaces/Meta-Aging/01_modules/te-tracks`, built and verified, and is in its
-final phase before publication to the shared reference cache.
+dimension has no source yet."** False. A complete, tested projection exists at
+`/workspaces/Meta-Aging/01_modules/te-tracks`, built and verified, in its last phase before publication to
+the shared reference cache.
 
-**"Acquire the RepeatMasker mm39 annotation into the reference lake" as an action item you could start.**
-Drop it. Acquiring, pinning, parsing, qualifying and exporting that annotation is te-tracks' whole job, and
-duplicating it would create a second unpinned copy with no identity, which is the exact failure the package
-exists to prevent. If you need TE intervals for a sanity check, ask for them rather than downloading them.
+**"Acquire the RepeatMasker mm39 annotation into the reference lake."** Dropped. A second unpinned copy with
+no identity is exactly the failure that package prevents. If you need TE intervals for a sanity check, ask.
 
-## What te-tracks is, in the terms your ledger cares about
+## Do not design the TE schema, and do not block on it
 
-It projects one checksum-pinned RepeatMasker run for one assembly into canonical tables, named universes and
-registered exports, with every emitted feature joined back to its source record. It carries no knowledge of
-what the annotation is used for; quantification and biological interpretation are the consumer's.
+How TE evidence joins anything is decided later, after your tables exist and te-tracks is published. Treat it
+as absent. Your entire TE obligation is five things, none of which is designing a satellite, and they exist
+so one is addable later without re-releasing what you publish now.
 
-| fact | value |
-|---|---|
-| records in the mm39 run | 5,320,771 |
-| the default counting universe, `interspersed` | 3,764,949 records over 1,220 subfamily names |
-| the complete catalog, `all_rmsk` | every record; its record BED is the interval catalog a peak ledger keys on |
-| contig namespaces | `ucsc`, `ensembl`, `gencode`, with an injective 61-contig alias table |
-| coordinate conventions | tables, GTF and SAF are 1-based inclusive; BED is 0-based half-open |
-| record identity | `rmsk_record_id` is `<name>\|<chrom>:<start_1>-<end_1>\|<strand>`; the export spelling is `R\|mm39\|<name>\|<chrom>\|<start>\|<end>\|<strand>` |
-| instance identity | `I\|mm39\|<id>`, RepeatMasker's grouping hypothesis |
-| feature levels | record, instance, subfamily, canonical family |
-| lineage and rank | a pinned Dfam 4.0 view: classification path, clades per model, and Wicker class through subfamily with a status per rank |
-| build identity | `BUILD_ID` over the manifest identity; `CATALOG_ID` binds the record-producing source, so a serializer change moves `BUILD_ID` alone |
+1. **Exact coordinates with the convention declared.** Half-open zero-based start and end as separate typed
+   columns, beside whatever string key your existing tables use.
+2. **A stable peak identity and a release identity.** The within-release identifier plus a content hash of
+   the admitted set, and a coordinate key for cross-release joins.
+3. **The assembly and contig dictionary pinned by name on the release manifest**, as a recorded fact rather
+   than an assumption. This matters because the mm10 lift the regulatory branch needs makes two coordinate
+   systems live in one repository.
+4. **Room for `te_catalog_id` and `te_build_id`, unpopulated.** An overlap that cannot say which reference
+   build produced it cannot be reproduced, and leaving no place for them means a re-release.
+5. **A measurement status that can express "not computed".** Yours already does.
 
-Four measured facts bear directly on the `te.parquet` satellite you sketched, and each is a design
-constraint rather than a detail.
+If you find yourself reasoning about TE classes, families or loci, you have crossed the seam.
 
-- **8.07 percent of records overlap another record**, 429,440 of 5,320,771, and 198,956 of those overlapping
-  pairs cross instance boundaries. The source's own overlap flag is constant false for this run, so it
-  cannot be relied on. A peak-by-TE overlap relation therefore needs an explicit deduplicating rule before
-  any cut count or accessibility figure is summed over TEs, or the same accessible base is counted twice.
+## Four measured facts, so the eventual satellite is not designed against wrong assumptions
+
+- **429,440 of 5,320,771 records overlap another record**, 198,956 of those pairs crossing instance
+  boundaries, and the source's own overlap flag is constant false for this run. A peak-by-TE relation needs
+  an explicit deduplicating rule before any accessible base is summed over TEs.
 - **An instance is a grouping hypothesis, not an insertion.** 30,569 interspersed instances mix subfamily
-  names and 23,244 mix strands. A "TE locus" in the field is a record, and every per-locus count is a count
-  per record. Insertion-level units are reconstructions and te-tracks defers them with their evidence gates
-  written down.
-- **A subfamily is one consensus model.** RepeatMasker's three tokens straddle the field's ranks, so filters
-  surprise: mouse B1 and PB1 sit under family `Alu` across 558,808 records, `ERVL-MaLR` is the largest LTR
-  family and nothing is spelled `MaLR`, DNA superfamilies appear only hyphenated, and a filter for `SINE/B1`
-  returns nothing. The Dfam view exists to give aggregates a definition.
-- **Mappability biases the TE side of every assay**, and your P4 note already says so. Keep that note. The
-  reference cannot fix it; it can only make the bias nameable per record through divergence and lineage.
+  names and 23,244 mix strands. Every per-locus count in the field is a count per record.
+- **RepeatMasker's three tokens straddle the field's ranks**, so filters surprise: 558,808 records sit under
+  family `Alu`, nothing is spelled `MaLR`, and a filter for `SINE/B1` returns nothing. The pinned Dfam view
+  exists to give aggregates a definition.
+- **Mappability biases the TE side of every assay**, as your P4 note already says. Keep that note: the
+  reference can make the bias nameable per record through divergence and lineage, never remove it.
 
-## What you must not do
+## When you can consume it
 
-Do not design the TE satellite, do not choose its grain, and do not block any run on the TE schema. How TE
-evidence joins the ledger is a decision the owner takes later, once your analyses have produced their tables
-and te-tracks is published. Treat it as absent.
+te-tracks is in acceptance. Publication runs on the host because the reference cache is read-only in the
+container. When it publishes you receive the family name, the full `BUILD_ID` and `CATALOG_ID`, the export
+paths and the digests to pin. Until then do not read from its scratch root: it holds deliberately superseded
+intermediate builds, and pinning one would be worse than pinning nothing.
 
-## What you must do, so the seam stays open
+Two things about the seam are already decided, so design compatibly. The interval catalog you would join
+against is the complete catalog rather than the counting universe, because admitting a peak is your
+producer's decision and never the annotation's. And genic context, meaning exon, intron, promoter window or
+intergenic, is not published as a label: te-tracks publishes geometry and the consumer derives the label.
 
-This is the whole of your TE obligation, and it costs you nothing you were not already doing. A TE satellite
-has to be addable later without re-releasing anything you publish now, so the peak spine carries what an
-interval join will need:
+## Environments are yours to build, under three conditions
 
-1. **Exact coordinates with their convention declared**, not only a coordinate string. Half-open zero-based
-   start and end as separate typed columns, beside whatever string key your existing tables use.
-2. **A stable peak identity and a release identity.** Your `v2c_NNNNNNN` within a release and a content hash
-   of the admitted set are exactly right; keep both, and keep the coordinate key for cross-release joins.
-3. **The assembly and contig dictionary pinned by name on the release manifest.** te-tracks refuses any
-   build that is not the assembly it declares, and normalizes contigs through its alias table. Your peaks
-   are mm39 under `chr` names; say so as a recorded fact rather than an assumption, because the mm10 lift
-   your gene-regulatory branch needs makes two coordinate systems live in one repository.
-4. **Room for two identity columns you do not populate yet**, `te_catalog_id` and `te_build_id`. When TE
-   evidence arrives it arrives pinned to an exact reference build, and a ledger that cannot say which build
-   an overlap was computed against cannot be reproduced. Leaving the columns unpopulated is fine; leaving no
-   place for them means a re-release.
-5. **A measurement-status vocabulary that can express "not computed".** You already have one, with
-   `structurally_absent`, `not_computed`, `below_detection` and `failed_qc`. TE evidence will arrive as
-   `not_computed` for every peak until it does not, and that must be sayable without a schema change.
+You may create virtual environments and install into them, and you may install into the base environment.
 
-Nothing else. If you find yourself reasoning about TE classes, families or loci, you have crossed the seam.
+1. **Every install is frozen and reproducible**: a pinned requirements file, the resolved versions, and the
+   command that recreates the environment from scratch.
+2. **The container's environment state is documented as it now stands**: which environments exist, what each
+   is for, and which scripts run under which.
+3. **Prefer an environment beside the scripts it serves**, so the correspondence is visible rather than
+   remembered.
 
-## When you will be able to consume it
+A route needing a package nobody has documented is not reproducible yet, so document first and install
+second.
 
-te-tracks is in its acceptance phase. The builds are complete and verified in a scratch reference root; the
-publication to `/data2/users/shared/refcache` runs on the host because that path is read-only inside the
-container. When it is published you receive the family name, the full `BUILD_ID` and `CATALOG_ID`, the paths
-of the exports you would read, and the digests to pin. Until then, do not read from the scratch root: it
-holds intermediate builds that are deliberately superseded, and pinning one would be worse than pinning
-nothing.
+## `90_integration_exports/` is a planned decision point
 
-Two things are already decided about that seam and are worth knowing so you design compatibly. The interval
-catalog you would join against is `all_rmsk/full/record.bed`, the complete catalog rather than the counting
-universe, because admitting a peak is your producer's decision and never the annotation's. And genic context,
-meaning whether a TE sits in an exon, an intron, a promoter window or between genes, is not published as a
-label: te-tracks publishes geometry and the consumer derives the label, under the owner's ruling that one
-component is responsible for one thing.
+How each analysis leaves this dataset for meta-level consumers is settled deliberately once the tables
+exist. What you owe it meanwhile is that every universal table carries its own grain in one sentence and the
+identities it was computed from, because an export format can be chosen over tables like that and cannot be
+chosen over tables without them.
