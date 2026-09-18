@@ -177,8 +177,14 @@ Investigated rather than retried, and the first hypothesis was wrong. The build 
 core archive both verify clean at exit 0 afterwards, and every publication check isolates its own work in a
 `TemporaryDirectory` under `$TE_TRACKS_REFROOT/pubtest`. The orchestrator then suspected the reviewer's
 method, because an earlier Opus pass reported mutating "a hardlinked copy" of the build and a hardlink shares
-its inode, so a write to the copy would write through to the real build. That is not what happened here: the
-reviewer's scratch directory holds a 15 GB real copy, so its mutations were isolated.
+its inode, so a write to the copy would write through to the real build. That suspicion was wrong twice over,
+and the reviewer's own account is the authority on its method. It did use `cp -al`, and every write into that
+copy went through `unlink()` followed by `write_bytes()`, which breaks the link and allocates a new inode, so
+the three files it touched left the archive's copies holding their original inodes at mode 0444 with their
+published digests, while an untouched file still showed two links. No write reached the reviewed build or any
+archive, which the closing verification of all six archives and both families confirms. The distinction worth
+keeping is narrower than the warning the orchestrator sent: a hardlinked copy is safe to replace a file in
+and unsafe to modify a file in place in, and `unlink` then write is a replacement.
 
 The actual cause is a shared path inside the reference root. `tests/lib/consumers.py` resolves its generated
 fixture directory to `$TE_TRACKS_REFROOT/fixtures/consumers` unless `TE_TRACKS_CONSUMER_FIXTURES` overrides
@@ -195,8 +201,9 @@ Four consequences, recorded so the remaining reviews do not repeat it.
 - Reviewer prompts set `TE_TRACKS_CONSUMER_FIXTURES` to a directory inside the reviewer's own scratch.
 - Reviewer prompts still require a real copy for every mutation and forbid `cp -al`, `cp -l` and
   `shutil.copytree` with a linking copy function, and ask for a closing verification of the build and every
-  archive. That guidance is right on its own terms even though it did not explain this failure, and it is now
-  in both review templates.
+  archive. The rule is stricter than the hazard requires, since replacing a file in a hardlinked copy is
+  safe, and it stays because it removes a distinction a reviewer would otherwise have to get right under
+  time pressure. It is now in both review templates.
 - Capturing a suite run through `tail` discards the failing check's identity and the runner's exit status.
   Suite output is captured whole.
 
