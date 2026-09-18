@@ -117,6 +117,23 @@ verifies in that window, and check 41 alone holds about 9.4 GB resident, so two 
 approach 19 GB here. Checks 71 and 72 isolate themselves with unique `TemporaryDirectory` names under the
 shared `pubtest`, so resource pressure explains it better than a shared path; naming the check would settle it.
 
+Closing sweep, run after `shutil.rmtree` of my scratch directory and as the last action of this review, so
+it reflects the artifacts' state with every mutation copy gone:
+
+```
+build te_mm39                exit=0
+build te_mm39_gene           exit=0   (--parent-dir the core build)
+archive 5e2a1563             exit=0
+archive 76381518             exit=0
+archive 9ddf3622             exit=0
+verify-current te_mm39       exit=0   5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813
+verify-current te_mm39_gene  exit=0   198f39f0ef16875121fa65e1b1301f0d58c894488cc557765ce7f50c57a38bd1
+```
+
+Raw log: `/workspaces/Meta-Aging/_scratch/te-tracks-audit/closing_sweep.log`. The reviewed build, the child
+build and all three published core archives verify clean, and both families' current selections verify, so
+nothing this review ran left a mark on the artifacts.
+
 ## Identity and scope
 
 Both ids recomputed from the canonical identity JSON with my own `sha256("te-tracks-build-v1\n" + …)`: core
