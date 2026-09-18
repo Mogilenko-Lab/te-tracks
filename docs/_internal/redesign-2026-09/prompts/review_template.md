@@ -19,7 +19,7 @@ installs, no network.
   content; every acceptance command re-run by you with its output quoted; any number that differs from the
   contract named.
 - **Fixture adequacy**: do the fixtures and checks fail when they should? Try to break one (read-only: reason
-  from the code, or run it against a modified copy under /tmp).
+  from the code, or run it against a real copy under the scratch directory the specifics name).
 - **Silent assumptions**: anything the code or docs assume that the contract leaves open; anything that will
   bite phase __N+1__.
 - **Wording rule**: contrastive negation, history, or provenance chatter in public files or comments.

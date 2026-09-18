@@ -10,7 +10,8 @@ Read, in order:
 5. The codex review already written: docs/_internal/redesign-2026-09/reviews/p__N___codex.md
 
 Your job is adversarial and independent of the codex review: recompute every acceptance number in the
-contract with your own read-only shell or python (working copies under /tmp only), try to make each check
+contract with your own read-only shell or python, with working copies under the scratch directory the
+specifics name, try to make each check
 fail, look for what the implementer assumed silently, and judge the public prose against the wording rules.
 Where you agree with a codex finding say so in one line; where you disagree, show the evidence.
 
