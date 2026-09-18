@@ -173,22 +173,30 @@ the same reference root, and that run recorded 26 checks with 25 passing and 1 f
 implementer's and the orchestrator's earlier clean runs. The failing check's name was lost because the
 command piped through `tail`, which also masked the runner's exit status.
 
-Investigated rather than retried. The build directory and the current core archive both verify clean at exit
-0 afterwards, and every publication check isolates its own work in a `TemporaryDirectory` under
-`$TE_TRACKS_REFROOT/pubtest`, so neither the artifact nor the checks' shared scratch explains it. The
-remaining explanation is the reviewer's method: the earlier Opus pass reported mutating "a hardlinked copy"
-of the build, and a hardlink shares its inode, so a write to the copy writes through to the real build for
-as long as the mutation is live. A concurrent reader sees a corrupted payload and one check fails, and the
-build verifies clean again once the mutation is reverted.
+Investigated rather than retried, and the first hypothesis was wrong. The build directory and the current
+core archive both verify clean at exit 0 afterwards, and every publication check isolates its own work in a
+`TemporaryDirectory` under `$TE_TRACKS_REFROOT/pubtest`. The orchestrator then suspected the reviewer's
+method, because an earlier Opus pass reported mutating "a hardlinked copy" of the build and a hardlink shares
+its inode, so a write to the copy would write through to the real build. That is not what happened here: the
+reviewer's scratch directory holds a 15 GB real copy, so its mutations were isolated.
 
-Three consequences, recorded so the remaining reviews do not repeat it.
+The actual cause is a shared path inside the reference root. `tests/lib/consumers.py` resolves its generated
+fixture directory to `$TE_TRACKS_REFROOT/fixtures/consumers` unless `TE_TRACKS_CONSUMER_FIXTURES` overrides
+it, and `build_fixture()` regenerates files there on every run. The reviewer was running its own
+`tests/run.sh core` at the same time, 226 files were rewritten in that directory during the overlap, and a
+concurrent reader can see a partially written fixture. The codex reviewer had redirected the directory with
+that variable; the Opus reviewer had not been told to.
 
-- A read-only contract is not violated by this, and the reviewer did nothing outside its instructions; the
-  hazard is that "copy then mutate" is only safe when the copy is real. Reviewer prompts from here on require
-  a real copy and forbid `cp -al`, `cp -l` and `shutil.copytree` with a linking copy function, and ask the
-  reviewer to verify the build and every archive as its last step.
-- The orchestrator does not run a verification suite concurrently with a mutation-testing reviewer against
-  the same reference root. Either the suite waits, or the reviewer is given its own `TE_TRACKS_REFROOT`.
+Four consequences, recorded so the remaining reviews do not repeat it.
+
+- The suite is not concurrency-safe against one reference root. Two runs share the generated fixture
+  directory at a fixed path. The parking pass either isolates it per run or documents the variable where a
+  reader will find it, and the runner documentation names it.
+- Reviewer prompts set `TE_TRACKS_CONSUMER_FIXTURES` to a directory inside the reviewer's own scratch.
+- Reviewer prompts still require a real copy for every mutation and forbid `cp -al`, `cp -l` and
+  `shutil.copytree` with a linking copy function, and ask for a closing verification of the build and every
+  archive. That guidance is right on its own terms even though it did not explain this failure, and it is now
+  in both review templates.
 - Capturing a suite run through `tail` discards the failing check's identity and the runner's exit status.
   Suite output is captured whole.
 

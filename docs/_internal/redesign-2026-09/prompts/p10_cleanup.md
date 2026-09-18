@@ -46,6 +46,20 @@ make that change only where it is local and obvious, and report any place where 
 A config key with no reader is deleted rather than commented, and so is a knob with exactly one legal value.
 Report any you find rather than removing a key some consumer may pin.
 
+## 2b. Make the suite safe to run twice
+
+`tests/lib/consumers.py` resolves its generated fixture directory to
+`$TE_TRACKS_REFROOT/fixtures/consumers` unless `TE_TRACKS_CONSUMER_FIXTURES` overrides it, and
+`build_fixture()` rewrites files there on every run, so two concurrent `tests/run.sh` invocations against one
+reference root can read a partially written fixture. The orchestrator hit exactly that, as one
+non-reproducible check failure.
+
+Give each run its own generated-fixture directory, keeping `TE_TRACKS_CONSUMER_FIXTURES` as the explicit
+override, or, if per-run isolation would break a check that depends on a fixture surviving between checks,
+state the constraint instead: name the variable in `AGENTS.md` beside the test commands and in the runner's
+usage text, and say that one reference root serves one suite run at a time. Whichever you choose, say which
+and why, and confirm the whole suite still passes.
+
 ## 3. `README.md`
 
 Rewrite it as the document a downstream consumer reads first. It currently speaks in the project's in-flight
