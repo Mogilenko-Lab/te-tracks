@@ -60,6 +60,18 @@ state the constraint instead: name the variable in `AGENTS.md` beside the test c
 usage text, and say that one reference root serves one suite run at a time. Whichever you choose, say which
 and why, and confirm the whole suite still passes.
 
+## 2c. Stop the suite leaving bytecode in a consumer's checkout
+
+`.gitignore` has no `__pycache__` or `*.pyc` rule, and the orchestrator found `src/lib/__pycache__/` in the
+working tree after a python run that did not set `PYTHONDONTWRITEBYTECODE=1`. Every prompt in this project
+exports that variable, so the project has never noticed; a consumer reading `AGENTS.md` and running
+`tests/run.sh` will not set it.
+
+Fix it at the source rather than in the ignore file alone: have `tests/run.sh` and `build.sh` export
+`PYTHONDONTWRITEBYTECODE=1` themselves, so a consumer gets the intended behaviour without knowing the
+variable exists, and add `__pycache__/` to `.gitignore` as the belt to that braces. Confirm afterwards that a
+full suite run from a clean tree leaves `git status --short` empty of anything the run produced.
+
 ## 3. `README.md`
 
 Rewrite it as the document a downstream consumer reads first. It currently speaks in the project's in-flight
