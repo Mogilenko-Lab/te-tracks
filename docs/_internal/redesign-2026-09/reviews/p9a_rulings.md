@@ -216,3 +216,58 @@ Four practices follow anyway, each worth keeping on its own terms.
   inode. A rule that removes the need to get that right under time pressure is the cheaper instrument.
 
 The clean re-run after the reviewer finishes is the record of the fix's suite result.
+
+## Rulings on the Opus review of the fix
+
+`reviews/p9a_fix_opus.md`: PASS WITH ADVISORIES, zero blocking, five advisory, every one of the eleven items
+biting under 64 mutations of which 57 refused by name and 5 were accepted by design. The reviewer recomputed
+both ids from the canonical identity JSON, confirmed `CATALOG_ID` unmoved, confirmed the 52-entry roster and
+that every statement of 51 is gone, verified all six published archives and both families, and found the
+scope exactly the eleven items across fifteen files. The orchestrator had already read both new guards and
+found them fixture-derived; the reviewer proved the derivation by adding a fixture molecule and watching a
+refused replay turn into a pass, which is the stronger demonstration.
+
+**A1 accepted as a documentation defect, and the verifier is left as it is.** The retained provenance anchors
+`fetch_finished` only for archives that carry `rank_scheme_version`, and the reviewer presented the old shape
+by dropping the rank scheme, the provenance and its inventory entry together, forging the timestamp and
+recomputing `BUILD_ID`, which verified clean. The branch has a live caller, the phase-9a implementation
+archive, so the condition is the same backward compatibility the phase-8 archive receives. Tightening it
+would make that archive unverifiable, and the exposure it closes is a hand-edited archive, which is outside
+what this design promises: the verifier detects corruption and drift, while a consumer's protection is
+pinning the full id and the digests of the files it reads. Every archive this builder writes carries the
+provenance unconditionally. What is actually wrong is one sentence, `docs/RELEASES.md:54`, which states
+unconditionally what the code does only for archives that retain the file. The sentence is corrected and the
+threat model is stated plainly beside it. The input boundary, where an edit would really enter, is closed by
+A4 instead.
+
+**A2 accepted.** Check 33 prints its refusal list before its census and the runner shows a passing check's
+first line alone, so the Dfam census that the reviews and these rulings quote has left the suite output.
+Checks 34 and 71 already print the summary first and append their refusals; check 33 matches them.
+
+**A3 accepted.** Two of the ten rank-column mutations are caught by an earlier assertion than the new one, so
+their diagnostic does not name the column, and one of those assertions carries no message at all. The rank
+comparison runs before the census comparison and the bare assertion gains a message.
+
+**A4 accepted, and it is the substantive one.** `config/mm39.env` pins the snapshot path and digest while the
+provenance file that now anchors `fetch_finished` carries no pin, so an edited provenance JSON flows through
+the fetch stage into `identity.build_sources` with nothing refusing it at build time. Its digest is pinned
+beside the snapshot's. This is the right place for the guarantee: a pin at the input refuses the edit before
+it can become an identity, which is stronger than a verifier branch that can only judge an archive against
+itself.
+
+**A5 accepted.** The pinned provenance JSON came from the ad-hoc fetch script and carries `census_sha256`,
+while the packaged `fetch_dfam_snapshot.py` writes `taxonomy_sha256` and `universe`, so a refresh yields a
+different key set. The four keys the verifier reads are in both, so nothing breaks today. The packaged
+script's key set is reconciled and the keys the verifier reads are named, without touching the pinned bytes,
+whose digest A4 now pins.
+
+**On the reviewer's own account of its copy method**, recorded because it corrects the orchestrator: its
+isolation held, and it held because every write went through `unlink` then `write_bytes`, which breaks a
+hardlink rather than writing through it. The three files it touched left the archive's inodes intact at mode
+0444 with their published digests. The stricter rule stays in the templates because one `open("w")` would
+have reached a published archive, and a rule that removes that distinction is cheaper than getting it right
+under time pressure.
+
+**The second fix** is `prompts/p9a_fix2.md`, five items, and none of them moves `BUILD_ID`: A1, A2, A3 and A5
+touch documentation, checks and a package script outside the payload, and A4 adds a build-time gate rather
+than an identity field. The unit confirms the ids are unchanged rather than rebuilding.
