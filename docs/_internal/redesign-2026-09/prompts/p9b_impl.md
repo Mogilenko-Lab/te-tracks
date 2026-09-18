@@ -2,7 +2,7 @@
 
 You are the implementer for phase 9b of the te-tracks redesign, the last implementation phase before the
 package is parked. Working directory (absolute): `/workspaces/Meta-Aging/01_modules/te-tracks`, git branch
-`redesign-2026-09`, HEAD `__HEAD__`. Phases 0 to 9a have landed. This prompt supersedes `p9_impl.md`.
+`redesign-2026-09`, HEAD `d28336f`. Phases 0 to 9a have landed. This prompt supersedes `p9_impl.md`.
 
 Read `AGENTS.md`, `README.md`, `build.sh`, `src/`, `tests/`, `docs/*.md`, the plan file
 `docs/_internal/_project/plans/2026-09-16_te-tracks-redesign/19_phase9_acceptance_park.md` (which carries the
