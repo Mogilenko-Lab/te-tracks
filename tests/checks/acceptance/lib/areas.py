@@ -97,6 +97,7 @@ def exports(core, child):
     results = core_checks(core, child, "40_exports_shape.py", "41_export_registration.py", "43_matrix_binding.py")
     inventory = rows(core / "tables/exports.tsv")
     assert len(inventory) == 27
+    assert any(row["feature_level"] == "family" for row in inventory), "family export level absent"
     for row in inventory:
         if row["feature_level"] == "family":
             assert int(row["distinct_features"]) == 49, "canonical family export census"
@@ -186,9 +187,9 @@ def publication(core, child):
                 discrepancies.append(f"{family} development table digests differ: {differences}")
             if (development / "BUILD_ID").read_text().strip() != build_id:
                 discrepancies.append(f"{family} BUILD_ID difference with equal CATALOG_ID: compare toolchain and payload; publish the host build with the in-container build recorded as its content witness")
-            comparison = "development tables and IDs equal" if not differences and (development / "BUILD_ID").read_text().strip() == build_id else "development comparison differs"
+            comparison = "live development comparison ran: tables and IDs equal" if not differences and (development / "BUILD_ID").read_text().strip() == build_id else "live development comparison ran: differs"
         else:
-            comparison = f"development comparison unavailable: {development}"
+            comparison = f"live development comparison skipped: build absent at {development}"
         if family == "te_mm39":
             assert sum(r["bytes"] for r in identity["inventory"]) == 15301538537
             for path, size in {
@@ -204,7 +205,7 @@ def publication(core, child):
             assert sum(r["bytes"] for r in identity["inventory"]) == 2157717760
             assert identity["parent_build_id"] == (core / "BUILD_ID").read_text().strip()
             assert identity["parent_catalog_id"] == catalog_id
-        summaries.append(f"{family} BUILD_ID={build_id} CATALOG_ID={catalog_id}; {comparison}")
+        summaries.append(f"{family} BUILD_ID={build_id} CATALOG_ID={catalog_id}; identity.tsv reproduction pins checked; {comparison}")
     assert not discrepancies, "\n".join(discrepancies)
     print("; ".join(summaries) + "; immutable modes, independent hashes and verify-current pass")
 

@@ -47,15 +47,18 @@ tests/run.sh acceptance
 ```
 
 The default reference root is `/workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot`.
-Each mode reports `pass`, `fail` or `unsupported` per check. `acceptance --build` creates fresh
+Each mode reports `pass`, `fail` or `unsupported` per check. All eleven acceptance checks are
+required: acceptance exits 1 when it has no archive to judge, with
+`unsupported: run tests/run.sh acceptance --build` naming the creation command.
+A selected archive missing `BUILD_ID`, `CATALOG_ID` or `MANIFEST.json` fails. `acceptance --build` creates fresh
 core and child archives under `$TE_TRACKS_REFROOT/acceptance/`; `acceptance` checks that pair again.
 Set `TE_TRACKS_SOURCE_CACHE=/workspaces/Meta-Aging/_scratch/te-tracks-audit/source` for the offline
 acceptance build. Existing archives stay retained. [Acceptance anchors](tests/expectations/mm39/README.md)
 name the independent evidence behind each expected census.
 [Consumer environment](docs/RUNBOOK.md#consumer-environment) records the activation recipe
-and suite outcomes with and without executable shims. Core checks cover the parser fixtures,
+and suite outcomes with and without executable shims. Core checks cover runner and acceptance prerequisites, the parser fixtures,
 the qualification report, the record schema, instances, universes, the record fixtures,
-taxonomy (30 to 34), exports and matrix binding (40 to 43), contigs (60 to 62), identity and publication (70 to 72),
+taxonomy (30 to 34), exports and matrix binding (40 to 43), contigs (60 to 62), identity and publication (70 to 73),
 and gene subtraction, identity and dependencies (80 to 83).
 
 Phase 9b qualification recorded 11 passes for fresh-build acceptance, 11 for its rerun,
@@ -160,7 +163,7 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 | `docs/RUNBOOK.md`: gene child build and verification | delivered, tested | 8 |
 | `docs/RUNBOOK.md`: host procedure and measured resource floors | delivered; commands reviewed and scratch publication tested; host filesystem qualification pending | 9b |
 | `tests/checks/acceptance/`: eleven complete-build checks | delivered, tested | 9b |
-| `tests/expectations/mm39/{source_pins,source_qualification,record_census,identity,gene_oracle}.tsv` | delivered, tested | 9b |
+| `tests/expectations/mm39/{source_pins,source_qualification,record_census,identity,gene_oracle,gene_oracle_m9}.tsv` | delivered, tested | 9b |
 | `data/dfam/`: tracked snapshot, provenance and refresh script | delivered; retained input pins tested; refresh qualification recorded in phase 9a | 9a |
 | `docs/OUTPUTS.md`: consumer map | delivered, tested: artifact bindings agree with registered contracts | 9b |
 | `docs/PROVENANCE.md`: qualification and measured census | delivered, tested | 9b |

@@ -39,10 +39,13 @@ to check the counting reference's contigs and lengths.
 
 ## Consumer environment
 
-The consuming module owns the reproducible environment recipe at
+The consuming module owns the environment recipe at
 `/workspaces/Meta-Aging/01_modules/te-consumers/env/bootstrap.sh`. Its adjacent
 `requirements.txt`, `MANIFEST.tsv`, `pip-freeze.txt` and `python-version.txt`
-pin packages, source versions and archives, installed versions and Python.
+record the five pinned Python-tool commits, executable archive versions, installed versions and Python.
+The recipe installs the five pinned tool commits and records the installed versions;
+`pip-freeze.txt` describes the qualified installation. Pinning packaging-tool upgrades,
+consuming the dependency freeze and enforcing download hashes remain the consuming module's work.
 The installed environment lives at `/workspaces/Meta-Aging/.venv/te-consumers`.
 
 ```bash
@@ -74,6 +77,55 @@ ambiguous-molecule EM evenly and adds unique support separately; the fixture
 records that allocation alongside identity and conservation checks.
 
 
+## Consumer parser sources
+
+Parser qualification reads six pinned clones in the ignored sibling directory
+`/workspaces/Meta-Aging/01_modules/.ref/`. Clone setup requires network access.
+The pinned commit is the source that qualification measures. Run the commands below once
+before consumer qualification; the consuming environment bootstrap supplies the installed tools.
+
+| Checkout | Upstream origin | Destination | Pinned commit |
+|---|---|---|---|
+| irescue | `https://github.com/bodegalab/irescue.git` | `/workspaces/Meta-Aging/01_modules/.ref/irescue` | `26f36fb391bb031a156ae8f0a77f31c125bfbe15` |
+| stellarscope | `https://github.com/nixonlab/stellarscope.git` | `/workspaces/Meta-Aging/01_modules/.ref/stellarscope` | `0e0d594047212afe81e3754732119975a0d2aa6f` |
+| TEsingle | `https://github.com/mhammell-laboratory/TEsingle.git` | `/workspaces/Meta-Aging/01_modules/.ref/TEsingle` | `655f1274de0fe5f3241219afc2ecb1c2e0830ae9` |
+| TEtranscripts | `https://github.com/mhammell-laboratory/TEtranscripts.git` | `/workspaces/Meta-Aging/01_modules/.ref/TEtranscripts` | `e7f9b93f8c351b1b582cf0882aed49ffd1f0d1e9` |
+| TElocal | `https://github.com/mhammell-laboratory/TElocal.git` | `/workspaces/Meta-Aging/01_modules/.ref/TElocal` | `1a168c299714fc55df7dd93359f553759b95c810` |
+| MATES | `https://github.com/mcgilldinglab/MATES.git` | `/workspaces/Meta-Aging/01_modules/.ref/MATES` | `87c1218603a26fc9cfa8ab36ef6f730d72d127af` |
+
+```bash
+set -euo pipefail
+export PYTHONDONTWRITEBYTECODE=1
+mkdir -p /workspaces/Meta-Aging/01_modules/.ref
+git clone https://github.com/bodegalab/irescue.git /workspaces/Meta-Aging/01_modules/.ref/irescue
+git -C /workspaces/Meta-Aging/01_modules/.ref/irescue checkout --detach 26f36fb391bb031a156ae8f0a77f31c125bfbe15
+git clone https://github.com/nixonlab/stellarscope.git /workspaces/Meta-Aging/01_modules/.ref/stellarscope
+git -C /workspaces/Meta-Aging/01_modules/.ref/stellarscope checkout --detach 0e0d594047212afe81e3754732119975a0d2aa6f
+git clone https://github.com/mhammell-laboratory/TEsingle.git /workspaces/Meta-Aging/01_modules/.ref/TEsingle
+git -C /workspaces/Meta-Aging/01_modules/.ref/TEsingle checkout --detach 655f1274de0fe5f3241219afc2ecb1c2e0830ae9
+git clone https://github.com/mhammell-laboratory/TEtranscripts.git /workspaces/Meta-Aging/01_modules/.ref/TEtranscripts
+git -C /workspaces/Meta-Aging/01_modules/.ref/TEtranscripts checkout --detach e7f9b93f8c351b1b582cf0882aed49ffd1f0d1e9
+git clone https://github.com/mhammell-laboratory/TElocal.git /workspaces/Meta-Aging/01_modules/.ref/TElocal
+git -C /workspaces/Meta-Aging/01_modules/.ref/TElocal checkout --detach 1a168c299714fc55df7dd93359f553759b95c810
+git clone https://github.com/mcgilldinglab/MATES.git /workspaces/Meta-Aging/01_modules/.ref/MATES
+git -C /workspaces/Meta-Aging/01_modules/.ref/MATES checkout --detach 87c1218603a26fc9cfa8ab36ef6f730d72d127af
+```
+
+## Acceptance verification
+
+```bash
+export PYTHONDONTWRITEBYTECODE=1
+export TE_TRACKS_SOURCE_CACHE=/workspaces/Meta-Aging/_scratch/te-tracks-audit/source
+tests/run.sh acceptance --build
+tests/run.sh acceptance
+```
+
+Use `--build` with an empty acceptance root; use `--refroot DIR` to isolate another pair.
+An absent pair reports `unsupported: run tests/run.sh acceptance --build` and exits 1.
+A selected archive missing an identity file fails. The untouched reference-root replay took
+**54 minutes 33 seconds**, with 11 of 11 checks passing, as recorded in the
+[phase 9b Opus review](_internal/redesign-2026-09/reviews/p9b_opus.md#closing-verification).
+
 ## Host build and publication
 
 Run the producer on the host inside the same devcontainer image, with
@@ -89,6 +141,7 @@ From the host's Meta-Aging checkout, identify the running `dev-core` container a
 image with the workspace and writable reference mount:
 
 ```bash
+set -euo pipefail
 export PYTHONDONTWRITEBYTECODE=1
 TE_TRACKS_CONTAINER=$(docker compose -f .devcontainer/docker-compose.yml ps -q dev-core)
 TE_TRACKS_IMAGE=$(docker inspect --format '{{.Image}}' "$TE_TRACKS_CONTAINER")
@@ -97,7 +150,7 @@ docker run --rm -it --user "$(id -u):$(id -g)" \
   --mount "type=bind,source=$PWD,target=/workspaces/Meta-Aging" \
   --mount type=bind,source=/data2/users/shared/refcache,target=/data2/users/shared/refcache \
   --workdir /workspaces/Meta-Aging/01_modules/te-tracks \
-  --env PYTHONDONTWRITEBYTECODE=1 "$TE_TRACKS_IMAGE" bash -l
+  --env PYTHONDONTWRITEBYTECODE=1 "$TE_TRACKS_IMAGE" bash -leuo pipefail
 ```
 
 The following versions were read from this container. The producer uses
@@ -136,6 +189,8 @@ a checksum mismatch stops publication for an explicit re-pin decision. The track
 snapshot, provenance and fetch script travel with the package; the build reads those local inputs.
 
 ```bash
+set -euo pipefail
+export PYTHONDONTWRITEBYTECODE=1
 export TE_TRACKS_SOURCE_CACHE=/data2/users/shared/refcache/te-tracks-source
 python3 - <<'SEED'
 import csv, hashlib, os, shutil
@@ -163,45 +218,52 @@ for pin in pins:
 SEED
 ```
 
-Use a clean committed package tree and a fresh complete `--root` build for publication.
-The first command builds `te_mm39`; `--family gene` selects `config/mm39_gene.env` for the child.
-Install both with `--no-select`, check `provenance.builder_git_dirty` is `false`, compare identities,
-and then select each full ID. The CLI selects configs through `--genome` and `--family`.
+Use a clean committed package tree and fresh private staging directories for publication.
+The CLI selects configs through `--genome` and `--family`. `--require-clean` enforces clean
+builder provenance at installation and selection; the owner omits it for deliberate dirty-tree
+scratch qualification. Run these blocks in the fail-fast host shell above.
 
 ```bash
+set -euo pipefail
+export PYTHONDONTWRITEBYTECODE=1
 export TE_TRACKS_REFROOT=/data2/users/shared/refcache
 export GIT_OPTIONAL_LOCKS=0
-test -z "$(git status --porcelain)" || exit 1
-./build.sh --genome mm39 --root "$TE_TRACKS_REFROOT" --no-select
+test -z "$(git status --porcelain)"
+mkdir -p "$TE_TRACKS_REFROOT/te_mm39/.staging"
+CORE_STAGING=$(mktemp -d "$TE_TRACKS_REFROOT/te_mm39/.staging/build.XXXXXXXX")
+./build.sh --genome mm39 --build-dir "$CORE_STAGING"
+PARENT_ID=$(cat "$CORE_STAGING/BUILD_ID")
+python3 src/release.py install --root "$TE_TRACKS_REFROOT" --family te_mm39 \
+  --staging "$CORE_STAGING" --require-clean
 ```
 
-Record the full core ID printed by `installed` or `converged` as `PARENT_ID`. Check that archive's
-manifest records a clean builder; convergence preserves the first installed manifest. Compare all
-`tables/` file digests and both IDs with the acceptance core. Equal IDs qualify the same-image
-reproduction. A `CATALOG_ID` difference stops for investigation. For a `BUILD_ID` difference with
-an equal `CATALOG_ID`, inspect the toolchain and payload differences, publish the host build,
-and record the in-container build as its content witness. Keep that comparison in the publication log.
+Compare all `tables/` file digests and both IDs with the acceptance core before selection.
+Equal IDs qualify the same-image reproduction. A `CATALOG_ID` difference stops for investigation.
+For a `BUILD_ID` difference with an equal `CATALOG_ID`, inspect the toolchain and payload
+changes, publish the host build, and record the in-container build as its content witness.
+Keep that comparison in the publication log. Convergence retains the first installed manifest;
+`--require-clean` checks that retained provenance too.
 
 ```bash
-python3 - "$TE_TRACKS_REFROOT/te_mm39/archive/$PARENT_ID/MANIFEST.json" <<'CLEAN'
-import json, sys
-assert json.load(open(sys.argv[1]))["provenance"]["builder_git_dirty"] is False
-CLEAN
-python3 src/release.py select --root "$TE_TRACKS_REFROOT" --family te_mm39 --build-id "$PARENT_ID"
+set -euo pipefail
+python3 src/release.py select --root "$TE_TRACKS_REFROOT" --family te_mm39 \
+  --build-id "$PARENT_ID" --require-clean
 python3 src/release.py verify-current --root "$TE_TRACKS_REFROOT" --family te_mm39
-./build.sh --genome mm39 --family gene --root "$TE_TRACKS_REFROOT" \
-  --parent-build-id "$PARENT_ID" --no-select
+mkdir -p "$TE_TRACKS_REFROOT/te_mm39_gene/.staging"
+CHILD_STAGING=$(mktemp -d "$TE_TRACKS_REFROOT/te_mm39_gene/.staging/build.XXXXXXXX")
+./build.sh --genome mm39 --family gene --build-dir "$CHILD_STAGING" \
+  --parent-dir "$TE_TRACKS_REFROOT/te_mm39/archive/$PARENT_ID"
+CHILD_ID=$(cat "$CHILD_STAGING/BUILD_ID")
+python3 src/release.py install --root "$TE_TRACKS_REFROOT" --family te_mm39_gene \
+  --staging "$CHILD_STAGING" --require-clean
 ```
 
-Record the child's installed ID as `CHILD_ID`, apply the same clean-builder and identity checks
-to its manifest and development witness, then select and verify it:
+Apply the same identity comparison to the child and its acceptance witness, then select and verify it:
 
 ```bash
-python3 - "$TE_TRACKS_REFROOT/te_mm39_gene/archive/$CHILD_ID/MANIFEST.json" <<'CLEAN'
-import json, sys
-assert json.load(open(sys.argv[1]))["provenance"]["builder_git_dirty"] is False
-CLEAN
-python3 src/release.py select --root "$TE_TRACKS_REFROOT" --family te_mm39_gene --build-id "$CHILD_ID"
+set -euo pipefail
+python3 src/release.py select --root "$TE_TRACKS_REFROOT" --family te_mm39_gene \
+  --build-id "$CHILD_ID" --require-clean
 python3 src/release.py verify-current --root "$TE_TRACKS_REFROOT" --family te_mm39_gene
 chmod 0755 "$TE_TRACKS_REFROOT/te_mm39" "$TE_TRACKS_REFROOT/te_mm39_gene"
 chmod 2755 "$TE_TRACKS_REFROOT/te_mm39/archive" "$TE_TRACKS_REFROOT/te_mm39_gene/archive"
@@ -224,11 +286,12 @@ staging directory using the site's host-to-CRI transfer channel. On the CRI host
 producer image and package checkout available, run:
 
 ```bash
+set -euo pipefail
 export PYTHONDONTWRITEBYTECODE=1
 CRI_ROOT=/gpfs/data/rathmell-lab/data/refdata
 python3 src/99_verify.py "$STAGING" --root "$CRI_ROOT"
-python3 src/release.py install --root "$CRI_ROOT" --family "$FAMILY" --staging "$STAGING"
-python3 src/release.py select --root "$CRI_ROOT" --family "$FAMILY" --build-id "$TRANSFER_ID"
+python3 src/release.py install --root "$CRI_ROOT" --family "$FAMILY" --staging "$STAGING" --require-clean
+python3 src/release.py select --root "$CRI_ROOT" --family "$FAMILY" --build-id "$TRANSFER_ID" --require-clean
 python3 src/release.py verify-current --root "$CRI_ROOT" --family "$FAMILY"
 ```
 
@@ -274,19 +337,20 @@ copy per new build, sort workspace and the verified CRI backup in addition.
 
 | Producer stage | Acceptance peak resident bytes | Interpretation |
 |---|---:|---|
-| Core export writer, stage 30 | 4,936,556,544 | 4.94 GB in the final fresh build; the initial fresh build measured 6,807,732,224 bytes. |
-| Child exon subtraction, stage 50 | 881,565,696 | 0.882 GB; 154.376 seconds for subtraction and child export writing. |
+| Core export writer, stage 30 | 4,936,556,544 | 4.94 GB in the final fresh build; retained in the core manifest’s `provenance.peak_rss_bytes`. |
+| Child exon subtraction, stage 50 | 881,565,696 | 0.882 GB; 154.376 seconds for subtraction and child export writing, retained in the child manifest’s stage metrics. |
 
-The two fresh-build export measurements bracket the earlier measured 5.5–6.0 GB range.
-The initial peak exceeds its rounded upper bound by 0.81 GB; the final peak is 0.56 GB below
-its rounded lower bound. These resource deviations accompany equal payload identities.
-The initial child measured 874,917,888 resident bytes and 152.012 seconds for the same stage.
-Complete-build source processing and verification have previously peaked near 9 GB,
+The initial producer measurements are recorded in the
+[milestone 9 rulings](_internal/redesign-2026-09/reviews/m9_rulings.md#observations-that-lost-their-carrier).
+The [phase 9a review prompt](_internal/redesign-2026-09/prompts/p9a_review.md)
+records the earlier complete-build peak near 9 GB,
 so stage-only floors describe their own work. Reserve at least 16 GB resident for a single producer
 and measure the host run's complete peak beside these per-stage figures.
 
 The reviewed 50,000-row head measurements provide the following annotation-load planning floor.
 Projections scale the measured cost to all 3,764,949 rows of `record.gtf`.
+The anchors are recorded in the [phase 9a rulings](_internal/redesign-2026-09/reviews/p9a_rulings.md#consumer-annotation-floors-orchestrator-for-the-milestone-5-ruling-h3-anchor);
+the reproduction command below measures the file supplied to it.
 
 | Reader | Resident bytes, 50,000 rows | Seconds | Per row | Full-profile projection |
 |---|---:|---:|---|---|
@@ -304,20 +368,18 @@ python3 tests/checks/acceptance/lib/consumer_floor.py "$CORE/exports/ucsc/inters
 ```
 
 The probe reports peak RSS before and after loading, their increase, elapsed load time, per-row
-cost and projection. The anchor uses the resident increase across annotation loading. The
-acceptance-core reproduction measured:
+cost and projection. It reads the export's total data-row count and loads its first 50,000 data rows
+in each isolated reader. The two anchors above use the resident increase across annotation loading.
+Process peaks include the interpreter and import baseline.
 
-| Reader | Annotation resident increase | Process peak RSS | Load seconds | Measured per row | Full projection |
-|---|---:|---:|---:|---|---|
-| Stellarscope | 133,443,584 bytes | 152,317,952 bytes | 1.751 | 2,668.872 bytes; 0.03502 ms | 10.048 GB; 2.197 min |
-| TElocal | 51,904,512 bytes | 70,189,056 bytes | 12.367 | 1,038.090 bytes; 0.24733 ms | 3.908 GB; 15.520 min |
+Acceptance and the floor probe use `${TMPDIR:-$TE_TRACKS_REFROOT/tmp}/te-tracks-<root-hash>/acceptance`
+for temporary directories, where `root-hash` is the first twelve SHA-256 digits of the absolute
+reference-root path. The default reference root is
+`/workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot`. Set `TMPDIR` to a writable executable
+scratch filesystem; each run creates a private directory and removes it with `shutil.rmtree`.
+The acceptance runner prints the derived path.
 
-Stellarscope differs from the anchor by −974,848 bytes and −0.039 s. TElocal reproduces the
-resident increase exactly and differs by +0.157 s. Process peaks include the interpreter and
-import baseline; the projections use the annotation increase. The anchor values remain
-recorded independently of these observations.
-
-Consumer installations pin the following vendored checkout commits. The consuming module's
+Consumer installations pin the following clone commits in the ignored sibling directory. The consuming module's
 `env/MANIFEST.tsv` and the installed `direct_url.json` metadata record the same five Python-tool commits. An alternate installation
 records its exact commit and fixture divergence before adoption; MATES qualification covers its
 isolated adapter. The table is the output of `git describe --tags --always` beside the full commit.

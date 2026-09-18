@@ -205,12 +205,13 @@ in `ucsc` / `ensembl` / `gencode` respectively.
 
 Reserve additional working space for staging and sorting. The export writer previously measured
 5.5 GB to 6.0 GB resident across in-container builds, including 5,994,254,336 bytes.
-The phase 9b export writer measured 6,807,732,224 resident bytes initially and 4,936,556,544
-in the final fresh build. These resource deviations bracket the earlier range while both
-builds reproduce the same payload identity; `provenance.peak_rss_bytes` records each measurement.
+The final phase 9b export writer measured 4,936,556,544 resident bytes, retained in the
+acceptance core manifest’s `provenance.peak_rss_bytes`. The initial export observation is
+recorded in the [milestone 9 rulings](_internal/redesign-2026-09/reviews/m9_rulings.md#observations-that-lost-their-carrier).
 An earlier complete core rebuild peaked at 9,026,424,832 resident bytes and took 717.201 seconds.
 The final acceptance child's subtraction stage measured 881,565,696 resident bytes and
-154.376 seconds; the initial build measured 874,917,888 bytes and 152.012 seconds.
+154.376 seconds, retained in its manifest’s stage metrics. The initial child observations
+are recorded in the [milestone 9 rulings](_internal/redesign-2026-09/reviews/m9_rulings.md#observations-that-lost-their-carrier).
 The child payload adds 2,157,717,760 bytes, for 17,459,256,297 payload bytes per retained pair.
 [RUNBOOK.md](RUNBOOK.md#resource-floors-and-consumer-pins) records these producer floors and the
 measured consumer annotation-load floors.

@@ -52,7 +52,7 @@ for section, key, value in mutations:
     (changed[section] if section else changed)[key] = value
     assert build_id(changed) != original and catalog_id(changed["catalog"]) == catalog_id(parent["catalog"])
     assert all((PARENT / path).read_bytes() == content for path, content in parent_bytes.items())
-SCRATCH = Path(os.environ["TE_TRACKS_REFROOT"]) / "pubtest"
+SCRATCH = Path(os.environ.get("TMPDIR", str(Path(os.environ["TE_TRACKS_REFROOT"]) / "pubtest")))
 SCRATCH.mkdir(parents=True, exist_ok=True)
 with TemporaryDirectory(prefix="identity-", dir=SCRATCH) as temporary:
     root = Path(temporary)

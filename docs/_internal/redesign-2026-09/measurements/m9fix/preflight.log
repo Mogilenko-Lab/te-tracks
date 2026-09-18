@@ -1,0 +1,5 @@
+absent builds unsupported; three missing identity files in either archive and dangling current fail; all eleven acceptance checks required
+prerequisites exit=0
+runner statuses, required checks, diagnostics, dangling symlinks and usage exits pass
+runner-selftest exit=0
+diff-check exit=0

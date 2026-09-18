@@ -27,7 +27,7 @@ if not (Path(os.environ["TE_TRACKS_REFROOT"]) / "te_mm39_gene/build").is_dir():
     print("gene child build is absent")
     raise SystemExit(3)
 FIXTURE = ROOT / "tests/fixtures/gene"
-SCRATCH = Path(os.environ["TE_TRACKS_REFROOT"]) / "pubtest"
+SCRATCH = Path(os.environ.get("TMPDIR", str(Path(os.environ["TE_TRACKS_REFROOT"]) / "pubtest")))
 SCRATCH.mkdir(parents=True, exist_ok=True)
 answers = json.loads((FIXTURE / "geometry.json").read_text())
 with TemporaryDirectory(prefix="geometry-", dir=SCRATCH) as temporary:

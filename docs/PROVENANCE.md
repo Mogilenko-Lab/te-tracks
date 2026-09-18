@@ -139,16 +139,21 @@ All three complete status censuses are independently recomputed against the phas
 
 Acceptance's independent bedtools pipeline converts the retained GTF exons to BED, sorts and
 merges them, and subtracts that union from the parent's record BED. It compares exact block
-multisets `(start, end, strand, name)` with the child SAF on chr18, chr19 and
-`chr1_MU069434v1_random`. All three comparisons passed against the acceptance archive:
+multisets `(start, end, strand, name)` with the child SAF on chr18, chr19,
+`chr1_MU069434v1_random` and chr7. All four comparisons passed against the acceptance archive:
 
 | Contig | Parent records | GTF exons | Exon-union intervals | Exon-union bp | Retained blocks | Retained bp |
 |---|---:|---:|---:|---:|---:|---:|
 | chr18 | 118,502 | 35,853 | 9,708 | 4,528,733 | 116,425 | 34,253,394 |
 | chr19 | 86,429 | 39,613 | 10,373 | 4,434,265 | 84,268 | 21,565,706 |
 | chr1_MU069434v1_random | 4 | 0 | 0 | 0 | 4 | 385 |
+| chr7 | 214,663 | 90,795 | 24,978 | 12,521,871 | 207,048 | 60,028,394 |
+| Covered blocks / child interspersed blocks | — | — | — | — | 407,745 / 3,684,934 (11.07%) | — |
 
-The measured blocks and lengths agree with the independently recorded phase 8 anchors.
+The original three contigs agree with the independently recorded phase 8 block/length anchors.
+The chr7 measurements are new milestone 9 bedtools anchors in
+[`gene_oracle_m9.tsv`](../tests/expectations/mm39/gene_oracle_m9.tsv), carried by the
+[milestone 9 rulings](_internal/redesign-2026-09/reviews/m9_rulings.md#fix-round-evidence).
 
 ## Packaged legacy reconciliation
 

@@ -142,8 +142,9 @@ landing on their feature; each tool's allocation of ambiguous molecules is recor
 behaviour outside these assertions.
 Alignment parameters, estimator choice, forks and allocation behaviour belong to the consuming
 toolkit, so te-tracks documents its observed qualification limits.
-Execution checks use a pinned, reproducible tool environment recorded with the repository and
-report `unsupported` when a binary is absent.
+The consumer environment is delivered by reference to the consuming module in
+[RUNBOOK.md](RUNBOOK.md#consumer-environment), with source pins, installed versions and execution
+evidence. Execution checks report `unsupported` when a binary is absent.
 
 ## 13. STARsolo record profile
 
@@ -199,7 +200,8 @@ Deferred work names the evidence its next decision needs.
 - TES-side window: evidence of need from the 3′ pilot admits a later context envelope.
 - Instance-level STARsolo profile: mixed-name, mixed-strand, gap and junction tests qualify its
   feature grammar.
-- Consumer environment: phase 9 promotes the pinned, reproducible environment into the package
-  with its source manifest and execution evidence.
+- Consumer pilots: barcode/empty-cell policy, chemistry, paired-mate and UMI handling,
+  the Stellarscope boundary defect and bulk counting-unit/strand policy retain their
+  consuming-project evidence gates.
 - Cross-build record correspondence on `(chrom, start_1, end_1, strand)` awaits an explicit mapping rule.
 - hg38 admission requires source-wide instance numbering or a contig-scoped instance key.

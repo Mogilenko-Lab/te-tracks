@@ -13,6 +13,7 @@ from pathlib import Path
 import random
 import re
 import shutil
+import shlex
 import subprocess
 import sys
 import traceback
@@ -20,6 +21,20 @@ import traceback
 sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[2]
 CHECKOUTS = ROOT.parent / ".ref"
+CHECKOUT_PINS = {
+    "irescue": ("https://github.com/bodegalab/irescue.git",
+                 "26f36fb391bb031a156ae8f0a77f31c125bfbe15"),
+    "stellarscope": ("https://github.com/nixonlab/stellarscope.git",
+                 "0e0d594047212afe81e3754732119975a0d2aa6f"),
+    "TEsingle": ("https://github.com/mhammell-laboratory/TEsingle.git",
+                 "655f1274de0fe5f3241219afc2ecb1c2e0830ae9"),
+    "TEtranscripts": ("https://github.com/mhammell-laboratory/TEtranscripts.git",
+                 "e7f9b93f8c351b1b582cf0882aed49ffd1f0d1e9"),
+    "TElocal": ("https://github.com/mhammell-laboratory/TElocal.git",
+                 "1a168c299714fc55df7dd93359f553759b95c810"),
+    "MATES": ("https://github.com/mcgilldinglab/MATES.git",
+                 "87c1218603a26fc9cfa8ab36ef6f730d72d127af"),
+}
 FIXTURES = Path(os.environ.get("TE_TRACKS_CONSUMER_FIXTURES", str(Path(os.environ.get(
     "TE_TRACKS_REFROOT", "/workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot"
 )).resolve() / "fixtures/consumers")))
@@ -70,11 +85,21 @@ def discover(tool):
     return result
 
 
-def checkout_import(checkout, module, subpackage=None):
-    """Import checkout code, optionally rooting imports at an isolated subpackage."""
+def checkout_directory(checkout):
+    """Require a pinned source clone and name its restoration command."""
     directory = CHECKOUTS / checkout
     if not directory.is_dir():
-        raise Unsupported(f"{checkout} checkout absent: {directory}")
+        url, commit = CHECKOUT_PINS[checkout]
+        target = shlex.quote(str(directory))
+        raise Unsupported(f"{checkout} checkout absent: {directory}; restore with "
+                          f"git clone {url} {target} && git -C {target} checkout --detach {commit} "
+                          "(setup requires network; docs/RUNBOOK.md#consumer-parser-sources)")
+    return directory
+
+
+def checkout_import(checkout, module, subpackage=None):
+    """Import checkout code, optionally rooting imports at an isolated subpackage."""
+    directory = checkout_directory(checkout)
     if subpackage:
         package_dir = directory.joinpath(*subpackage.split("."))
         private = "_te_tracks_" + subpackage.replace(".", "_")
@@ -95,10 +120,11 @@ def checkout_import(checkout, module, subpackage=None):
 
 def checkout_version(checkout):
     """Read the declared parser version and checkout description without executing setup code."""
-    description = command(["git", "-C", CHECKOUTS / checkout,
+    directory = checkout_directory(checkout)
+    description = command(["git", "-C", directory,
                            "describe", "--tags", "--always"]).strip()
     if checkout == "stellarscope":
-        values = [command(["git", "-C", CHECKOUTS / checkout,
+        values = [command(["git", "-C", directory,
                            "describe", "--tags", "--abbrev=0"]).strip()]
     elif checkout == "irescue":
         _, tree = source_tree(checkout, "irescue/_version.py")
@@ -121,7 +147,7 @@ def absent_external_module(error):
     if not isinstance(error, ModuleNotFoundError) or not error.name:
         return None
     name = error.name.split(".")[0]
-    roots = [ROOT, ROOT / "src/lib", ROOT / "tests/lib", *CHECKOUTS.iterdir()]
+    roots = [ROOT, ROOT / "src/lib", ROOT / "tests/lib", *(CHECKOUTS / checkout for checkout in CHECKOUT_PINS)]
     if any((root / name).exists() or (root / f"{name}.py").exists() for root in roots):
         return None
     if name in sys.modules or importlib.util.find_spec(name) is not None:
@@ -215,7 +241,7 @@ def gzip_text(path):
 
 
 def source_tree(checkout, relative):
-    path = CHECKOUTS / checkout / relative
+    path = checkout_directory(checkout) / relative
     return path, ast.parse(path.read_text())
 
 

@@ -1,0 +1,208 @@
+$ /opt/venvs/base/bin/python3 -c 'import sys,runpy; from pathlib import Path; sys.path.insert(0,'"'"'tests/lib'"'"'); import consumers; consumers.CHECKOUTS=Path('"'"'/workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/absent'"'"'); runpy.run_path('"'"'tests/checks/consumers/10_irescue_parser.required.py'"'"',run_name='"'"'__main__'"'"')'
+unsupported: irescue checkout absent: /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/absent/irescue; restore with git clone https://github.com/bodegalab/irescue.git /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/absent/irescue && git -C /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/absent/irescue checkout --detach 26f36fb391bb031a156ae8f0a77f31c125bfbe15 (setup requires network; docs/RUNBOOK.md#consumer-parser-sources)
+exit=3
+$ /opt/venvs/base/bin/python3 tests/checks/consumers/10_irescue_parser.required.py
+supported irescue 1.2.0 (v1.2.0-20-g26f36fb) checkout parser; record=11, subfamily=8; comma splits one name and exporter rejects it
+names=8 multi_label_names=1 taxonomy_rule_version=taxonomy_rule_v1
+universe=interspersed records=11 subfamilies=8 families=5 taxonomy_triples=8 instances=10 exports=8 registrations=88
+exit=0
+$ /opt/venvs/base/bin/python3 src/release.py install --root /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/dirty-fixture --family te_mm39 --staging /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/dirty-fixture/te_mm39/.staging/fixture-jly08pie
+installed b7f9166b060e77d379ec4e01c69e475019e41e2d7e9e98f844bbf57da02ff081
+exit=0
+$ /opt/venvs/base/bin/python3 src/release.py select --root /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/dirty-fixture --family te_mm39 --build-id b7f9166b060e77d379ec4e01c69e475019e41e2d7e9e98f844bbf57da02ff081 --require-clean
+release: te_mm39 build b7f9166b060e77d379ec4e01c69e475019e41e2d7e9e98f844bbf57da02ff081: --require-clean refuses builder_git_dirty=true
+exit=1
+$ /opt/venvs/base/bin/python3 src/release.py select --root /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/dirty-fixture --family te_mm39 --build-id b7f9166b060e77d379ec4e01c69e475019e41e2d7e9e98f844bbf57da02ff081
+selected b7f9166b060e77d379ec4e01c69e475019e41e2d7e9e98f844bbf57da02ff081
+exit=0
+$ /opt/venvs/base/bin/python3 tests/checks/acceptance/lib/consumer_floor.py /workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot/acceptance/te_mm39/archive/5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813/exports/ucsc/interspersed/full/record.gtf
+annotation source: /workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot/acceptance/te_mm39/archive/5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813/exports/ucsc/interspersed/full/record.gtf; total_rows=3764949; head_rows=50000; scratch=/workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/tmp/te-tracks-930ad69d7ac3/acceptance/consumer-floor-w26gx9y8
+{"anchor_resident_bytes": 134418432, "anchor_seconds": 1.79, "annotation_resident_bytes": 134590464, "before_resident_bytes": 22413312, "bytes_per_row": 2691.809, "milliseconds_per_row": 0.06926, "peak_resident_bytes": 157003776, "projected_bytes": 10134524657, "projected_minutes": 4.346, "reader": "Stellarscope", "resident_deviation_bytes": 172032, "rows": 50000, "seconds": 3.463, "seconds_deviation": 1.673, "total_rows": 3764949, "version": "1.5 (1.5)"}
+{"anchor_resident_bytes": 51904512, "anchor_seconds": 12.21, "annotation_resident_bytes": 53084160, "before_resident_bytes": 21823488, "bytes_per_row": 1061.683, "milliseconds_per_row": 0.44642, "peak_resident_bytes": 74907648, "projected_bytes": 3997183102, "projected_minutes": 28.012, "reader": "TElocal", "resident_deviation_bytes": 1179648, "rows": 50000, "seconds": 22.321, "seconds_deviation": 10.111, "total_rows": 3764949, "version": "1.1.3 (1.1.3-4-g1a168c2)"}
+exit=0
+$ /opt/venvs/base/bin/python3 tests/checks/acceptance/lib/consumer_floor.py /workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot/acceptance/te_mm39/archive/5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813/exports/ucsc/interspersed/full/record_starsolo.gtf
+annotation source: /workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot/acceptance/te_mm39/archive/5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813/exports/ucsc/interspersed/full/record_starsolo.gtf; total_rows=3764949; head_rows=50000; scratch=/workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/tmp/te-tracks-930ad69d7ac3/acceptance/consumer-floor-feu0i6by
+{"anchor_resident_bytes": 134418432, "anchor_seconds": 1.79, "annotation_resident_bytes": 165363712, "before_resident_bytes": 22413312, "bytes_per_row": 3307.274, "milliseconds_per_row": 0.0726, "peak_resident_bytes": 187777024, "projected_bytes": 12451718843, "projected_minutes": 4.556, "reader": "Stellarscope", "resident_deviation_bytes": 30945280, "rows": 50000, "seconds": 3.63, "seconds_deviation": 1.84, "total_rows": 3764949, "version": "1.5 (1.5)"}
+{"anchor_resident_bytes": 51904512, "anchor_seconds": 12.21, "annotation_resident_bytes": 54853632, "before_resident_bytes": 21823488, "bytes_per_row": 1097.073, "milliseconds_per_row": 0.46199, "peak_resident_bytes": 76677120, "projected_bytes": 4130422539, "projected_minutes": 28.99, "reader": "TElocal", "resident_deviation_bytes": 2949120, "rows": 50000, "seconds": 23.1, "seconds_deviation": 10.89, "total_rows": 3764949, "version": "1.1.3 (1.1.3-4-g1a168c2)"}
+exit=0
+scratch export: first 60000 rows of the core record.gtf
+$ /opt/venvs/base/bin/python3 tests/checks/acceptance/lib/consumer_floor.py /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/record.60000.gtf
+annotation source: /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/record.60000.gtf; total_rows=60000; head_rows=50000; scratch=/workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/tmp/te-tracks-930ad69d7ac3/acceptance/consumer-floor-9d95hj8x
+{"anchor_resident_bytes": 134418432, "anchor_seconds": 1.79, "annotation_resident_bytes": 134615040, "before_resident_bytes": 22413312, "bytes_per_row": 2692.301, "milliseconds_per_row": 0.06535, "peak_resident_bytes": 157028352, "projected_bytes": 161538048, "projected_minutes": 0.065, "reader": "Stellarscope", "resident_deviation_bytes": 196608, "rows": 50000, "seconds": 3.268, "seconds_deviation": 1.478, "total_rows": 60000, "version": "1.5 (1.5)"}
+{"anchor_resident_bytes": 51904512, "anchor_seconds": 12.21, "annotation_resident_bytes": 53673984, "before_resident_bytes": 21823488, "bytes_per_row": 1073.48, "milliseconds_per_row": 0.38176, "peak_resident_bytes": 75497472, "projected_bytes": 64408781, "projected_minutes": 0.382, "reader": "TElocal", "resident_deviation_bytes": 1769472, "rows": 50000, "seconds": 19.088, "seconds_deviation": 6.878, "total_rows": 60000, "version": "1.1.3 (1.1.3-4-g1a168c2)"}
+exit=0
+mutation: removed copied core MANIFEST.json; current still resolves
+$ tests/run.sh acceptance --refroot /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/damaged
+acceptance scratch: /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/tmp/te-tracks-35fcad88eb4a/acceptance
+Traceback (most recent call last):
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/10_source.required.py", line 5, in <module>
+    run("10_source")
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/common.py", line 103, in run
+    core, child = require_builds()
+                  ^^^^^^^^^^^^^^^^
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/common.py", line 76, in require_builds
+    assert not missing, f"damaged acceptance archive: {path}; missing {', '.join(missing)}"
+           ^^^^^^^^^^^
+AssertionError: damaged acceptance archive: /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/damaged/acceptance/te_mm39/archive/5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813; missing MANIFEST.json
+fail  10_source.required.py
+Traceback (most recent call last):
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/20_records_universes.required.py", line 5, in <module>
+    run("20_records_universes")
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/common.py", line 103, in run
+    core, child = require_builds()
+                  ^^^^^^^^^^^^^^^^
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/common.py", line 76, in require_builds
+    assert not missing, f"damaged acceptance archive: {path}; missing {', '.join(missing)}"
+           ^^^^^^^^^^^
+AssertionError: damaged acceptance archive: /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/damaged/acceptance/te_mm39/archive/5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813; missing MANIFEST.json
+fail  20_records_universes.required.py
+Traceback (most recent call last):
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/30_taxonomy.required.py", line 5, in <module>
+    run("30_taxonomy")
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/common.py", line 103, in run
+    core, child = require_builds()
+                  ^^^^^^^^^^^^^^^^
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/common.py", line 76, in require_builds
+    assert not missing, f"damaged acceptance archive: {path}; missing {', '.join(missing)}"
+           ^^^^^^^^^^^
+AssertionError: damaged acceptance archive: /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/damaged/acceptance/te_mm39/archive/5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813; missing MANIFEST.json
+fail  30_taxonomy.required.py
+Traceback (most recent call last):
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/35_taxonomy_dfam.required.py", line 5, in <module>
+    run("35_taxonomy_dfam")
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/common.py", line 103, in run
+    core, child = require_builds()
+                  ^^^^^^^^^^^^^^^^
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/common.py", line 76, in require_builds
+    assert not missing, f"damaged acceptance archive: {path}; missing {', '.join(missing)}"
+           ^^^^^^^^^^^
+AssertionError: damaged acceptance archive: /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/damaged/acceptance/te_mm39/archive/5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813; missing MANIFEST.json
+fail  35_taxonomy_dfam.required.py
+Traceback (most recent call last):
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/40_exports.required.py", line 5, in <module>
+    run("40_exports")
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/common.py", line 103, in run
+    core, child = require_builds()
+                  ^^^^^^^^^^^^^^^^
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/common.py", line 76, in require_builds
+    assert not missing, f"damaged acceptance archive: {path}; missing {', '.join(missing)}"
+           ^^^^^^^^^^^
+AssertionError: damaged acceptance archive: /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/damaged/acceptance/te_mm39/archive/5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813; missing MANIFEST.json
+fail  40_exports.required.py
+Traceback (most recent call last):
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/45_record_profile.required.py", line 5, in <module>
+    run("45_record_profile")
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/common.py", line 103, in run
+    core, child = require_builds()
+                  ^^^^^^^^^^^^^^^^
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/common.py", line 76, in require_builds
+    assert not missing, f"damaged acceptance archive: {path}; missing {', '.join(missing)}"
+           ^^^^^^^^^^^
+AssertionError: damaged acceptance archive: /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/damaged/acceptance/te_mm39/archive/5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813; missing MANIFEST.json
+fail  45_record_profile.required.py
+Traceback (most recent call last):
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/60_namespaces.required.py", line 5, in <module>
+    run("60_namespaces")
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/common.py", line 103, in run
+    core, child = require_builds()
+                  ^^^^^^^^^^^^^^^^
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/common.py", line 76, in require_builds
+    assert not missing, f"damaged acceptance archive: {path}; missing {', '.join(missing)}"
+           ^^^^^^^^^^^
+AssertionError: damaged acceptance archive: /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/damaged/acceptance/te_mm39/archive/5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813; missing MANIFEST.json
+fail  60_namespaces.required.py
+Traceback (most recent call last):
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/70_publication.required.py", line 5, in <module>
+    run("70_publication")
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/common.py", line 103, in run
+    core, child = require_builds()
+                  ^^^^^^^^^^^^^^^^
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/common.py", line 76, in require_builds
+    assert not missing, f"damaged acceptance archive: {path}; missing {', '.join(missing)}"
+           ^^^^^^^^^^^
+AssertionError: damaged acceptance archive: /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/damaged/acceptance/te_mm39/archive/5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813; missing MANIFEST.json
+fail  70_publication.required.py
+Traceback (most recent call last):
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/80_gene_child.required.py", line 5, in <module>
+    run("80_gene_child")
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/common.py", line 103, in run
+    core, child = require_builds()
+                  ^^^^^^^^^^^^^^^^
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/common.py", line 76, in require_builds
+    assert not missing, f"damaged acceptance archive: {path}; missing {', '.join(missing)}"
+           ^^^^^^^^^^^
+AssertionError: damaged acceptance archive: /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/damaged/acceptance/te_mm39/archive/5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813; missing MANIFEST.json
+fail  80_gene_child.required.py
+Traceback (most recent call last):
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/85_gene_child_oracle.required.py", line 5, in <module>
+    run("85_gene_child_oracle")
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/common.py", line 103, in run
+    core, child = require_builds()
+                  ^^^^^^^^^^^^^^^^
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/common.py", line 76, in require_builds
+    assert not missing, f"damaged acceptance archive: {path}; missing {', '.join(missing)}"
+           ^^^^^^^^^^^
+AssertionError: damaged acceptance archive: /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/damaged/acceptance/te_mm39/archive/5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813; missing MANIFEST.json
+fail  85_gene_child_oracle.required.py
+Traceback (most recent call last):
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/90_legacy_reconciliation.required.py", line 5, in <module>
+    run("90_legacy_reconciliation")
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/common.py", line 103, in run
+    core, child = require_builds()
+                  ^^^^^^^^^^^^^^^^
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/common.py", line 76, in require_builds
+    assert not missing, f"damaged acceptance archive: {path}; missing {', '.join(missing)}"
+           ^^^^^^^^^^^
+AssertionError: damaged acceptance archive: /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/damaged/acceptance/te_mm39/archive/5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813; missing MANIFEST.json
+fail  90_legacy_reconciliation.required.py
+checks=11 pass=0 fail=11 unsupported=0
+exit=1
+mutation: copied child chr7 RLTR45-int Start 3050001 -> 3050002
+$ env TE_TRACKS_REFROOT=/workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/damaged /opt/venvs/base/bin/python3 tests/checks/acceptance/85_gene_child_oracle.required.py
+Traceback (most recent call last):
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/85_gene_child_oracle.required.py", line 5, in <module>
+    run("85_gene_child_oracle")
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/common.py", line 105, in run
+    getattr(areas, area.split("_", 1)[1])(core, child)
+  File "/workspaces/Meta-Aging/01_modules/te-tracks/tests/checks/acceptance/lib/oracles.py", line 84, in gene_child_oracle
+    assert not missing and not extra, (chrom, "bedtools/SAF multiset differs", list(missing.items())[:10], list(extra.items())[:10])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('chr7', 'bedtools/SAF multiset differs', [((3050000, 3050829, '+', 'RLTR45-int'), 1)], [((3050001, 3050829, '+', 'RLTR45-int'), 1)])
+exit=1
+$ tests/run.sh acceptance --refroot /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/empty-a
+acceptance scratch: /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/tmp/te-tracks-f7c37bdf5a9c/acceptance
+unsupported  10_source.required.py  unsupported: run tests/run.sh acceptance --build
+unsupported  20_records_universes.required.py  unsupported: run tests/run.sh acceptance --build
+unsupported  30_taxonomy.required.py  unsupported: run tests/run.sh acceptance --build
+unsupported  35_taxonomy_dfam.required.py  unsupported: run tests/run.sh acceptance --build
+unsupported  40_exports.required.py  unsupported: run tests/run.sh acceptance --build
+unsupported  45_record_profile.required.py  unsupported: run tests/run.sh acceptance --build
+unsupported  60_namespaces.required.py  unsupported: run tests/run.sh acceptance --build
+unsupported  70_publication.required.py  unsupported: run tests/run.sh acceptance --build
+unsupported  80_gene_child.required.py  unsupported: run tests/run.sh acceptance --build
+unsupported  85_gene_child_oracle.required.py  unsupported: run tests/run.sh acceptance --build
+unsupported  90_legacy_reconciliation.required.py  unsupported: run tests/run.sh acceptance --build
+checks=11 pass=0 fail=0 unsupported=11
+exit=1
+$ tests/run.sh acceptance --refroot /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/empty-b
+acceptance scratch: /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/tmp/te-tracks-8ca83afd9a7a/acceptance
+unsupported  10_source.required.py  unsupported: run tests/run.sh acceptance --build
+unsupported  20_records_universes.required.py  unsupported: run tests/run.sh acceptance --build
+unsupported  30_taxonomy.required.py  unsupported: run tests/run.sh acceptance --build
+unsupported  35_taxonomy_dfam.required.py  unsupported: run tests/run.sh acceptance --build
+unsupported  40_exports.required.py  unsupported: run tests/run.sh acceptance --build
+unsupported  45_record_profile.required.py  unsupported: run tests/run.sh acceptance --build
+unsupported  60_namespaces.required.py  unsupported: run tests/run.sh acceptance --build
+unsupported  70_publication.required.py  unsupported: run tests/run.sh acceptance --build
+unsupported  80_gene_child.required.py  unsupported: run tests/run.sh acceptance --build
+unsupported  85_gene_child_oracle.required.py  unsupported: run tests/run.sh acceptance --build
+unsupported  90_legacy_reconciliation.required.py  unsupported: run tests/run.sh acceptance --build
+checks=11 pass=0 fail=0 unsupported=11
+exit=1
+$ /opt/venvs/base/bin/python3 tests/checks/acceptance/85_gene_child_oracle.required.py
+bedtools merge/subtract multiset equality; contigs=chr18,chr19,chr1_MU069434v1_random,chr7; block coverage=407745/3684934 (11.07%); chr18 input_records=118502,exon_rows=35853,union_intervals=9708,union_bp=4528733,blocks=116425,retained_bp=34253394; chr19 input_records=86429,exon_rows=39613,union_intervals=10373,union_bp=4434265,blocks=84268,retained_bp=21565706; chr1_MU069434v1_random input_records=4,exon_rows=0,union_intervals=0,union_bp=0,blocks=4,retained_bp=385; chr7 input_records=214663,exon_rows=90795,union_intervals=24978,union_bp=12521871,blocks=207048,retained_bp=60028394
+exit=0
+$ env LC_ALL=C /opt/venvs/base/bin/python3 tests/checks/acceptance/90_legacy_reconciliation.required.py
+legacy md5=1d6770be131fc1b47402a633f4401cbd; compat membership=3799629 packaged GTF=3799629; interval multiset difference compat_only=0 legacy_only=0
+exit=0
+all demonstrations matched their expected exits; mutation copies removed with shutil.rmtree

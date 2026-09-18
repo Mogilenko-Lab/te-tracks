@@ -1,0 +1,53 @@
+syntax ok build.sh
+syntax ok lib/common.sh
+syntax ok src/00_fetch_sources.sh
+syntax ok src/05_qualify_source.sh
+syntax ok src/10_build_records.sh
+syntax ok src/15_build_universes.sh
+syntax ok src/20_build_taxonomy.sh
+syntax ok src/25_build_dfam.sh
+syntax ok src/30_build_exports.sh
+syntax ok src/35_build_namespaces.sh
+syntax ok src/gene/00_fetch_gene_sources.sh
+syntax ok src/gene/10_copy_parent_inputs.sh
+syntax ok src/gene/50_build_exon_subtracted.sh
+syntax ok tests/run.sh
+pass  01_runner_selftest.sh  runner statuses, required checks, diagnostics, dangling symlinks and usage exits pass
+pass  02_acceptance_prerequisites.py  absent builds unsupported; three missing identity files in either archive and dangling current fail; all eleven acceptance checks required
+pass  10_rmsk_out_parser.py  6 expected records; plain/gzip, signed consensus, ID tokens, malformed/unreadable input and ID statistics pass
+pass  11_source_qualification.sh  13 summary metrics and 10 field disagreements verified; reports identical; four source md5s and declared assembly match config pins; offline fetch pins pass; refused: dfam_snapshot sha256 mismatch; dfam_provenance sha256 mismatch
+pass  20_records_schema.py  5320771 records; 24 typed columns; all typed rows equal; identities and bounds pass
+pass  21_instances.py  4696900 instances; one instance per record; single contig; sizes 1=4251251 2=338697 3+=106952
+pass  22_universes.py  six universe summaries and every membership match; 17 classes; 3 collision pairs; 20 multi-label names / 6517 records
+pass  23_records_fixtures.py  hand-authored records, collisions, text IDs, signed fields, instances, bounds, joins, class sets and tRNA-family rules pass
+pass  30_taxonomy_canonical.py  18484 names; all 15 columns recomputed exactly; 20 report rows equal the multi-label subset; census matches; minimum plurality share 0.840 MER63C
+pass  31_taxonomy_dfam_agreement.py  report names missing from snapshot: []
+pass  32_taxonomy_rule_fixtures.py  31 rule cases; permutations, rank shares, instance weighting, rounded median, deterministic builds, input gates and canonical rollups pass
+pass  33_taxonomy_dfam_view.py  Dfam census and catalog joins pass; {"coded_nodes": 193, "exact_names": 1047, "exact_records": 2797852, "exact_wicker_inherited": 110, "exact_wicker_mapped": 884, "exact_wicker_missing": 53, "l2_cr1_part_sets": 6, "lineage_nodes": 300, "missing_names": 26, "missing_records": 38569, "model_rows": 1263, "multi_clade_models": 9, "names": 1220, "part_model_set_names": 147, "part_model_set_records": 928528, "part_sets_1": 108, "part_sets_2": 9, "part_sets_3": 30, "primate_branch_models": 33, "primate_branch_names": 31, "records": 3764949}; refused: Dfam rank cell differs: AmnHarb1: wicker_class; Dfam rank cell differs: AmnHarb1: wicker_class_status; Dfam rank cell differs: AmnHarb1: wicker_subclass; Dfam rank cell differs: AmnHarb1: wicker_subclass_status; Dfam rank cell differs: AmnHarb1: wicker_order; Dfam rank cell differs: AmnHarb1: wicker_order_status; Dfam rank cell differs: AmnHarb1: wicker_superfamily; Dfam rank cell differs: AmnHarb1: wicker_superfamily_status; Dfam rank cell differs: AmnHarb1: wicker_family; Dfam rank cell differs: AmnHarb1: wicker_family_status
+pass  34_dfam_rule_fixtures.py  14 authored Dfam cases: codes, inherited ranks, uncertainty, subclasses, parts, clades and named disagreement pass; refused: Dfam invalid Wicker code: R/I/L/X; Dfam unknown Wicker superfamily letter: TIR/Z
+pass  40_exports_shape.py  eight exports: 3764949 rows each; subfamilies=1220 families=49 taxonomy_triples=1220; coordinates and identifiers pass
+pass  41_export_registration.py  registrations: interspersed=30119592 all_rmsk=5320771; eight interspersed ID spellings; instances=3152636; 27 inventory hashes, feature sets and GTF tuple/instance joins pass; three record grammars; count 7 stays 7 at record, subfamily and family levels
+pass  42_exports_fixtures.py  nine hand-authored exports and 46 registration rows; eight-export/40-row interspersed job; membership selection, unresolved ranks, coordinate duplicates, shared instances, deterministic rebuild, universe and identifier gates pass
+pass  43_matrix_binding.py  1000 shared records: pair-only join=2000 rows/1001000 counts; four-field join=1000 rows/500500 counts
+pass  60_contig_aliases.py  61 injective aliases and FASTA names/lengths; catalog=5320771 interspersed=3764949; all contigs carry catalog records; chr4_JH584295v1_random and chrM carry 2 and 4 catalog records, zero interspersed records
+pass  61_namespace_exports.py  27 sorted exports and SHA-256 digests; 18 complete renamed files regenerated; interspersed=3764949 all_rmsk=5320771 per namespace; registrations=30119592+5320771
+pass  62_preflight.sh  104 preflight cases; both universes, three namespaces, BED/GTF/SAF and sizes/FAI/BAM; covered=0, export-only=2, empty/shared-length/input errors=1; exact reports and enclosing build aliases pass
+pass  70_manifest_identity.py  BUILD_ID=5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813 CATALOG_ID=90cc18be5d4ee9342b57b58e4b8ad19e59f9e6b48b9a94bab9db615db1091b5e; 52 payloads; identity mutations pass
+pass  71_verify_build.py  real build verifies unchanged; fixture stray authoring payload, flipped byte, extra file, unpublished taxonomy rule and export roster mismatch fail with named discrepancies; refused: dfam_snapshot: fetch_finished differs from retained provenance; dfam_snapshot: provenance sha256 differs; dfam_snapshot: provenance dfam_version differs; dfam_snapshot: provenance payload sha256 differs; identity.build_sources: source roles differ; unsupported rank_scheme_version; fixture cases=11.905s
+pass  72_publication_cases.py  identical and changed builds, export-roster evolution (4 archives), failed verification and interrupted staging cleanup, concurrent installs/selects (5 archives), old IDs, forged ID, corrupt current, selector and root cases, occupied targets, symlinks and 0444/0555 modes pass
+pass  73_clean_publication.py  dirty install/select refused; permissive defaults pass; selected dirty archive and dirty convergence refused; clean convergence/select pass; BUILD_ID preserved
+pass  80_exon_subtraction.py  5320771 records conserve bases; registered blocks ordered, disjoint and contained; 200000-record sample exon-disjoint; summary census, 14805348 registrations, 12 SAF row multisets and sort orders, independent GTF coverage 38/61 with 2638 unannotated records pass
+pass  81_exon_subtraction_fixtures.py  15 geometry cases, 12 SAFs, 96 registrations, annotation coverage, duplicate invariance and named refusals pass
+pass  82_child_identity.py  child identity fields, inherited pins, all policy/GTF/roster/parent mutations, dependency and payload refusals, SAF content and order refusals, parent/build-dir symlink refusals with trailing slashes, CLI usage gates pass
+pass  83_child_publication_cases.sh  child install/select/verify-current require present, verified parent; repeated publication converges; archive resolution, preserved selection, immutable modes and earlier core selection pass
+checks=28 pass=28 fail=0 unsupported=0
+core exit=0
+acceptance scratch: /workspaces/Meta-Aging/_scratch/te-tracks-audit/m9fix/tmp/te-tracks-930ad69d7ac3/acceptance
+pass  10_source.required.py  seven retained input pins; 5320771 source/browser matches; zero field disagreements; 4696900 source-wide IDs; Dfam fetch_finished equals retained provenance
+pass  20_records_universes.required.py  20_records_schema.py: 5320771 records; 24 typed columns; all typed rows equal; identities and bounds pass; 21_instances.py: 4696900 instances; one instance per record; single contig; sizes 1=4251251 2=338697 3+=106952; 22_universes.py: six universe summaries and every membership match; 17 classes; 3 collision pairs; 20 multi-label names / 6517 records; record/instance limits {"all_ltr_only_instances": 722280, "all_multi_record_instances": 445649, "all_overlapping_records": 429440, "consensus_start_above_end": 2, "interspersed_instances": 3152636, "interspersed_mixed_name_instances": 30569, "interspersed_mixed_name_records": 95830, "interspersed_mixed_strand_instances": 23244, "interspersed_multi_record_instances": 434707, "interspersed_score_above_1000": 1224713, "l1_model_base_one_records": 588, "overlap_flag_true": 0}
+pass  30_taxonomy.required.py  18484 canonical names; 20 multi-label names independently agree with Dfam; taxonomy census and hand-authored rule/rollup fixtures pass; 30_taxonomy_canonical.py: 18484 names; all 15 columns recomputed exactly; 20 report rows equal the multi-label subset; census matches; minimum plurality share 0.840 MER63C
+pass  35_taxonomy_dfam.required.py  1220 names: exact=1047 part_model_set=147 missing=26; models=1263 lineage_nodes=300 clades=1278; table lines=1221/1264/301/1279; every metadata/rank cell and dfam_census metric pass; 34_dfam_rule_fixtures.py: 14 authored Dfam cases: codes, inherited ranks, uncertainty, subclasses, parts, clades and named disagreement pass; refused: Dfam invalid Wicker code: R/I/L/X; Dfam unknown Wicker superfamily letter: TIR/Z
+pass  40_exports.required.py  27 exports; 3764949 interspersed rows, 1220 names, 49 canonical families; registrations=30119592+5320771; full coordinates, grammars, conservation and matrix binding pass; 43_matrix_binding.py: 1000 shared records: pair-only join=2000 rows/1001000 counts; four-field join=1000 rows/500500 counts
+pass  45_record_profile.required.py  ucsc=3764949 rows/genes, 59 contigs; ensembl=3764949 rows/genes, 59 contigs; gencode=3764949 rows/genes, 59 contigs; twelve ordered attributes and record identities pass
+pass  60_namespaces.required.py  61 injective aliases; 59 interspersed contigs; 27 sorted exports; all 18 renamed files independently regenerated; preflight gates pass; 60_contig_aliases.py: 61 injective aliases and FASTA names/lengths; catalog=5320771 interspersed=3764949; all contigs carry catalog records; chr4_JH584295v1_random and chrM carry 2 and 4 catalog records, zero interspersed records
+pass  70_publication.required.py  te_mm39 BUILD_ID=5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813 CATALOG_ID=90cc18be5d4ee9342b57b58e4b8ad19e59f9e6b48b9a94bab9db615db1091b5e; identity.tsv reproduction pins checked; live development comparison ran: tables and IDs equal; te_mm39_gene BUILD_ID=198f39f0ef16875121fa65e1b1301f0d58c894488cc557765ce7f50c57a38bd1 CATALOG_ID=90cc18be5d4ee9342b57b58e4b8ad19e59f9e6b48b9a94bab9db615db1091b5e; identity.tsv reproduction pins checked; live development comparison ran: tables and IDs equal; immutable modes, independent hashes and verify-current pass

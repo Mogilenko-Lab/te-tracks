@@ -10,3 +10,9 @@ chr19	retained_bp	21565706
 chr1_MU069434v1_random	annotation_rows	0
 chr1_MU069434v1_random	input_records	4
 chr1_MU069434v1_random	blocks	4
+chr18	input_records	118502
+chr18	union_bp	4528733
+chr1_MU069434v1_random	exon_rows	0
+chr1_MU069434v1_random	union_intervals	0
+chr1_MU069434v1_random	union_bp	0
+chr1_MU069434v1_random	retained_bp	385

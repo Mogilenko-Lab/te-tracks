@@ -12,9 +12,11 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[4]
-REFROOT = Path(os.environ["TE_TRACKS_REFROOT"])
+REFROOT = Path(os.environ.get("TE_TRACKS_REFROOT",
+    "/workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot")).resolve()
 ACCEPTANCE = REFROOT / "acceptance"
-SCRATCH = Path("/workspaces/Meta-Aging/_scratch/te-tracks-audit/p9b")
+SCRATCH = (Path(os.environ.get("TMPDIR", str(REFROOT / "tmp")))
+           / ("te-tracks-" + hashlib.sha256(str(REFROOT).encode()).hexdigest()[:12]) / "acceptance")
 EXPECT = ROOT / "tests/expectations/mm39"
 FAMILIES = ("te_mm39", "te_mm39_gene")
 
@@ -62,15 +64,16 @@ def require_builds():
     selected = []
     for family in FAMILIES:
         current = ACCEPTANCE / family / "current"
-        if not current.exists():
+        if not os.path.lexists(current):
             print("unsupported: run tests/run.sh acceptance --build")
             raise SystemExit(3)
         assert current.is_symlink(), f"acceptance selector requires a symlink: {current}"
+        assert current.exists(), f"damaged acceptance selector: {current} -> {current.readlink()}"
         path = current.resolve(strict=True)
         assert path.parent == ACCEPTANCE / family / "archive", f"acceptance archive escaped its family: {path}"
-        if not all((path / name).is_file() for name in ("BUILD_ID", "CATALOG_ID", "MANIFEST.json")):
-            print("unsupported: run tests/run.sh acceptance --build")
-            raise SystemExit(3)
+        missing = [name for name in ("BUILD_ID", "CATALOG_ID", "MANIFEST.json")
+                   if not (path / name).is_file()]
+        assert not missing, f"damaged acceptance archive: {path}; missing {', '.join(missing)}"
         assert path.name == (path / "BUILD_ID").read_text().strip(), f"archive name differs: {path}"
         selected.append(path)
     return selected

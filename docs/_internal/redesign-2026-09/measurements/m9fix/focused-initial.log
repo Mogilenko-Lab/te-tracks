@@ -1,0 +1,4 @@
+dirty install/select refused; permissive defaults pass; selected dirty archive and dirty convergence refused; clean convergence/select pass; BUILD_ID preserved
+clean-publication exit=0
+bedtools merge/subtract multiset equality; contigs=chr18,chr19,chr1_MU069434v1_random,chr7; block coverage=407745/3684934 (11.07%); chr18 input_records=118502,exon_rows=35853,union_intervals=9708,union_bp=4528733,blocks=116425,retained_bp=34253394; chr19 input_records=86429,exon_rows=39613,union_intervals=10373,union_bp=4434265,blocks=84268,retained_bp=21565706; chr1_MU069434v1_random input_records=4,exon_rows=0,union_intervals=0,union_bp=0,blocks=4,retained_bp=385; chr7 input_records=214663,exon_rows=90795,union_intervals=24978,union_bp=12521871,blocks=207048,retained_bp=60028394
+geometry exit=0

@@ -42,7 +42,7 @@ after = {path.relative_to(BUILD): (path.stat().st_size, path.stat().st_mtime_ns)
          for path in BUILD.rglob("*")}
 assert before == after, "verifier changed the build"
 started = perf_counter()
-scratch = Path(os.environ["TE_TRACKS_REFROOT"]) / "pubtest"
+scratch = Path(os.environ.get("TMPDIR", str(Path(os.environ["TE_TRACKS_REFROOT"]) / "pubtest")))
 scratch.mkdir(parents=True, exist_ok=True)
 with TemporaryDirectory(prefix="verify-fixture-", dir=scratch) as directory:
     try:

@@ -3,7 +3,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 scratch=$(mktemp -d -t te-tracks-runner-XXXXXXXX)
-trap 'rm -rf -- "$scratch"' EXIT
+trap 'python3 -c "import shutil, sys; shutil.rmtree(sys.argv[1])" "$scratch"' EXIT
 mkdir -p "$scratch/tests/checks/core" "$scratch/lib"
 cp "$ROOT/tests/run.sh" "$scratch/tests/run.sh"
 cp "$ROOT/lib/common.sh" "$scratch/lib/common.sh"

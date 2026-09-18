@@ -17,7 +17,7 @@ def gene_child_oracle(core, child):
     if bedtools is None:
         print("unsupported: bedtools is absent; install it in the qualification image")
         raise SystemExit(3)
-    contigs = ("chr18", "chr19", "chr1_MU069434v1_random")
+    contigs = ("chr18", "chr19", "chr1_MU069434v1_random", "chr7")
     aliases = {r["chrom_gencode"]: r["chrom_ucsc"] for r in rows(child / "tables/contig_aliases.tsv")}
     identity = json.loads((child / "MANIFEST.json").read_text())["identity"]
     gtf = child / "source" / identity["gene_annotation"]["url"].rsplit("/", 1)[-1]
@@ -54,7 +54,7 @@ def gene_child_oracle(core, child):
             union = temporary / (chrom + ".union.bed")
             blocks = temporary / (chrom + ".blocks.bed")
             with sorted_exons.open("w") as outgoing:
-                subprocess.run(["sort", "-k1,1", "-k2,2n", "-k3,3n", "-T", str(temporary),
+                subprocess.run(["env", "LC_ALL=C", "sort", "-k1,1", "-k2,2n", "-k3,3n", "-T", str(temporary),
                                 str(temporary / (chrom + ".exons.bed"))], stdout=outgoing, check=True)
             with union.open("w") as outgoing:
                 subprocess.run([bedtools, "merge", "-i", str(sorted_exons)], stdout=outgoing, check=True)
@@ -72,8 +72,10 @@ def gene_child_oracle(core, child):
                     expected_blocks[chrom][int(start), int(end), strand, name] += 1
                     measured[chrom]["blocks"] += 1
                     measured[chrom]["retained_bp"] += int(end) - int(start)
+        total_blocks = 0
         with (child / "exports/ucsc/interspersed/exon_subtracted/subfamily.saf").open() as stream:
             for row in csv.DictReader(stream, delimiter="\t"):
+                total_blocks += 1
                 if row["Chr"] in observed_blocks:
                     observed_blocks[row["Chr"]][int(row["Start"]) - 1, int(row["End"]), row["Strand"], row["GeneID"]] += 1
         for chrom in contigs:
@@ -81,9 +83,11 @@ def gene_child_oracle(core, child):
             extra = observed_blocks[chrom] - expected_blocks[chrom]
             assert not missing and not extra, (chrom, "bedtools/SAF multiset differs", list(missing.items())[:10], list(extra.items())[:10])
         assert measured[contigs[2]]["annotation_rows"] == 0, "oracle contig requires absent annotation"
-        for row in rows(EXPECT / "gene_oracle.tsv"):
+        for row in rows(EXPECT / "gene_oracle.tsv") + rows(EXPECT / "gene_oracle_m9.tsv"):
             assert measured[row["contig"]][row["metric"]] == int(row["value"]), (row, measured[row["contig"]])
-    print("bedtools merge/subtract multiset equality; " + "; ".join(
+    covered_blocks = sum(measured[chrom]["blocks"] for chrom in contigs)
+    print(f"bedtools merge/subtract multiset equality; contigs={','.join(contigs)}; "
+          f"block coverage={covered_blocks}/{total_blocks} ({covered_blocks / total_blocks:.2%}); " + "; ".join(
         chrom + " " + ",".join(f"{key}={measured[chrom][key]}" for key in
                                 ("input_records", "exon_rows", "union_intervals", "union_bp", "blocks", "retained_bp"))
         for chrom in contigs))
@@ -121,7 +125,7 @@ def legacy_reconciliation(core, child):
         for path in (members_path, legacy_path):
             target = path.with_suffix(".sorted.tsv")
             with target.open("w") as outgoing:
-                subprocess.run(["sort", "--buffer-size=256M", "-T", str(temporary), str(path)], stdout=outgoing, check=True)
+                subprocess.run(["env", "LC_ALL=C", "sort", "--buffer-size=256M", "-T", str(temporary), str(path)], stdout=outgoing, check=True)
             sorted_paths.append(target)
         differences, samples = Counter(), {"compat_only": [], "legacy_only": []}
         with sorted_paths[0].open() as left, sorted_paths[1].open() as right:

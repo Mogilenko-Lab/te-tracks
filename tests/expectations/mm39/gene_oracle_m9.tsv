@@ -1,0 +1,9 @@
+contig	metric	value
+chr7	input_records	214663
+chr7	exon_rows	90795
+chr7	union_intervals	24978
+chr7	union_bp	12521871
+chr7	blocks	207048
+chr7	retained_bp	60028394
+chr18	exon_rows	35853
+chr19	exon_rows	39613

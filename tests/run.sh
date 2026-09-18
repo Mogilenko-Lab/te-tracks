@@ -8,6 +8,7 @@ usage() {
     'checks: tests/checks/<mode>/*.sh and tests/checks/<mode>/*.py, sorted by name' \
     'consumer environment: source /workspaces/Meta-Aging/.venv/te-consumers/activate.sh' \
     'consumer suite: tests/run.sh consumers' \
+    'acceptance scratch: ${TMPDIR:-$TE_TRACKS_REFROOT/tmp}/te-tracks-<root-hash>/acceptance' \
     'execution: bash for .sh; python3 for .py; all file modes included' >&2
 }
 
@@ -52,6 +53,17 @@ for check in "$check_dir"/*; do
     checks+=("$check")
   fi
 done
+
+if [ "$mode" = acceptance ] && [ "${#checks[@]}" -gt 0 ]; then
+  python3 - <<'SCRATCH'
+import hashlib, os
+from pathlib import Path
+root = Path(os.environ["TE_TRACKS_REFROOT"]).resolve()
+base = Path(os.environ.get("TMPDIR", str(root / "tmp")))
+scratch = base / ("te-tracks-" + hashlib.sha256(str(root).encode()).hexdigest()[:12]) / "acceptance"
+print(f"acceptance scratch: {scratch}")
+SCRATCH
+fi
 
 pass=0
 fail=0

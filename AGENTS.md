@@ -31,15 +31,20 @@ The default `TE_TRACKS_REFROOT` is `/workspaces/Meta-Aging/_scratch/te-tracks-au
 That check verifies cached source pins, requires an empty `$TE_TRACKS_REFROOT/acceptance/`,
 and builds `te_mm39` followed by `te_mm39_gene` there. Existing development archives remain
 retained. Missing acceptance builds report `unsupported: run tests/run.sh acceptance --build`.
+All eleven acceptance checks are required, so acceptance exits 1 when no archive is available.
+A selected archive missing `BUILD_ID`, `CATALOG_ID` or `MANIFEST.json` fails.
 Checks are `tests/checks/<mode>/*.sh` and `*.py`, run in name order through `bash` or `python3`
 regardless of file mode. A check exit of 0 is pass, 3 is unsupported and any other exit is fail.
 A failing check makes the runner exit 1, as does an unsupported check whose name ends in
 `.required.sh` or `.required.py`. Bad usage, a missing check directory and a mode with no checks exit 2.
 
-Export `PYTHONDONTWRITEBYTECODE=1` in every shell. Acceptance scratch lives under
-`/workspaces/Meta-Aging/_scratch/te-tracks-audit/p9b/` and is removed with Python `shutil.rmtree`.
-Source refresh is an explicit re-pin decision. Acceptance expectations retain independently
-authored values; report deviations for investigation. Sequence mutation reviews and suite runs,
+Export `PYTHONDONTWRITEBYTECODE=1` in every shell. Acceptance and the consumer floor probe use
+`${TMPDIR:-$TE_TRACKS_REFROOT/tmp}/te-tracks-<root-hash>/acceptance`, where `root-hash` is the
+first twelve SHA-256 digits of the absolute reference-root path. The runner prints this path;
+`tempfile.mkdtemp` isolates each task and Python `shutil.rmtree` removes its directory.
+Core publication fixtures also honor `TMPDIR`.
+Source refresh is an explicit re-pin decision. Acceptance expectations retain reviewed oracle
+values and prior-output reproduction pins; report deviations for investigation. Sequence mutation reviews and suite runs,
 and capture complete output with exit status. Give concurrent consumer runs separate
 `TE_TRACKS_CONSUMER_FIXTURES` directories.
 

@@ -18,7 +18,7 @@ sys.path.insert(0, str(ROOT / "tests/fixtures/publication"))
 from build_fixture import make_build
 
 
-SCRATCH = Path(os.environ["TE_TRACKS_REFROOT"]) / "pubtest"
+SCRATCH = Path(os.environ.get("TMPDIR", str(Path(os.environ["TE_TRACKS_REFROOT"]) / "pubtest")))
 SCRATCH.mkdir(parents=True, exist_ok=True)
 
 

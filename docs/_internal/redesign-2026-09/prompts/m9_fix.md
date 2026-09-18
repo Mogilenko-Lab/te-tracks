@@ -1,7 +1,7 @@
 # te-tracks milestone 9 fix: the two operational blockers and the document truth
 
 You are the implementer of the fix round after the milestone 9 seam review. Working directory (absolute):
-`/workspaces/Meta-Aging/01_modules/te-tracks`, git branch `redesign-2026-09`, HEAD `__HEAD__`. Read
+`/workspaces/Meta-Aging/01_modules/te-tracks`, git branch `redesign-2026-09`, HEAD `c98ce26`. Read
 `docs/_internal/redesign-2026-09/reviews/m9_codex.md` first: it is the review you are answering, it checked
 437 claims and found four false operational claims, and its findings are numbered B1, B2 and A1 to A4.
 Then read `AGENTS.md`, `README.md`, `docs/RUNBOOK.md`, `docs/DECISIONS.md`, `tests/lib/consumers.py`,

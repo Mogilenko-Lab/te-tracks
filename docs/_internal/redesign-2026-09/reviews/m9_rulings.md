@@ -156,3 +156,44 @@ verification needs it.
 
 One count settled between the two reviews: `gene_oracle.tsv` holds eleven data rows. The codex count is
 right, mine of twelve and the Opus table's twelve both counted the header.
+
+## Fix-round evidence
+
+The nine phase 9b observations below are retained here as historical observations after their
+original raw logs were removed. The fix removes them from the public resource tables. The final
+acceptance-manifest measurements remain in the public documents.
+
+| Observation | Recorded value | Public disposition |
+|---|---:|---|
+| Initial core export peak RSS | 6,807,732,224 bytes | Moved here from RUNBOOK and RELEASES |
+| Initial child subtraction peak RSS | 874,917,888 bytes | Moved here from RUNBOOK and RELEASES |
+| Initial child subtraction elapsed time | 152.012 s | Moved here from RUNBOOK and RELEASES |
+| Stellarscope annotation resident increase | 133,443,584 bytes | Moved here from RUNBOOK |
+| Stellarscope process peak RSS | 152,317,952 bytes | Moved here from RUNBOOK |
+| Stellarscope annotation load time | 1.751 s | Moved here from RUNBOOK |
+| TElocal annotation resident increase | 51,904,512 bytes | Moved here from RUNBOOK; the separate phase 9a anchor stays with its citation |
+| TElocal process peak RSS | 70,189,056 bytes | Moved here from RUNBOOK |
+| TElocal annotation load time | 12.367 s | Moved here from RUNBOOK |
+
+The six newly pinned earlier-oracle metrics come from `p8_codex.md:178–179` and the annotation
+absence adopted in `p8_rulings.md:41–42`: chr18 input_records=118502 and union_bp=4528733;
+random-contig exon_rows=0, union_intervals=0, union_bp=0 and retained_bp=385. No earlier internal
+review or ruling carrying chr18 or chr19 exon_rows was found; those two literals remain unpinned.
+
+The additional contig chr7 has new anchors measured by this fix's bedtools merge/subtract run:
+input_records=214663, exon_rows=90795, union_intervals=24978, union_bp=12521871,
+blocks=207048 and retained_bp=60028394. They are saved separately in `gene_oracle_m9.tsv`.
+Together chr18, chr19, chr1_MU069434v1_random and chr7 cover 407745 of 3684934 child interspersed
+blocks (11.07%). The measurement logs are retained in the repository at
+`docs/_internal/redesign-2026-09/measurements/m9fix/`: `focused-initial.log` carries the oracle run,
+`demonstrations.log` the five demonstrations verbatim, `validation.log` the suite run the implementer
+completed, `checkout-origins.tsv` the six clone URLs read from the checkouts themselves, and
+`implementer_state.md` the unit's own account of what it did before its quota ended.
+
+The orchestrator then reproduced the chr7 anchors with an independently written bedtools pipeline and
+obtained every value exactly: input_records 214,663, exon_rows 90,795, union_intervals 24,978, union_bp
+12,521,871, blocks 207,048 and retained_bp 60,028,394, with multiset equality against the child SAF on
+chr7, chr18 and chr19. Two independent pipelines therefore stand behind them, so they are anchors rather
+than the implementer's own output. That run also supplied the two literals no earlier record carried,
+chr18 exon_rows 35,853 and chr19 exon_rows 39,613, which are now pinned in `gene_oracle_m9.tsv`. Every
+metric the oracle prints is pinned.

@@ -81,10 +81,19 @@ def verify_current(family):
         raise ValueError(f"current -> {target}: {error}") from error
 
 
-def select_locked(family, identifier, verified=False, existing_id=None):
+def require_clean_builder(path, family, identifier):
+    """Enforce the owner's clean-builder publication policy on the retained manifest."""
+    manifest = read_json(path / "MANIFEST.json")
+    require(manifest["provenance"]["builder_git_dirty"] is not True,
+            f"{family.name} build {identifier}: --require-clean refuses builder_git_dirty=true")
+
+
+def select_locked(family, identifier, verified=False, existing_id=None, require_clean=False):
     """Replace the sole selector after validating the candidate and existing selection."""
     target = family / "archive" / identifier
     current = family / "current"
+    if require_clean:
+        require_clean_builder(target, family, identifier)
     if os.path.lexists(current):
         selected = existing_id or verify_current(family)
         if selected == identifier:
@@ -115,7 +124,7 @@ def discard_staging(staging):
     shutil.rmtree(staging)
 
 
-def install(family, staging, select=False):
+def install(family, staging, select=False, require_clean=False):
     staging = Path(os.path.abspath(staging))
     parent = family / ".staging"
     require(not parent.is_symlink() and not staging.is_symlink()
@@ -125,6 +134,8 @@ def install(family, staging, select=False):
     identifier = verify_build(staging, emit=lambda line: None, root=family.parent)
     require(read_json(staging / "MANIFEST.json")["identity"]["family"] == family.name,
             f"staging manifest family differs from {family.name}")
+    if require_clean:
+        require_clean_builder(staging, family, identifier)
     with publication_lock(family, create=True) as archive:
         target = archive / identifier
         existing_id = None
@@ -134,6 +145,8 @@ def install(family, staging, select=False):
             # Reuse the selected archive's verification under the held lock.
             if existing_id != identifier:
                 verify_archive(target, family, identifier)
+            if require_clean:
+                require_clean_builder(target, family, identifier)
             discard_staging(staging)
             print(f"converged {identifier}")
         else:
@@ -145,7 +158,8 @@ def install(family, staging, select=False):
             target.chmod(0o555)
             print(f"installed {identifier}")
         if select:
-            select_locked(family, identifier, verified=True, existing_id=existing_id)
+            select_locked(family, identifier, verified=True, existing_id=existing_id,
+                          require_clean=require_clean)
     return identifier
 
 
@@ -157,6 +171,9 @@ def main():
         command = commands.add_parser(name)
         command.add_argument("--root", required=True, type=Path)
         command.add_argument("--family", required=True)
+        if name in ("install", "select"):
+            command.add_argument("--require-clean", action="store_true",
+                                 help="refuse manifests recording a dirty builder tree")
         if name == "install":
             command.add_argument("--staging", required=True, type=Path)
             command.add_argument("--select", action="store_true")
@@ -166,11 +183,11 @@ def main():
     try:
         family = family_root(args.root, args.family)
         if args.command == "install":
-            install(family, args.staging, args.select)
+            install(family, args.staging, args.select, args.require_clean)
         elif args.command == "select":
             identifier = validate_id(args.build_id)
             with publication_lock(family):
-                select_locked(family, identifier)
+                select_locked(family, identifier, require_clean=args.require_clean)
         else:
             print(verify_current(family))
     except (ValueError, KeyError, TypeError, StopIteration, OSError) as error:
