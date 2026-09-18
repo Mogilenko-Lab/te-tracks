@@ -186,25 +186,33 @@ archive, which the closing verification of all six archives and both families co
 keeping is narrower than the warning the orchestrator sent: a hardlinked copy is safe to replace a file in
 and unsafe to modify a file in place in, and `unlink` then write is a replacement.
 
-The actual cause is a shared path inside the reference root. `tests/lib/consumers.py` resolves its generated
-fixture directory to `$TE_TRACKS_REFROOT/fixtures/consumers` unless `TE_TRACKS_CONSUMER_FIXTURES` overrides
-it, and `build_fixture()` regenerates files there on every run. The reviewer was running its own
-`tests/run.sh core` at the same time, 226 files were rewritten in that directory during the overlap, and a
-concurrent reader can see a partially written fixture. The codex reviewer had redirected the directory with
-that variable; the Opus reviewer had not been told to.
+The cause is undetermined, and saying so is the honest end of this. The orchestrator's second hypothesis
+was a shared path: `tests/lib/consumers.py` resolves its generated fixture directory to
+`$TE_TRACKS_REFROOT/fixtures/consumers` unless `TE_TRACKS_CONSUMER_FIXTURES` overrides it, 226 files were
+rewritten there during the overlap, and the reviewer had not been told to redirect it. That does not explain
+this failure either: no check under `tests/checks/core/` imports that library, so a core run never touches
+that directory. The reviewer offers a third explanation, resource pressure, since check 41 alone holds about
+9.4 GB resident and two concurrent instances approach 19 GB; this host carries 502 GB, so that is weak on its
+own. The decisive fact was destroyed by the orchestrator's own command: piping the run through `tail`
+discarded the failing check's name and the runner's exit status, so nothing can now attribute it.
 
-Four consequences, recorded so the remaining reviews do not repeat it.
+What is established: the fix's own suite run, the reviewer's independent run and the orchestrator's clean
+re-run with an isolated fixture directory each pass 26 of 26 at exit 0, every one of the six published
+archives verifies, and `verify-current` exits 0 for both families. A single unattributable failure in a
+concurrent run against a package that passes cleanly three times over is recorded as transient and
+unexplained rather than given a cause it has not earned.
 
-- The suite is not concurrency-safe against one reference root. Two runs share the generated fixture
-  directory at a fixed path. The parking pass either isolates it per run or documents the variable where a
-  reader will find it, and the runner documentation names it.
-- Reviewer prompts set `TE_TRACKS_CONSUMER_FIXTURES` to a directory inside the reviewer's own scratch.
-- Reviewer prompts still require a real copy for every mutation and forbid `cp -al`, `cp -l` and
-  `shutil.copytree` with a linking copy function, and ask for a closing verification of the build and every
-  archive. The rule is stricter than the hazard requires, since replacing a file in a hardlinked copy is
-  safe, and it stays because it removes a distinction a reviewer would otherwise have to get right under
-  time pressure. It is now in both review templates.
-- Capturing a suite run through `tail` discards the failing check's identity and the runner's exit status.
-  Suite output is captured whole.
+Four practices follow anyway, each worth keeping on its own terms.
+
+- Capture a suite run whole. A run summarised through `tail` cannot be diagnosed.
+- Do not run a verification suite concurrently with a mutation-testing reviewer against one reference root.
+  Sequence them, or give the reviewer its own root.
+- Reviewer prompts set `TE_TRACKS_CONSUMER_FIXTURES` into the reviewer's own scratch, because the default is
+  a fixed path under the shared reference root and two consumer-suite runs would overwrite each other.
+- Reviewer prompts require a real copy for every mutation and forbid `cp -al`, `cp -l` and `shutil.copytree`
+  with a linking copy function, and ask for a closing verification. The reviewer's own account shows why the
+  rule is worth more than the hazard it names: its isolation held only because every write went through
+  `unlink` then `write_bytes`, and one `open("w")` would have reached a published archive through the shared
+  inode. A rule that removes the need to get that right under time pressure is the cheaper instrument.
 
 The clean re-run after the reviewer finishes is the record of the fix's suite result.
