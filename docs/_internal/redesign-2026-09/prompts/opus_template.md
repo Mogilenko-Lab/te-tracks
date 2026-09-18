@@ -16,6 +16,15 @@ Where you agree with a codex finding say so in one line; where you disagree, sho
 
 __EXTRA__
 
+## Mutation safety (applies to every review in this series)
+
+When a finding needs a mutation, copy the target and mutate the copy, and make the copy a real one. A
+hardlinked copy shares its inode, so writing to it writes through to the artifact under review and a
+concurrent reader sees a corrupted payload. Never use `cp -al`, `cp -l`, or `shutil.copytree` with a linking
+copy function on a build, an archive or a fixture. As your last step, verify that nothing you did persisted:
+run the build verifier on the build directory and on every archive under the published root, and
+`release.py verify-current` for both families, and report those exits.
+
 Report as:
 # Phase __N__ re-review (Opus)
 Verdict: PASS | PASS WITH ADVISORIES | FAIL
