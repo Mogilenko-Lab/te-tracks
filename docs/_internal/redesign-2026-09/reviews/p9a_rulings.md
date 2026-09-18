@@ -271,3 +271,17 @@ under time pressure.
 **The second fix** is `prompts/p9a_fix2.md`, five items, and none of them moves `BUILD_ID`: A1, A2, A3 and A5
 touch documentation, checks and a package script outside the payload, and A4 adds a build-time gate rather
 than an identity field. The unit confirms the ids are unchanged rather than rebuilding.
+
+## The orchestrator's clean suite run after the fix
+
+Run alone, with `TE_TRACKS_CONSUMER_FIXTURES` pointed into the orchestrator's own scratch and the output
+captured whole to a file rather than through `tail`:
+
+```
+checks=26 pass=26 fail=0 unsupported=0
+runner_exit=0
+```
+
+Three independent runs of the fixed tree therefore pass at 26 of 26 with the runner exiting 0: the
+implementer's, the reviewer's and this one. The earlier single failure in a concurrent run is transient and
+unattributable, as recorded above.
