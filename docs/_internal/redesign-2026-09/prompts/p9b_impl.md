@@ -22,13 +22,16 @@ Everything you write is read by that consumer.
 | `tables/taxonomy_dfam.tsv` | 1,221 lines; `match_status` 1,047 exact, 147 part_model_set, 26 missing |
 | `tables/taxonomy_dfam_models.tsv`, `tables/dfam_lineage_nodes.tsv`, `tables/dfam_model_clades.tsv` | 1,264, 301 and 1,279 lines |
 | `data/dfam/` | the tracked snapshot, its provenance and its fetch script; snapshot sha256 `ac1885c87963ca28071e7312a31220fc918111c057e3bbc6375fdda9255c701f` |
-| core identity | 51 inventory entries, 27 export contracts, five `build_sources` roles, `catalog.sources` still `['rmsk_out']` |
-| core payload | 15,301,535,164 bytes |
+| core identity | 52 inventory entries, 27 export contracts, five `build_sources` roles, `catalog.sources` still `['rmsk_out']`, `rank_scheme_version` `rank_scheme_wicker_v1` |
+| core payload | 15,301,538,537 bytes |
 
-The development build ids at this HEAD are core `763815187e47d13bd397475e4cb8de99c3a793a2039d1d36506de805c3fddd1c`,
-child `693ba1aa15e85d13b9dafd046962e6f07a0b3aad476b82041e4eabc10e1a65e0`, and `CATALOG_ID`
+The development build ids at this HEAD are core `5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813`,
+child `198f39f0ef16875121fa65e1b1301f0d58c894488cc557765ce7f50c57a38bd1`, and `CATALOG_ID`
 `90cc18be5d4ee9342b57b58e4b8ad19e59f9e6b48b9a94bab9db615db1091b5e` in both. A fresh build from the same tree
-must reproduce all three.
+must reproduce all three. The scratch reference root already holds three core archives and three child
+archives from phases 8 and 9a; leave every one of them in place and build acceptance into its own root.
+`source/` now retains the Dfam snapshot and its provenance JSON, so the acceptance build's roster is 52 and
+`fetch_finished` is compared against the retained provenance rather than against itself.
 
 ## Deliverables
 
