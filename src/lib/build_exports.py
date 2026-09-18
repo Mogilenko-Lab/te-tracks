@@ -72,6 +72,18 @@ EXPORT_CONTRACTS = {
                               "gene_id:family_id:class_id": "taxonomy_triple"},
         "coordinate_convention": "1-based inclusive",
     },
+    "record_starsolo.gtf": {
+        "feature_level": "record", "feature_identity": "gene_id",
+        "attribute_sources": {
+            **_GTF_SOURCES, "gene_id": _RECORD_ALIAS, "transcript_id": _RECORD_ALIAS,
+            "gene_name": "rmsk_records.rmsk_name", "gene_type": "transposable_element",
+            "locus": _RECORD_ALIAS, "rmsk_name": "rmsk_records.rmsk_name",
+            "instance_id": _INSTANCE_ALIAS, "rmsk_record_id": "rmsk_records.rmsk_record_id",
+        },
+        "consumer_keys": {"STARsolo": "gene_id", "cellranger": "gene_id"},
+        "selectable_levels": {"gene_id": "record"},
+        "coordinate_convention": "1-based inclusive",
+    },
     "subfamily.gtf": {
         "feature_level": "subfamily", "feature_identity": "locus",
         "attribute_sources": {**_GTF_SOURCES, "transcript_id": "rmsk_records.rmsk_name",
@@ -279,6 +291,11 @@ def export_universe(build_dir, genome, universe, export_set, registration):
             streams["record.gtf"].write(
                 gtf_prefix + f'gene_id "{name}"; transcript_id "{alias}"; locus "{alias}"; '
                 + taxonomy + f' instance_id "{instance}"; rmsk_record_id "{key}";\n')
+            streams["record_starsolo.gtf"].write(
+                gtf_prefix + f'gene_id "{alias}"; transcript_id "{alias}"; '
+                + f'gene_name "{name}"; gene_type "transposable_element"; '
+                + f'locus "{alias}"; rmsk_name "{name}"; ' + taxonomy
+                + f' instance_id "{instance}"; rmsk_record_id "{key}";\n')
             streams["subfamily.gtf"].write(
                 gtf_prefix + f'gene_id "{name}"; transcript_id "{name}"; locus "{name}"; '
                 + taxonomy + "\n")

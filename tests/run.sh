@@ -5,6 +5,8 @@ usage() {
   printf '%s\n' \
     'usage: tests/run.sh <core|consumers|acceptance> [--refroot DIR]' \
     'checks: tests/checks/<mode>/*.sh and tests/checks/<mode>/*.py, sorted by name' \
+    'consumer environment: source /workspaces/Meta-Aging/.venv/te-consumers/activate.sh' \
+    'consumer suite: tests/run.sh consumers' \
     'execution: bash for .sh; python3 for .py; all file modes included' >&2
 }
 

@@ -41,15 +41,25 @@ container exposes one.
 
 `MANIFEST.json` has two top-level sections. `identity` contains the manifest schema version,
 family, species, assembly, declared FASTA pins and status, contig-byte digest, catalog, build sources,
-complete universe definitions, taxonomy rule version, export contracts, parent identities and
+complete universe definitions, taxonomy rule and rank scheme versions, export contracts, parent identities and
 sorted file inventory. Each inventory entry records a relative path, byte count and SHA-256;
 all regular payload files, including retained sources, belong to that inventory. The three
 identity files form the inventory's explicit self-reference exclusions. Paths are confined to
 the build, and the payload consists of regular files and directories.
 
 `identity.catalog.sources` holds `rmsk_out` alone, with its URL and observed MD5, SHA-256 and bytes.
-The sibling `identity.build_sources` holds `rmsk_table`, `chromAlias` and `chrom_sizes` with the
-same fields, binding these inputs to `BUILD_ID`.
+The sibling `identity.build_sources` holds all four fetched roles with the same fields,
+plus `dfam_snapshot` with its package-relative `path`, SHA-256, bytes, `dfam_version`
+and provenance `fetch_finished`. The tracked snapshot, retained provenance JSON and four Dfam tables bind
+to `BUILD_ID`. The verifier compares the fetch timestamp, Dfam version and payload digest
+with the retained provenance when the archive retains that file. Earlier archives retain
+their declared source layout and verify against their own source and payload roster.
+
+The verifier detects corruption and accidental drift in an archive judged against its own
+declaration. A consumer protects against a deliberately edited archive by pinning the full
+`BUILD_ID` and the digests of the files it reads. Every archive this builder writes retains
+the provenance unconditionally.
+
 `identity.catalog` also contains the declared
 RepeatMasker version, library, run evidence and parser profile, `instance_id_scope: source_run`,
 and `tables`, a mapping from logical names `rmsk_records.tsv`, `rmsk_instance_members.tsv`
@@ -61,7 +71,7 @@ numbers the instances. A new export, universe or taxonomy rule version changes b
 while an unchanged catalog keeps its
 catalog identity. The core family has null `parent_build_id` and `parent_catalog_id`.
 
-The 24 export contracts derive from the export writer's shared contract dictionary and job
+The 27 export contracts derive from the export writer's shared contract dictionary and job
 roster, cross-checked against `tables/exports.tsv`: path, namespace, universe, variant, format,
 feature level, identity field, attribute source mapping, selectable levels and coordinate convention.
 Reader key columns and grammars are documented in [OUTPUTS.md](OUTPUTS.md#consumer-contracts-phase-5)
@@ -111,9 +121,9 @@ It judges taxonomy rule versions, predicate schemas and each schema's predicate 
 published sets, and export contract fields against a required core that declarations may extend.
 The manifest schema version stays single-valued; a new schema adds a verifier branch.
 The feature-level tuple only grows; renaming a level is a contract break.
-The verifier recomputes `catalog.sources` for `rmsk_out` and `build_sources` for `rmsk_table`,
-`chromAlias` and `chrom_sizes` from `source/SOURCES.json` and the inventory, and streams the
-decompressed canonical text tables to verify `catalog.tables`.
+The verifier recomputes `catalog.sources` for `rmsk_out` and each declared `build_sources`
+role from `source/SOURCES.json` and the inventory, and streams the decompressed canonical
+text tables to verify `catalog.tables`.
 
 Installation verifies staging before acquiring an advisory lock on the `archive/` directory.
 Cooperating publishers hold that lock across destination checks, `os.rename` and selection,
@@ -151,7 +161,10 @@ disk exhaustion during rename, staging on another filesystem and ACL access for 
 
 Publication proceeds from a fresh complete `--root` build; a staging directory left by an
 interruption is for inspection and is removed before republication.
-Remove abandoned staging by hand after confirming that its builder or transfer process has exited. A complete
+The owner removes the abandoned directory with `shutil.rmtree(staging_path)` after
+confirming that its builder or transfer process has exited. A missing `MANIFEST.json`
+or truncated table causes a named install refusal and leaves `current` unchanged;
+check 72 exercises the failed-build staging and owner removal. A complete
 unselected archive is a valid state; verify it and select its full ID to finish publication.
 A selector discrepancy requires a human decision after verifying a candidate independently and
 preserving the damaged archive for diagnosis. A leftover `current.tmp.<pid>` can be removed after
@@ -167,15 +180,31 @@ directly at `archive/<BUILD_ID>/` after newer selections.
 
 Every installed build and its dependency closure stays on disk. Identical rebuilds converge;
 retention planning reserves space for each distinct build at each reference root. Measured sums
-of regular file sizes for mm39 exports are 3,021,714,346 bytes for `ucsc`, 2,926,266,953 for
-`ensembl` and 3,021,140,740 for `gencode`. Registration occupies 347,526,106 bytes, and the
-43-file payload totals 10,461,884,289 bytes. The `all_rmsk` record BED occupies 332,554,184 /
-316,524,255 / 332,461,688 bytes in `ucsc` / `ensembl` / `gencode` respectively. The whole build
-directory measures about 10.46 GB by `du -sb`, the provisioning size, with the exact total varying
-by a few hundred bytes with the manifest's provenance. Reserve additional working space for
-staging and sorting.
-The export writer peaks near 6.0 GB resident, measured between 5.5 GB and 6.0 GB across
-in-container builds; `provenance.peak_rss_bytes` records each build's own measurement.
+of regular file sizes for mm39 exports are 4,638,043,480 bytes for `ucsc`,
+4,531,250,735 for `ensembl` and 4,637,401,144 for `gencode`. Registration occupies
+347,526,106 bytes. The 52-file payload totals 15,301,538,537 bytes; the complete
+scratch build measures 15,301,659,615 bytes with `du -sb`, about 15.30 GB.
+Manifest provenance and filesystem directory sizes contribute to the whole-build total.
+The `all_rmsk` record BED occupies 332,554,184 / 316,524,255 / 332,461,688 bytes
+in `ucsc` / `ensembl` / `gencode` respectively.
+
+| Addition | Measured bytes |
+|---|---:|
+| `exports/ucsc/interspersed/full/record_starsolo.gtf` | 1,616,329,134 |
+| `exports/ensembl/interspersed/full/record_starsolo.gtf` | 1,604,983,782 |
+| `exports/gencode/interspersed/full/record_starsolo.gtf` | 1,616,260,404 |
+| `tables/taxonomy_dfam.tsv` | 780,296 |
+| `tables/taxonomy_dfam_models.tsv` | 577,712 |
+| `tables/dfam_lineage_nodes.tsv` | 75,154 |
+| `tables/dfam_model_clades.tsv` | 367,180 |
+| `source/dfam_interspersed_mm39_snapshot.json.gz` | 278,952 |
+| `source/dfam_interspersed_mm39_snapshot.provenance.json` | 921 |
+
+Reserve additional working space for staging and sorting. The export writer has measured
+5.5 GB to 6.0 GB resident across in-container builds, including a peak of
+5,994,254,336 bytes; `provenance.peak_rss_bytes` records that stage's
+measurement. A measured complete core rebuild peaked at 9,026,424,832 resident bytes
+and took 717.201 seconds in the container.
 
 ## Gene child snapshots
 

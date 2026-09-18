@@ -1,0 +1,31 @@
+{
+  "census_sha256": "b3bee1d921f8b221df4f3d982961562787aa8d034ac009f75d32528e0799e832",
+  "dfam_version": {
+    "bugfix": "0",
+    "curated_families": 30621,
+    "dfam_version": "4.0",
+    "major": "6",
+    "minor": "0",
+    "release_date": "May 2026",
+    "species": 6130,
+    "total_families": 7627638
+  },
+  "dropped_record_fields": [
+    "buffer_stages",
+    "consensus_sequence",
+    "hmm_general_threshold",
+    "model_mask",
+    "search_stages"
+  ],
+  "endpoint": "https://dfam.org/api",
+  "errors": [],
+  "fetch_finished": "2026-09-17T15:10:29.831392Z",
+  "fetch_started": "2026-09-17T15:00:55.012729Z",
+  "file_bytes": 278952,
+  "file_sha256": "ac1885c87963ca28071e7312a31220fc918111c057e3bbc6375fdda9255c701f",
+  "names_queried": 1220,
+  "names_with_results": 1196,
+  "payload_bytes": 3863087,
+  "payload_sha256": "053c728b2bf2054b84a66d31d8cd27bc70128e3f9ef2ae618a394df9a34f41e1",
+  "records_fetched": 1263
+}

@@ -97,7 +97,7 @@ with TemporaryDirectory(prefix="te-tracks-preflight-") as directory:
     wrong = scratch / "wrong.bam"
     write_reference(wrong, {"chr1": 1})
     for universe in ("interspersed", "all_rmsk"):
-        files = ("record.bed", "record.gtf", "subfamily.saf") if universe == "interspersed" else ("record.bed",)
+        files = ("record.bed", "record.gtf", "record_starsolo.gtf", "subfamily.saf") if universe == "interspersed" else ("record.bed",)
         expected_sizes = ({"gencode": (2, 0), "ucsc": (40, 38), "ensembl": (23, 21)}
                           if universe == "interspersed" else
                           {"gencode": (0, 0), "ucsc": (39, 39), "ensembl": (22, 22)})

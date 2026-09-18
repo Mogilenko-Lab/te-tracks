@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "src/lib"))
 import build_exports as exporter
 from build_taxonomy import build_taxonomy
+from build_dfam import build_dfam
 from build_universes import DEFINITIONS
 import contigs
 from manifest import write_manifest
@@ -92,6 +93,25 @@ def _make_build(family, note):
         metadata["sources"][role] = {"url": url, "md5": md5, "bytes": len(content)}
         config[prefixes[role] + "_URL"] = url
         config[prefixes[role] + "_MD5"] = md5
+    models = {name: {"accession": accession, "name": name, "version": 1, "length": 4,
+                    "classification": "root;L1", "clades": ["root;Mammalia"],
+                    "repeat_type_name": "LINE", "repeat_subtype_name": "L1"}
+              for name, accession in (("Example", "DFfixture1"), ("Second", "DFfixture2"))}
+    snapshot = {"version": {"dfam_version": "4.0"},
+                "classes": {"full_name": "root", "name": "root", "children": [
+                    {"full_name": "root;L1", "name": "L1", "wicker_equiv": "R/I (LINE)/L (L1)"}]},
+                "summaries": {name: [model] for name, model in models.items()},
+                "records": {model["accession"]: model for model in models.values()}}
+    snapshot_path = source / "dfam_interspersed_mm39_snapshot.json.gz"
+    snapshot_path.write_bytes(gzip.compress(json.dumps(snapshot, sort_keys=True).encode(), mtime=0))
+    digest = hashlib.sha256(snapshot_path.read_bytes()).hexdigest()
+    snapshot_path.with_suffix("").with_suffix(".provenance.json").write_text(json.dumps({
+        "file_sha256": digest, "dfam_version": snapshot["version"],
+        "payload_sha256": hashlib.sha256(gzip.decompress(snapshot_path.read_bytes())).hexdigest(),
+        "fetch_finished": "2026-09-17T00:00:00Z"}) + "\n")
+    config.update(DFAM_SNAPSHOT_PATH="data/dfam/" + snapshot_path.name, DFAM_SNAPSHOT_SHA256=digest)
+    metadata["sources"]["dfam_snapshot"] = {"path": config["DFAM_SNAPSHOT_PATH"],
+                                            "sha256": digest, "bytes": snapshot_path.stat().st_size}
     (source / "SOURCES.json").write_text(json.dumps(metadata, indent=2) + "\n")
     config_path = family.parent / "fixture.env"
     config_path.write_text("".join(f"{key}='{value}'\n" for key, value in config.items()))
@@ -117,6 +137,7 @@ def _make_build(family, note):
                             "triples": 1, "length_sum_bp": 4}]), tables / "universe_summary.tsv")
     with redirect_stdout(io.StringIO()):
         build_taxonomy(build)
+        build_dfam(build, snapshot_path)
         exporter.build_exports(build, "mm39", jobs=exporter.EXPORT_JOBS)
         contigs.build_namespaces(build, "mm39")
     (source / "qualification.md").write_text(f"synthetic qualification: {note}\n")

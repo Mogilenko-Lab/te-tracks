@@ -131,7 +131,7 @@ def build_namespaces(build_dir, genome):
     expected = {f"exports/ucsc/{universe}/full/{name}"
                 for universe, export_set in EXPORT_JOBS for name, _ in export_set}
     if {row["export_path"] for row in ucsc} != expected or len(ucsc) != len(expected):
-        raise ValueError("namespace exports require the eight UCSC inventory entries")
+        raise ValueError(f"namespace exports require the {len(expected)} UCSC inventory entries")
     combined = {row["export_path"]: row for row in inventory}
     for namespace in ("ensembl", "gencode"):
         mapping = aliases.set_index("chrom_ucsc")[f"chrom_{namespace}"].to_dict()

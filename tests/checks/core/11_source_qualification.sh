@@ -57,4 +57,69 @@ for key, pin in zip(("genome_fa_url", "genome_fa_md5"), sys.argv[6:8]):
     assert declared[key] == pin, (key, declared[key], pin)
 assert declared["status"] == "declared", declared
 PY
-printf '%s\n' '13 summary metrics and 10 field disagreements verified; reports identical; four source md5s and declared assembly match config pins'
+
+fetch_pins=$(python3 - "$ROOT" "$DFAM_SNAPSHOT_PATH" "$DFAM_SNAPSHOT_SHA256" "$DFAM_PROVENANCE_SHA256" \
+  "$RMSK_OUT_URL" "$RMSK_TABLE_URL" "$CHROMALIAS_URL" "$CHROM_SIZES_URL" <<'PY'
+import hashlib
+import json
+import os
+from pathlib import Path
+import shlex
+import shutil
+import subprocess
+import sys
+from tempfile import TemporaryDirectory
+from urllib.parse import urlsplit
+
+root, tracked, snapshot_pin, provenance_pin, *urls = sys.argv[1:]
+root = Path(root)
+with TemporaryDirectory(prefix="source-pins-") as directory:
+    scratch = Path(directory)
+    cache = scratch / "cache"
+    cache.mkdir()
+    snapshot = scratch / Path(tracked).name
+    provenance = snapshot.with_suffix("").with_suffix(".provenance.json")
+    shutil.copy2(root / tracked, snapshot)
+    shutil.copy2((root / tracked).with_suffix("").with_suffix(".provenance.json"), provenance)
+    overrides = [f"DFAM_SNAPSHOT_PATH={shlex.quote(str(snapshot))}"]
+    for prefix, url in zip(("RMSK_OUT", "RMSK_TABLE", "CHROMALIAS", "CHROM_SIZES"), urls):
+        data = (prefix + "\n").encode()
+        (cache / Path(urlsplit(url).path).name).write_bytes(data)
+        overrides.append(f"{prefix}_MD5={hashlib.md5(data).hexdigest()}")
+    config = scratch / "pins.env"
+    config.write_text((root / "config/mm39.env").read_text() + "\n" + "\n".join(overrides) + "\n")
+    env = {**os.environ, "TE_TRACKS_SOURCE_CACHE": str(cache)}
+
+    def fetch(case):
+        build = scratch / case
+        result = subprocess.run(["bash", str(root / "src/00_fetch_sources.sh"), str(build), str(config)],
+                                env=env, capture_output=True, text=True)
+        return build, result
+
+    build, result = fetch("valid")
+    assert result.returncode == 0, result.stdout + result.stderr
+    sources = json.loads((build / "source/SOURCES.json").read_text())["sources"]
+    assert sources["dfam_snapshot"] == {"path": str(snapshot), "sha256": snapshot_pin,
+                                        "bytes": snapshot.stat().st_size}
+    assert (build / "source" / provenance.name).read_bytes() == provenance.read_bytes()
+    refusals = []
+    for role, path, pin in (("dfam_snapshot", snapshot, snapshot_pin),
+                            ("dfam_provenance", provenance, provenance_pin)):
+        original = path.read_bytes()
+        if role == "dfam_provenance":
+            edited = json.loads(original)
+            edited["fetch_finished"] = "1999-01-01T00:00:00.000000Z"
+            path.write_text(json.dumps(edited) + "\n")
+        else:
+            path.write_bytes(original + b"\n")
+        observed = hashlib.sha256(path.read_bytes()).hexdigest()
+        message = f"{role} sha256 mismatch: {path}: {observed} != {pin}"
+        build, result = fetch(role)
+        assert result.returncode != 0 and message in result.stderr, result.stdout + result.stderr
+        assert not (build / "source/SOURCES.json").exists(), "source metadata written after pin refusal"
+        refusals.append(f"{role} sha256 mismatch")
+        path.write_bytes(original)
+    print("offline fetch pins pass; refused: " + "; ".join(refusals))
+PY
+)
+printf '%s; %s\n' '13 summary metrics and 10 field disagreements verified; reports identical; four source md5s and declared assembly match config pins' "$fetch_pins"

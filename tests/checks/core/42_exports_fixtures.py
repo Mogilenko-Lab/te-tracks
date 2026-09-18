@@ -26,7 +26,7 @@ from build_exports import EXPORTS, build_exports
 
 
 FIXTURES = ROOT / "tests/fixtures/exports"
-FILES = ["record.bed", "subfamily.bed", "family.bed", "record.gtf", "subfamily.gtf",
+FILES = ["record.bed", "subfamily.bed", "family.bed", "record.gtf", "record_starsolo.gtf", "subfamily.gtf",
          "subfamily.saf", "taxonomy_triple.saf"]
 require(*(f"exports/ucsc/interspersed/full/{filename}" for filename in FILES))
 
@@ -100,8 +100,8 @@ with TemporaryDirectory(prefix="te-tracks-exports-") as directory:
     assert "DNA/unresolved_family_Mystery" in (exports / "family.bed").read_text()
     assert "Mystery:unresolved_family_Mystery:DNA" in (exports / "taxonomy_triple.saf").read_text()
     inventory = pd.read_csv(tables / "exports.tsv", sep="\t")
-    assert len(inventory) == 8
-    assert inventory.universe_name.value_counts().to_dict() == {"interspersed": 7, "all_rmsk": 1}
+    assert len(inventory) == 9
+    assert inventory.universe_name.value_counts().to_dict() == {"interspersed": 8, "all_rmsk": 1}
     for row in inventory.itertuples(index=False):
         assert hashlib.sha256((scratch / row.export_path).read_bytes()).hexdigest() == row.sha256
         if row.universe_name == "all_rmsk":
@@ -123,7 +123,7 @@ with TemporaryDirectory(prefix="te-tracks-exports-") as directory:
         with contextlib.redirect_stdout(io.StringIO()):
             build_exports(selected, "mm39", jobs=(("interspersed", EXPORTS),))
         selected_exports = [path for path in (selected / "exports").rglob("*") if path.is_file()]
-        assert len(selected_exports) == 7
+        assert len(selected_exports) == 8
         for path in selected_exports:
             assert path.read_bytes() == (FIXTURES / "expected" / path.name).read_bytes()
         selected_inventory = pd.read_csv(selected / "tables/exports.tsv", sep="\t")
@@ -179,6 +179,6 @@ with TemporaryDirectory(prefix="te-tracks-exports-") as directory:
     malformed["default_universe"] = "satellites"
     (scratch / "universes.json").write_text(json.dumps(malformed))
     expect_failure(lambda: build_exports(scratch, "mm39"), "default universe")
-print("eight hand-authored exports and 46 registration rows; seven-export/40-row interspersed job; "
+print("nine hand-authored exports and 46 registration rows; eight-export/40-row interspersed job; "
       "membership selection, unresolved ranks, coordinate duplicates, shared instances, deterministic rebuild, "
       "universe and identifier gates pass")

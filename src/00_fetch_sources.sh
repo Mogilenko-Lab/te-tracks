@@ -38,17 +38,32 @@ done
 
 python3 - "$SRC/SOURCES.json" "$GENOME" "$ASSEMBLY" \
   "$RM_VERSION" "$RM_LIBRARY" "$RM_RUN_EVIDENCE" "$RMSK_OUT_PROFILE" \
-  "$GENOME_FA_URL" "$GENOME_FA_MD5" \
-  "${source_metadata[@]}" <<'PY'
+  "$GENOME_FA_URL" "$GENOME_FA_MD5" "$REPO_ROOT" "$DFAM_SNAPSHOT_PATH" "$DFAM_SNAPSHOT_SHA256" \
+  "$DFAM_PROVENANCE_SHA256" "${source_metadata[@]}" <<'PY'
 import json
+import hashlib
+import shutil
 import sys
 from pathlib import Path
 
-output, genome, assembly, version, library, evidence, profile, fa_url, fa_md5, *items = sys.argv[1:]
+output, genome, assembly, version, library, evidence, profile, fa_url, fa_md5, repo, tracked, pin, provenance_pin, *items = sys.argv[1:]
 sources = {}
 for i in range(0, len(items), 4):
     key, url, md5, path = items[i:i + 4]
     sources[key] = {"url": url, "md5": md5, "bytes": Path(path).stat().st_size}
+payload = Path(repo) / tracked
+with payload.open("rb") as stream:
+    observed = hashlib.file_digest(stream, "sha256").hexdigest()
+if observed != pin:
+    raise SystemExit(f"dfam_snapshot sha256 mismatch: {tracked}: {observed} != {pin}")
+provenance = payload.with_suffix("").with_suffix(".provenance.json")
+with provenance.open("rb") as stream:
+    provenance_observed = hashlib.file_digest(stream, "sha256").hexdigest()
+if provenance_observed != provenance_pin:
+    raise SystemExit(f"dfam_provenance sha256 mismatch: {provenance}: {provenance_observed} != {provenance_pin}")
+shutil.copyfile(payload, Path(output).parent / payload.name)
+shutil.copyfile(provenance, Path(output).parent / provenance.name)
+sources["dfam_snapshot"] = {"path": tracked, "sha256": observed, "bytes": payload.stat().st_size}
 metadata = {
     "genome": genome,
     "assembly": assembly,

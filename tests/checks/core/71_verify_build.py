@@ -64,6 +64,50 @@ with TemporaryDirectory(prefix="verify-fixture-", dir=scratch) as directory:
         run(fixture, 1, "unexpected.txt")
         extra.unlink()
         manifest = json.loads((fixture / "MANIFEST.json").read_text())
+        tracked = manifest["identity"]["build_sources"]["dfam_snapshot"]
+        assert set(tracked) == {"path", "sha256", "bytes", "dfam_version", "fetch_finished"}
+        for field, value in (("sha256", "0" * 64), ("bytes", tracked["bytes"] + 1),
+                              ("dfam_version", "changed")):
+            original_value = tracked[field]
+            tracked[field] = value
+            rewrite_manifest(fixture, manifest)
+            run(fixture, 1, "identity.build_sources differs")
+            tracked[field] = original_value
+        rewrite_manifest(fixture, manifest)
+        original_finished = tracked["fetch_finished"]
+        tracked["fetch_finished"] = "1999-01-01T00:00:00.000000Z"
+        rewrite_manifest(fixture, manifest)
+        run(fixture, 1, "dfam_snapshot: fetch_finished differs from retained provenance")
+        tracked["fetch_finished"] = original_finished
+        source = manifest["identity"]["build_sources"].pop("rmsk_out")
+        rewrite_manifest(fixture, manifest)
+        run(fixture, 1, "identity.build_sources: source roles differ")
+        manifest["identity"]["build_sources"]["rmsk_out"] = source
+        rewrite_manifest(fixture, manifest)
+        provenance = fixture / "source/dfam_interspersed_mm39_snapshot.provenance.json"
+        original = provenance.read_bytes()
+        entry = next(item for item in manifest["identity"]["inventory"]
+                     if item["path"] == provenance.relative_to(fixture).as_posix())
+        for field, value, message in (
+                ("file_sha256", "0" * 64, "dfam_snapshot: provenance sha256 differs"),
+                ("dfam_version", {"dfam_version": "changed"}, "dfam_snapshot: provenance dfam_version differs"),
+                ("payload_sha256", "0" * 64, "dfam_snapshot: provenance payload sha256 differs")):
+            changed = json.loads(original)
+            changed[field] = value
+            provenance.write_text(json.dumps(changed) + "\n")
+            entry.update(bytes=provenance.stat().st_size, sha256=hashlib.sha256(provenance.read_bytes()).hexdigest())
+            rewrite_manifest(fixture, manifest)
+            run(fixture, 1, message)
+            result = subprocess.run([sys.executable, str(ROOT / "src/90_manifest.py"), str(fixture),
+                                     str(Path(directory) / "fixture.env")], capture_output=True, text=True)
+            assert result.returncode == 1 and message in result.stderr, result.stdout + result.stderr
+        provenance.write_bytes(original)
+        entry.update(bytes=len(original), sha256=hashlib.sha256(original).hexdigest())
+        rewrite_manifest(fixture, manifest)
+        manifest["identity"]["rank_scheme_version"] = "rank_scheme_wicker_v9"
+        rewrite_manifest(fixture, manifest)
+        run(fixture, 1, "unsupported rank_scheme_version")
+        manifest["identity"]["rank_scheme_version"] = "rank_scheme_wicker_v1"
         manifest["identity"]["taxonomy_rule_version"] = "taxonomy_rule_v9"
         rewrite_manifest(fixture, manifest)
         run(fixture, 1, "unsupported taxonomy_rule_version")
@@ -84,4 +128,7 @@ with TemporaryDirectory(prefix="verify-fixture-", dir=scratch) as directory:
                     path.chmod(0o664)
 elapsed = perf_counter() - started
 print("real build verifies unchanged; fixture stray authoring payload, flipped byte, extra file, unpublished taxonomy rule and "
-      f"export roster mismatch fail with named discrepancies; fixture cases={elapsed:.3f}s")
+      "export roster mismatch fail with named discrepancies; refused: dfam_snapshot: fetch_finished differs from retained provenance; "
+      "dfam_snapshot: provenance sha256 differs; dfam_snapshot: provenance dfam_version differs; "
+      "dfam_snapshot: provenance payload sha256 differs; identity.build_sources: source roles differ; "
+      f"unsupported rank_scheme_version; fixture cases={elapsed:.3f}s")

@@ -50,6 +50,11 @@ changed = deepcopy(manifest)
 changed["identity"]["catalog"]["tables"]["rmsk_records.tsv"] = "0" * 64
 assert all(left != right for left, right in zip(identities(changed), original))
 entries = manifest["identity"]["inventory"]
+assert len(entries) == 52
+assert set(manifest["identity"]["build_sources"]) == {"rmsk_out", "rmsk_table", "chromAlias", "chrom_sizes", "dfam_snapshot"}
+changed = deepcopy(manifest)
+changed["identity"]["build_sources"]["dfam_snapshot"]["sha256"] = "0" * 64
+assert identities(changed)[0] != original[0] and identities(changed)[1] == original[1]
 paths = [item["path"] for item in entries]
 assert paths == sorted(set(paths))
 files = []
@@ -66,7 +71,8 @@ for entry in entries:
         assert hashlib.file_digest(stream, "sha256").hexdigest() == entry["sha256"], path
 assert manifest["identity"]["catalog"]["instance_id_scope"] == "source_run"
 assert manifest["identity"]["taxonomy_rule_version"] == "taxonomy_rule_v1"
-assert len(manifest["identity"]["export_contracts"]) == 24
+assert manifest["identity"]["rank_scheme_version"] == "rank_scheme_wicker_v1"
+assert len(manifest["identity"]["export_contracts"]) == 27
 identity_fields = {"export_path", "namespace", "universe_name", "variant", "format", "feature_level",
                    "feature_identity", "attribute_sources", "selectable_levels", "coordinate_convention"}
 for contract in manifest["identity"]["export_contracts"]:

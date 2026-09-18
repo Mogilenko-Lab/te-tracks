@@ -56,6 +56,35 @@ components. Repeat names also exclude `/`, keeping unresolved rank tokens separa
 Genomic bounds satisfy `1 <= start_1 <= end_1 <= contig length`. Equal coordinates
 with different names retain separate record identities; exact duplicate keys fail the build.
 
+### Records, instances and insertions
+
+A record is one RepeatMasker alignment of a genome stretch to a consensus model.
+Every per-locus count measures a record. An instance is the source grouping of
+records hypothesized to descend from one element; its member records preserve
+fragmentation and nesting. An insertion is the DNA produced by one insertion
+event. Insertion-level candidates require reconstruction parameters and supporting
+evidence for full-length copies, proviruses or solo LTRs.
+
+The mm39 records align to the pinned 2018 repeat library. Consensus coordinates
+are model-relative; fragmentation, nesting and overlapping alignments affect
+record support. Genic context depends on the gene-annotation pin.
+`rmsk_overlap_flag` records the source `*` marker and is constant `false` in mm39.
+Genomic interval intersection measures overlap independently of that source flag.
+
+| Measurement | Scope | Observed |
+|---|---|---:|
+| Multi-record instances | `all_rmsk` | 445,649 |
+| Multi-record instances | `interspersed` | 434,707 |
+| Mixed-name instances | `interspersed` | 30,569 |
+| Mixed-strand instances | `interspersed` | 23,244 |
+| Records overlapping another record on the same contig | `all_rmsk`, either strand | 429,440 / 5,320,771 (8.0710%) |
+| LTR-only instances | Class LTR, a non-`-int` name and zero `-int` members | 722,280 |
+| L1 records starting at consensus base 1 | Raw LINE/L1 | 588 |
+
+The LTR-only screen measures source annotation composition; solo-LTR status
+requires structural evidence. The L1 prefix screen measures model-base coverage;
+promoter function requires sequence and experimental evidence.
+
 ### `tables/rmsk_instance_members.tsv.gz`
 
 Columns are `rmsk_instance_id` (text) and `rmsk_record_id` (text), sorted by both columns.
@@ -229,6 +258,103 @@ role and per-family version evidence; the next refresh adds the release endpoint
 Check 30 proves the published canonical table equals the rule's output on every row.
 `tests/fixtures/taxonomy/rule_cases.tsv` through check 32 proves the rule itself, including ties, plurality and weighting cases mm39 never exercises.
 
+### Dfam lineage, ranks and clades (phase 9a)
+
+The tracked Dfam 4.0 snapshot under `data/dfam/` supplies metadata for the 1,220
+`interspersed` names. Stage 25 reads its checksum-verified copy under `source/`.
+The snapshot provenance JSON is retained beside it in the 52-file core payload.
+The verifier reads its `file_sha256`, `payload_sha256`, `dfam_version` and `fetch_finished` keys.
+The fetch script accepts a canonical taxonomy path, query census (`--census`), universe
+and output directory. The census TSV's `rmsk_name` column contains each selected name once;
+`census_sha256` and `taxonomy_sha256` record the respective input file digests.
+Source refresh is an explicit preparation step. Canonical RepeatMasker labels remain
+resolved by `taxonomy_rule_v1`.
+
+`tables/taxonomy_dfam.tsv` contains one row per selected name, sorted by `rmsk_name`.
+Its columns appear in the following order; text uses empty strings for absent values,
+counts and lengths use decimal integers, and the uncertainty flag uses `true`/`false`.
+
+| Columns, in order | Contract |
+|---|---|
+| `rmsk_name`, `rmsk_class`, `rmsk_family` | Name and raw tokens of its canonical plurality label; remaining raw-label ties sort by instance count descending, class and family ascending. |
+| `canonical_class`, `canonical_family`, `record_count` | Canonical labels and selected catalog records counted by name. |
+| `match_status` | `exact`, `part_model_set` or `missing`. |
+| `dfam_accessions`, `dfam_model_names`, `dfam_model_versions`, `dfam_model_lengths_bp` | Parallel `;`-joined model fields in role order: `whole`, or `5end`, `orf2`, `3end`. |
+| `available_part_count`, `part_roles_present`, `model_length_sum_bp` | Available part count (zero for exact/missing), ordered part roles, and sum of selected model lengths (zero for missing). |
+| `classification_path`, `classification_leaf` | Common Dfam classification path and its final node name. |
+| `clades`, `clade_count`, `clade_leaves`, `clade_compatibility` | Every model clade path and leaf, deduplicated in first-seen order and joined with `;`; count of distinct complete clade paths across the selected models (zero for missing); compatibility status. |
+| `dfam_release`, `wicker_code`, `wicker_code_uncertain` | Snapshot release, nearest coded ancestor's Wicker equivalent, and a trailing `?` uncertainty flag. |
+| `wicker_class`, `wicker_class_status`, `wicker_subclass`, `wicker_subclass_status` | Wicker class and subclass with separate statuses. |
+| `wicker_order`, `wicker_order_status`, `wicker_superfamily`, `wicker_superfamily_status` | Wicker order and superfamily with separate statuses. |
+| `wicker_family`, `wicker_family_status`, `subfamily`, `subfamily_status` | Dfam leaf family and RepeatMasker name with separate statuses. |
+| `dfam_repeat_type`, `dfam_repeat_subtype` | Matched models' type/subtype names, deduplicated in role order and joined with `;`. |
+
+A summary hit named exactly `rmsk_name` wins. Otherwise, hits named `<name>_5end`,
+`<name>_orf2` and `<name>_3end` form a part set, including L1 and L2/CR1 models.
+Every selected accession requires a full metadata record. Part paths must agree;
+a disagreement fails with `Dfam part classification disagreement: <name>`.
+There are 1,047 exact names (2,797,852 records), 147 part sets (928,528 records),
+and 26 missing names (38,569 records). The part sets contain three, two and one
+models for 30, 9 and 108 names respectively. The six L2/CR1 sets are L2a, L2b,
+L2c, L2d, L2d2 and L3b. `model_length_sum_bp` summarizes available metadata;
+full-length inference requires a validated projection between the part models
+and the pinned RepeatMasker model coordinates.
+
+The rank scheme is `rank_scheme_wicker_v1`, recorded in
+`MANIFEST.json` at `identity.rank_scheme_version`. Wicker class I comprises
+retrotransposons with an RNA intermediate; class II comprises DNA transposons.
+Class II subclass 1 contains TIR and Crypton orders, and subclass 2 contains
+Helitron and Maverick. Class I subclass is `inapplicable`. Order identifies the
+transposition group: LINE, LTR, SINE, PLE, DIRS, TIR, Crypton, Helitron or Maverick.
+Superfamily identifies a lineage within an order, such as L1, ERV, hAT or
+Tc1-Mariner. Wicker families use the 80-80-80 sequence-similarity convention;
+this view takes the curated Dfam leaf name as its family label. A subfamily here
+is the set of catalog records sharing one RepeatMasker name.
+
+| Dissertation rank alias | Wicker rank |
+|---|---|
+| class | class |
+| subclass | order |
+| superfamily | superfamily |
+| family | family |
+| subfamily | subfamily |
+
+The nearest classification node carrying `wicker_equiv` supplies the code.
+Parenthesized names supply order and superfamily; bare letters use the Wicker
+letter table, including P element under TIR, I under LINE and Helitron under
+Helitron. Derived ranks are `mapped` for a leaf code and `inherited` for an
+ancestor code; absent code parts leave deeper ranks `missing`. A part set uses
+`part_model_set` on derived ranks, with the class I subclass `inapplicable`.
+`wicker_family` uses the leaf with `mapped` or `part_model_set`; an absent code
+leaves every Wicker rank `missing`. `subfamily` always holds the name with status
+`mapped`. Among exact names, 884 have leaf codes, 110 inherit codes and 53 have
+missing codes under `Unknown`.
+
+RepeatMasker tokens span several ranks. B1 names sit under `Alu`; `ERVL-MaLR`
+identifies a curated LTR branch; hyphenated labels such as `hAT-Charlie` combine
+superfamily and family information. Class-less annotations retain their source
+labels. Every Wicker rank is `missing` for the 53 names whose Dfam leaf is `Unknown`.
+The class-less name `UCON4`, labeled `Unspecified` in the source, has the Dfam leaf
+`Kolobok` and inherits code `D` and class `Class II (DNA transposons)`.
+
+The normalized companions provide direct SQL joins. Their columns appear in order:
+
+| Table | Grain and columns |
+|---|---|
+| `tables/taxonomy_dfam_models.tsv` | 1,263 name × model rows: `rmsk_name`, `role`, `accession`, `model_name`, `model_version`, `model_length_bp`, `classification_path`, `clades`, `repeat_type`, `repeat_subtype`. Sorted by name and declared role order. |
+| `tables/dfam_lineage_nodes.tsv` | 300 classification nodes: `full_path`, `parent_path`, `name`, `depth`, `wicker_code`, `repeatmasker_type`, `repeatmasker_subtype`, `family_count`. Sorted by path; root depth is zero and parent is empty. `family_count` is the node's count when present, otherwise empty. 193 nodes carry a code. |
+| `tables/dfam_model_clades.tsv` | 1,278 model × clade rows: `accession`, `clade_path`, `clade_leaf`. Sorted by accession and path, with unique pairs. |
+
+Paths use `;` between nodes; the normalized clade table preserves each complete
+path separately. `clades` is a display field in both taxonomy tables;
+`dfam_model_clades.tsv` supplies the accession join key and complete paths for clade queries.
+A model's clade is its curated assignment. `clade_compatibility`
+is `primate_branch` when any path contains the `Primates` node, then `multi_clade`
+when any model has several clades, otherwise `compatible`; a missing match is
+`missing`. Nine models have multiple clades; 33 models across 31 names have a
+Primates branch. Consumers derive age tiers from the clade path with
+`taxonomy_canonical.median_divergence_pct` and per-record divergence beside it.
+
 ## Published legacy release
 
 Published legacy releases in the reference cache carry `te_loci.tsv.gz`, `te_dim.tsv`,
@@ -267,7 +393,7 @@ source `(subfamily, family, class)` triple.
 ## Exports and later phases
 
 Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>[_<profile>].<format>`.
-The core release supplies seven `interspersed` full-interval exports in each of the `ucsc`,
+The core release supplies eight `interspersed` full-interval exports in each of the `ucsc`,
 `ensembl` and `gencode` contig namespaces. The gene child family supplies `exon_subtracted`
 intervals in phase 8. Each emitted feature and block registers to source records through
 `tables/export_feature_members.tsv.gz`.
@@ -296,7 +422,7 @@ intervals in phase 8. Each emitted feature and block registers to source records
 
 ### Phase 4: UCSC full-interval exports
 
-Eight exports land under `exports/ucsc/`: seven interspersed files under
+Nine exports land under `exports/ucsc/`: eight interspersed files under
 `exports/ucsc/interspersed/full/` and the complete-catalog record BED under `exports/ucsc/all_rmsk/full/`.
 The builder accepts an explicit universe and export set, validates the universe in `universes.json`,
 and selects interspersed records through `tables/universe_members.tsv.gz`. Provisional status is a
@@ -315,6 +441,7 @@ BED name, GTF attribute value and SAF GeneID and reports the offending value and
 | `subfamily.bed` | 0-based half-open | BED6 name = `rmsk_name` |
 | `family.bed` | 0-based half-open | BED6 name = `<class>/<family>`; each position carries its canonical label or `unresolved_<rank>_<rmsk_name>` token |
 | `record.gtf` | 1-based inclusive | Exon rows; `gene_id` = `rmsk_name`; `transcript_id` and `locus` = record alias |
+| `record_starsolo.gtf` | 1-based inclusive | Exon rows; `gene_id`, `transcript_id` and `locus` = record alias; `gene_name` = `rmsk_name` |
 | `subfamily.gtf` | 1-based inclusive | Exon rows; `gene_id`, `transcript_id` and `locus` = `rmsk_name` |
 | `subfamily.saf` | 1-based inclusive | `GeneID` = `rmsk_name` |
 | `taxonomy_triple.saf` | 1-based inclusive | Canonical taxonomy-triple grouping; `GeneID` = `<rmsk_name>:<canonical_family>:<canonical_class>` |
@@ -358,6 +485,17 @@ Attributes appear in this order: `gene_id`, `transcript_id`, `locus`, `family_id
 with one space between attributes. Stellarscope's default `locus` groups by record;
 `--attribute instance_id` selects the source instance grouping.
 
+#### `record_starsolo.gtf`
+
+One exon per record uses the fixed columns of `record.gtf`. Attributes appear in
+this order: `gene_id`, `transcript_id`, `gene_name`, `gene_type`, `locus`, `rmsk_name`,
+`family_id`, `class_id`, `rmsk_family`, `rmsk_class`, `instance_id`, `rmsk_record_id`.
+`gene_id`, `transcript_id` and `locus` equal the record alias; `gene_name` and
+`rmsk_name` equal the source name; `gene_type` is `transposable_element`.
+Canonical and source taxonomy and instance/record identities use the mappings below.
+Each namespace has 3,764,949 rows and distinct genes on 59 contigs. Registration
+reuses `(interspersed, full, record, record_alias)` and retains 30,119,592 rows.
+
 #### `subfamily.gtf`
 
 One exon row per record uses the same fixed GTF columns and 1-based inclusive coordinates.
@@ -365,22 +503,24 @@ Attributes appear in this order: `gene_id`, `transcript_id`, `locus`, `family_id
 `rmsk_family`, `rmsk_class`. The first three values equal `rmsk_name`, supplying subfamily
 identity for Stellarscope, TEsingle and TElocal.
 
-The following attribute mapping applies to both GTFs. TEtranscripts groups by
+The following attribute mapping covers the GTF profiles. TEtranscripts groups by
 `gene_id:family_id:class_id`; TEsingle and TElocal use
 `transcript_id:gene_id:family_id:class_id`. Canonical ranks come from the name's row in
 `taxonomy_canonical`; an unresolved rank emits `unresolved_<rank>_<rmsk_name>` in its position.
 
 | Attribute | Source column or transformation | Consumer that reads it |
 |---|---|---|
-| `gene_id` | `rmsk_records.rmsk_name` | TEtranscripts, TEsingle, TElocal |
-| `transcript_id` | Record alias in `record.gtf`; `rmsk_name` in `subfamily.gtf` | TEsingle, TElocal |
-| `locus` | Record alias in `record.gtf`; `rmsk_name` in `subfamily.gtf` | Stellarscope default grouping |
+| `gene_id` | Record alias in `record_starsolo.gtf`; `rmsk_records.rmsk_name` in the other profiles | STARsolo, cellranger, TEtranscripts, TEsingle, TElocal |
+| `gene_name`, `rmsk_name` (STARsolo profile) | `rmsk_records.rmsk_name` | Display and taxonomy joins |
+| `gene_type` (STARsolo profile) | `transposable_element` | cellranger `mkgtf` filter |
+| `transcript_id` | Record alias in `record.gtf` and `record_starsolo.gtf`; `rmsk_name` in `subfamily.gtf` | TEsingle, TElocal |
+| `locus` | Record alias in `record.gtf` and `record_starsolo.gtf`; `rmsk_name` in `subfamily.gtf` | Stellarscope default grouping |
 | `family_id` | `taxonomy_canonical.canonical_family` or unresolved family token | TEtranscripts, TEsingle, TElocal |
 | `class_id` | `taxonomy_canonical.canonical_class` or unresolved class token | TEtranscripts, TEsingle, TElocal |
 | `rmsk_family` | `rmsk_records.rmsk_family` | Source-taxonomy audit readers |
 | `rmsk_class` | `rmsk_records.rmsk_class` | Source-taxonomy audit readers |
-| `instance_id` (record GTF) | `I\|mm39\|<rmsk_instance_id>` | Stellarscope with `--attribute instance_id` |
-| `rmsk_record_id` (record GTF) | `rmsk_records.rmsk_record_id` | Registration and catalog joins |
+| `instance_id` (record GTF profiles) | `I\|mm39\|<rmsk_instance_id>` | Stellarscope with `--attribute instance_id` |
+| `rmsk_record_id` (record GTF profiles) | `rmsk_records.rmsk_record_id` | Registration and catalog joins |
 
 #### `subfamily.saf`
 
@@ -433,9 +573,11 @@ registration serves phase 6 namespaces. Rows follow export record order, then th
 order above. Gzip uses the deterministic table serialization above. The mm39 interspersed
 registration has 30,119,592 rows and 3,152,636 distinct instance aliases.
 
-A run's matrix binds to one `(feature_level, key_grammar)`.
-Counts join the registration through the run's measured feature ids at that pair.
-A traversal from records to the registration without a matrix join lists possible support and is never summed.
+A run's matrix binds to one `(universe_name, variant, feature_level, key_grammar)`.
+Counts join the registration through the run's measured feature IDs at that full scope.
+Check 43 joins 1,000 shared records: the level/grammar pair returns 2,000 rows,
+while the four-field scope returns 1,000 and conserves the count total.
+A traversal from records to registration lists possible support; counts come from the scoped matrix join.
 Selecting supporting records selects each distinct measured feature once before summing its count.
 A mixed-name instance attributes to a subfamily only through an explicit allocation.
 The mm39 interspersed selection includes 30,569 mixed-name instances holding 95,830 records.
@@ -453,7 +595,7 @@ One row per export file, sorted by `export_path`, inventories these columns in o
 | `feature_level` | text | Export's default feature level. |
 | `format` | text | `bed`, `gtf` or `saf`. |
 | `rows` | int64 | Data rows; SAF headers are counted separately. |
-| `distinct_features` | int64 | Distinct BED names, GTF `locus` values or SAF GeneIDs. |
+| `distinct_features` | int64 | Distinct values of the declared feature identity: BED names, GTF `locus` or STARsolo-profile `gene_id`, and SAF GeneIDs. |
 | `sha256` | text | SHA-256 of the complete emitted file bytes. |
 
 ### Consumer contracts (phase 5)
@@ -466,18 +608,20 @@ self-test verifies exit 1 for a missing symbol and exit 3 for an absent external
 Every checkout parser support line reports its declared version and `git describe --tags --always`.
 The table names the checkout commit each fixture authorizes; an installed release may differ in
 the exercised entry points, including IRescue's `makeRmsk` and MATES's `split_count_10X_data`.
-Checks 00, 10, 12, 13, 14, 16, 22 and 23 are required; unsupported status in any of them fails the runner.
-Checks 11, 15, 20, 21 and 30 report optional support.
+Checks 00, 10, 12, 13, 14, 16, 17, 22 and 23 are required; unsupported status in any of them fails the runner.
+Checks 11, 15, 20, 21, 24, 25 and 30 report optional support.
 
 | Consumer / authorized checkout | Export read | Feature identity | Registration `(feature_level, key_grammar)` | Fixture in `tests/checks/consumers/` | Support in-container |
 |---|---|---|---|---|---|
-| IRescue 1.2.0, `26f36fb` | `record.bed`, `subfamily.bed` | BED column 4 | `(record, rmsk_record_id)`, `(subfamily, rmsk_name)` | `10_irescue_parser.required.py`: roster identities and coordinates, 11 record features, 8 names, comma splitting and exporter rejection; `15_irescue_chrcat.py`: real `chrcat` serialization; `20_irescue_exec.sh`: 2 molecules versus 1+1, 4/2 and 3/3 allocation | Identity parser supported; `chrcat` unsupported: system tool `gawk` absent; execution unsupported: `irescue` absent |
-| Stellarscope 1.5, `0e0d594` | `record.gtf`, `subfamily.gtf` | `locus` for records or subfamilies; `instance_id` in record GTF | `(record, record_alias)`, `(subfamily, rmsk_name)`, `(instance, instance_alias)` | `11_stellarscope_parser.py`: isolated annotation package, 11 records, 10 instances, attributes, registration joins, endpoint gate | Parser exercised; unsupported: right-boundary overlap defect, observed `0,1,1,1`, expected `0,1,1,0`; executable `stellarscope` absent |
-| TEsingle 1.0, `655f127` | `record.gtf`, `subfamily.gtf` | `transcript_id:gene_id:family_id:class_id` | `(record, four_tuple)`, `(subfamily, four_tuple)` | `12_tesingle_parser.required.py`: 11 record tuples, 8 subfamily tuples, registration joins, BAM `UR` cutoff at 1,000, reverse-strand annotation and duplicate/QC-fail read filtering | Parser supported; executable `TEsingle` absent |
-| TEtranscripts 2.2.4, `e7f9b93` | `record.gtf`, `subfamily.gtf` | `gene_id:family_id:class_id` | `(taxonomy_triple, taxonomy_triple)` | `13_tetranscripts_telocal_parser.required.py`: 8 groups through either GTF, registration joins | Parser supported; executable `TEcount` absent |
-| TElocal 1.1.3, `1a168c2` | `.locInd` built from `record.gtf` by TElocal's own indexer; `subfamily.gtf` supplies subfamily grain | `transcript_id:gene_id:family_id:class_id` | `(record, four_tuple)`, `(subfamily, four_tuple)` | `13_tetranscripts_telocal_parser.required.py`: index construction and the checkout's pickle loader, semantic feature-tuple comparison, registration joins, 11 record or 8 subfamily features; the pickle embeds the GTF path | Parser and index round trip supported; executable `TElocal` absent |
+| IRescue 1.2.0, `26f36fb` | `record.bed`, `subfamily.bed` | BED column 4 | `(record, rmsk_record_id)`, `(subfamily, rmsk_name)` | `10_irescue_parser.required.py`: roster identities and coordinates, 11 record features, 8 names, comma splitting and exporter rejection; `15_irescue_chrcat.py`: real `chrcat` serialization; `20_irescue_exec.sh`: 2 molecules versus 1+1, 4/2 and 3/3 allocation | Identity parser and `chrcat` supported; execution supported with consumer environment |
+| STARsolo 2.7.11b | `record_starsolo.gtf` plus host GTF | `gene_id`; `gene_name` supplies display labels | `(record, record_alias)` under `interspersed/full` | `17_starsolo_profile.required.py`: attributes, namespaces, one-base endpoints, collision preflight; `24_starsolo_exec.sh`: index, Gene/GeneFull matrices, same-name genes, gaps, gene–TE EM conservation | Parser and execution supported with consumer environment |
+| cellranger 10.1.0 | `record_starsolo.gtf` plus host GTF | `gene_id` | `(record, record_alias)` under `interspersed/full` | `25_cellranger_mkref.sh`: `mkgtf` retains TE/host biotypes; `mkref` preserves aliases and creates STAR index | Reference construction supported with consumer environment |
+| Stellarscope 1.5, `0e0d594` | `record.gtf`, `subfamily.gtf` | `locus` for records or subfamilies; `instance_id` in record GTF | `(record, record_alias)`, `(subfamily, rmsk_name)`, `(instance, instance_alias)` | `11_stellarscope_parser.py`: isolated annotation package, 11 records, 10 instances, attributes, registration joins, endpoint gate | Parser exercised; unsupported: right-boundary overlap defect, observed `0,1,1,1`, expected `0,1,1,0`; executable `stellarscope` available through the consumer environment |
+| TEsingle 1.0, `655f127` | `record.gtf`, `subfamily.gtf` | `transcript_id:gene_id:family_id:class_id` | `(record, four_tuple)`, `(subfamily, four_tuple)` | `12_tesingle_parser.required.py`: 11 record tuples, 8 subfamily tuples, registration joins, BAM `UR` cutoff at 1,000, reverse-strand annotation and duplicate/QC-fail read filtering | Parser supported; executable `TEsingle` available through the consumer environment |
+| TEtranscripts 2.2.4, `e7f9b93` | `record.gtf`, `subfamily.gtf` | `gene_id:family_id:class_id` | `(taxonomy_triple, taxonomy_triple)` | `13_tetranscripts_telocal_parser.required.py`: 8 groups through either GTF, registration joins | Parser supported; executable `TEcount` available through the consumer environment |
+| TElocal 1.1.3, `1a168c2` | `.locInd` built from `record.gtf` by TElocal's own indexer; `subfamily.gtf` supplies subfamily grain | `transcript_id:gene_id:family_id:class_id` | `(record, four_tuple)`, `(subfamily, four_tuple)` | `13_tetranscripts_telocal_parser.required.py`: index construction and the checkout's pickle loader, semantic feature-tuple comparison, registration joins, 11 record or 8 subfamily features; the pickle embeds the GTF path | Parser and index round trip supported; executable `TElocal` available through the consumer environment |
 | MATES 0.1.8, `87c1218`, optional adapter | Fixture-only `record_mates.csv` and `record_mates.bed`, eight columns each | Column 5 fixture roster ordinal; column 4 `TE_Name` group; column 7 raw class/family model group | `TE_Name`: `(subfamily, rmsk_name)`; integer index maps through the fixture roster | `14_mates_parser.required.py`: isolated source functions, pair agreement, companion stem, `?`/`Unknown` model filters; minimal `pkg_resources.resource_filename` stand-in | Adapter supported in isolation; installed package depends on `pkg_resources` (setuptools below 82), absent here |
-| featureCounts | `subfamily.saf`, `taxonomy_triple.saf`; fixture `onebase.saf` | SAF `GeneID` | `(subfamily, rmsk_name)`, `(taxonomy_triple, taxonomy_triple)`; `OneBase` is fixture-only | `21_featurecounts_exec.sh`: `-s 0`, shared subfamily and triple features each count 2 fragments; one-base feature counts 1 read | Execution unsupported: `featureCounts` absent |
+| featureCounts | `subfamily.saf`, `taxonomy_triple.saf`; fixture `onebase.saf` | SAF `GeneID` | `(subfamily, rmsk_name)`, `(taxonomy_triple, taxonomy_triple)`; `OneBase` is fixture-only | `21_featurecounts_exec.sh`: `-s 0`, shared subfamily and triple features each count 2 fragments; one-base feature counts 1 read | Execution supported with consumer environment |
 | bedtools 2.31.1 | `record.bed`, `family.bed` | BED column 4 retained by `intersect -wa -wb` | `(record, rmsk_record_id)`, `(family, family_bucket)` | `22_bedtools_exec.required.sh`: equal-coordinate names, right-adjacent query, `-s`/`-S`; `16_family_triple_readers.required.py`: canonical buckets and registration joins | Execution supported |
 | 14761 ATAC route | `exports/<namespace>/all_rmsk/full/record.bed` | BED column 4, `rmsk_record_id` | `(record, rmsk_record_id)` under `all_rmsk` | Core checks 41 and 61: complete catalog, bounds, score clipping, one registered block per record and namespace identity | Export and registration supported |
 | SAF column reader | `taxonomy_triple.saf` | SAF `GeneID` | `(taxonomy_triple, taxonomy_triple)` | `16_family_triple_readers.required.py`: 8 GeneIDs, three `TwoLab` rows sharing one triple, registration joins | Reader supported |
@@ -486,7 +630,7 @@ Checks 11, 15, 20, 21 and 30 report optional support.
 The authored oracle in `tests/fixtures/consumers/expected.json` specifies 11 records, 8 names and
 10 instances. The production taxonomy resolver elects `TwoLab`'s `hAT-Tip100` family by 2:1
 instance plurality; both GTFs retain its raw family labels. The production exporter writes all
-seven exports from those tables. TElocal's loader branch is executed directly from its checkout.
+eight exports from those tables. TElocal's loader branch is executed directly from its checkout.
 
 The FASTA has seed 1729 and contigs `chrA` (5,000 bp) and `chrB` (3,000 bp). The ARC, OCM and
 bulk BAMs each encode eleven molecules: one unique, one repeated, one multimapping, one in the
@@ -498,7 +642,9 @@ and raw `UR`: `unique_a` copy 0 and `duplicate_b` copy 1 have one-base raw error
 in these totals and records flagged query names per BAM. Bulk carries query and mate identities.
 Separate counting fixtures preserve each assay layout and report IRescue's fitted
 allocation in `irescue_allocation.json` when its executable is available.
-The allocation check asserts A = 6.0, B = 3.0 for 4/2 support and A = B = 4.5 for 3/3, within 0.05.
+The allocation check asserts registered identities, unique-molecule floors, upper bounds of
+floor plus three, and a conserved total of nine. The activated environment observes
+5.5/3.5 for 4/2 unique support and 4.5/4.5 for 3/3 in both ARC and OCM fixtures.
 Every tagged fixture BAM carries one barcode, so whitelist, empty-cell and per-barcode threshold behaviour are the consumer's audit.
 
 Stellarscope's endpoint gate expects `0,1,1,0` for the four reads against GTF `101..110`.
@@ -511,11 +657,33 @@ MATES works in `$TE_TRACKS_REFROOT/fixtures/consumers_scratch/mates/` and remove
 The MATES pair is fixture-only, its index is the fixture roster's ordinal, and a MATES release export waits for a named consumer.
 IRescue's five parser `.tsv.gz` files have mtime 0 and an empty gzip filename. TElocal indexes
 are compared by feature tuples across GTF paths.
-The existing registration query remains unsupported through the missing Python module `duckdb`.
+The DuckDB registration query verifies identity joins and conserved count totals.
+
+The STARsolo fixture uses the seeded FASTA, eleven TE records and a two-exon host
+gene. Read 1 carries a 16-base barcode and 12-base UMI; read 2 carries 40-base cDNA.
+The index uses `--genomeSAindexNbases 4 --sjdbOverhang 39`; counting uses
+`--soloType CB_UMI_Simple --soloCBwhitelist None --soloFeatures Gene GeneFull
+--soloMultiMappers EM --soloStrand Unstranded --soloCellFilter None`.
+Two same-name genes each receive one unique molecule. The gap molecule has zero
+TE support, with host support in GeneFull. The exon-overlap fixture conserves
+three molecules: Gene reports one unique molecule per host/TE and EM 1.5/1.5;
+GeneFull reports one unique host molecule and EM 2.98266/0.0173415. The host-intronic
+TE molecule gives Gene TE support 1 and GeneFull EM 0.5/0.5. These allocations are
+recorded in `starsolo_allocation.json`; checks assert identity and conservation.
+The unique matrix and `UniqueAndMult-EM.mtx` are separate outputs; the latter
+already includes unique support.
+
+The combined-annotation preflight requires distinct TE gene and transcript aliases,
+consistent host transcript-to-gene identity, and host IDs outside the reserved
+`R|mm39|` prefix. `cellranger mkgtf` retains `gene_type:transposable_element` and
+`gene_type:protein_coding`; the check pins 3 GB with `mkref --nthreads=1 --memgb=3` and retains all eleven TE
+genes and the host gene. `cellranger count`, chemistry and barcode policy belong
+to the consuming module's recipe. Execution checks report the binary name when
+it is absent from PATH. [RUNBOOK.md](RUNBOOK.md#consumer-environment) gives activation.
 
 ### Phase 6: contig namespaces and qualification
 
-The release supplies eight files per namespace: seven under
+The release supplies nine files per namespace: eight under
 `exports/<namespace>/interspersed/full/` and `record.bed` under
 `exports/<namespace>/all_rmsk/full/`.
 The complete-catalog BED supplies 5,320,771 intervals to the 14761 ATAC route, with
@@ -548,7 +716,7 @@ Stage 35 renames the contig column of each UCSC export through the alias table a
 renamed contig in C-locale byte order, numeric start and end, strand and name.
 Every other field retains its bytes, including UCSC names inside record IDs and GTF aliases.
 The three namespaces share the same feature registrations.
-`tables/exports.tsv` contains the sorted union of all 24 export paths and their measured SHA-256 digests.
+`tables/exports.tsv` contains the sorted union of all 27 export paths and their measured SHA-256 digests.
 
 #### Preflight
 

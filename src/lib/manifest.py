@@ -45,6 +45,12 @@ CORE_PAYLOAD_PATHS = {
 RUN_KEYS = ("rm_version", "rm_library", "rm_run_evidence", "rmsk_out_profile")
 SOURCE_CONFIG = {"rmsk_out": "RMSK_OUT", "rmsk_table": "RMSK_TABLE",
                  "chromAlias": "CHROMALIAS", "chrom_sizes": "CHROM_SIZES"}
+TRACKED_SOURCE_CONFIG = {"dfam_snapshot": "DFAM_SNAPSHOT"}
+SOURCE_LAYOUTS = ({"rmsk_table", "chromAlias", "chrom_sizes"},
+                  set(SOURCE_CONFIG) | set(TRACKED_SOURCE_CONFIG))
+RANK_SCHEME_VERSION = "rank_scheme_wicker_v1"
+DFAM_PAYLOAD_PATHS = {"tables/taxonomy_dfam.tsv", "tables/taxonomy_dfam_models.tsv",
+                      "tables/dfam_lineage_nodes.tsv", "tables/dfam_model_clades.tsv"}
 SPECIES = {"mm39": {"name": "Mus musculus", "taxon_id": 10090}}
 
 
@@ -140,18 +146,42 @@ def read_tsv(path):
 
 
 def source_path(source):
-    return relative_path("source/" + PurePosixPath(urlsplit(source["url"]).path).name)
+    path = source["path"] if "path" in source else urlsplit(source["url"]).path
+    return relative_path("source/" + PurePosixPath(path).name)
 
 
-def sources_from_payload(build_dir, sources, entries, roles):
+def sources_from_payload(build_dir, sources, entries, roles, tracked_metadata=None):
     """Bind declared source roles to their observed bytes and digests."""
     by_path = {entry["path"]: entry for entry in entries}
     observed = {}
-    require(set(sources["sources"]) == set(SOURCE_CONFIG), "source/SOURCES.json: source roles differ")
+    declared = set(sources["sources"])
+    require(set(SOURCE_CONFIG) <= declared <= set(SOURCE_CONFIG) | set(TRACKED_SOURCE_CONFIG),
+            "source/SOURCES.json: source roles differ")
     for role in roles:
         source = sources["sources"][role]
         path = source_path(source)
         item = by_path[path]
+        if role in TRACKED_SOURCE_CONFIG:
+            relative_path(source["path"])
+            require(set(source) == {"path", "sha256", "bytes"}, f"{role}: source fields differ")
+            require(item["sha256"] == source["sha256"], f"{path}: source sha256 mismatch")
+            require(item["bytes"] == source["bytes"], f"{path}: source byte count mismatch")
+            with gzip.open(build_dir / path, "rt") as stream:
+                snapshot = json.load(stream)
+            retained = provenance_path(build_dir / path)
+            metadata = tracked_provenance(build_dir / path) if retained.is_file() else tracked_metadata[role]
+            if retained.is_file():
+                require(metadata["file_sha256"] == item["sha256"], f"{role}: provenance sha256 differs")
+                require(metadata["dfam_version"] == snapshot["version"], f"{role}: provenance dfam_version differs")
+                with gzip.open(build_dir / path, "rb") as stream:
+                    payload_digest = hashlib.file_digest(stream, "sha256").hexdigest()
+                require(metadata["payload_sha256"] == payload_digest, f"{role}: provenance payload sha256 differs")
+            finished = metadata["fetch_finished"]
+            require(isinstance(finished, str) and finished.endswith("Z"), f"{role}: invalid fetch_finished")
+            datetime.fromisoformat(finished.replace("Z", "+00:00"))
+            observed[role] = {**source, "dfam_version": snapshot["version"]["dfam_version"],
+                              "fetch_finished": finished}
+            continue
         md5 = digest_file(build_dir / path, "md5")
         require(md5 == source["md5"], f"{path}: source md5 mismatch")
         require(item["bytes"] == source["bytes"], f"{path}: source byte count mismatch")
@@ -316,6 +346,8 @@ def verify_child_identity(build_dir, identity, entries, parent, parent_dir):
     from gene_child import COPIED_INPUTS, CHILD_UNIVERSES, validate_policy
     for key in INHERITED_KEYS:
         require(identity[key] == parent[key], f"child inherited {key} differs from parent")
+    require(identity.get("rank_scheme_version") == parent.get("rank_scheme_version"),
+            "child inherited rank_scheme_version differs from parent")
     require((build_dir / "CATALOG_ID").read_bytes() == (parent_dir / "CATALOG_ID").read_bytes(),
             "child CATALOG_ID bytes differ from parent")
     sources = read_json(build_dir / "source/SOURCES.json")
@@ -355,6 +387,8 @@ def child_identity_from_payload(build_dir, config, entries, lines, parent_dir=No
     parent_dir, parent = resolve_parent(build_dir, identity, parent_dir, root)
     require(identity["assembly"] == parent["assembly"], "configured child assembly differs from parent")
     identity.update({key: parent[key] for key in INHERITED_KEYS})
+    if "rank_scheme_version" in parent:
+        identity["rank_scheme_version"] = parent["rank_scheme_version"]
     source = child_sources(build_dir, sources, entries)
     require(source["url"] == config["GENE_GTF_URL"] and source["md5"] == config["GENE_GTF_MD5"],
             "configured gene_gtf differs")
@@ -376,12 +410,21 @@ def config_values(path):
     keys = ["GENOME", "ASSEMBLY", "GENOME_FA_URL", "GENOME_FA_MD5",
             *(key.upper() for key in RUN_KEYS),
             *(prefix + suffix for prefix in SOURCE_CONFIG.values() for suffix in ("_URL", "_MD5")), *CHILD_CONFIG_KEYS]
+    keys += [prefix + suffix for prefix in TRACKED_SOURCE_CONFIG.values() for suffix in ("_PATH", "_SHA256")]
     command = 'unset FAMILY; source "$1"; shift; for key in "$@"; do printf "%s\\0" "${!key-}"; done'
     result = subprocess.run(["bash", "-eu", "-c", command, "manifest-config", str(Path(path).resolve()),
                              *keys], check=True, stdout=subprocess.PIPE)
     values = result.stdout.decode().split("\0")[:-1]
     require(len(keys) == len(values), f"invalid config: {path}")
     return dict(zip(keys, values))
+
+
+def provenance_path(path):
+    return Path(path).with_suffix("").with_suffix(".provenance.json")
+
+
+def tracked_provenance(path):
+    return read_json(provenance_path(path))
 
 
 def identity_from_payload(build_dir, config, entries, lines, parent_dir=None, root=None):
@@ -393,6 +436,10 @@ def identity_from_payload(build_dir, config, entries, lines, parent_dir=None, ro
             "unsupported taxonomy_rule_version")
     expected_paths = CORE_PAYLOAD_PATHS | {
         source_path({"url": config[prefix + "_URL"]}) for prefix in SOURCE_CONFIG.values()}
+    expected_paths |= DFAM_PAYLOAD_PATHS | {
+        source_path({"path": config[prefix + "_PATH"]}) for prefix in TRACKED_SOURCE_CONFIG.values()}
+    expected_paths |= {provenance_path(source_path({"path": config[prefix + "_PATH"]})).as_posix()
+                       for prefix in TRACKED_SOURCE_CONFIG.values()}
     observed_paths = {entry["path"] for entry in entries if not entry["path"].startswith("exports/")}
     require(observed_paths == expected_paths,
             f"payload roster differs: {sorted(observed_paths ^ expected_paths)}")
@@ -407,12 +454,20 @@ def identity_from_payload(build_dir, config, entries, lines, parent_dir=None, ro
         for field in ("url", "md5"):
             require(sources["sources"][role][field] == config[prefix + "_" + field.upper()],
                     f"source/SOURCES.json: configured {role} {field} differs")
+    tracked_metadata = {}
+    for role, prefix in TRACKED_SOURCE_CONFIG.items():
+        for field in ("path", "sha256"):
+            require(sources["sources"][role][field] == config[prefix + "_" + field.upper()],
+                    f"source/SOURCES.json: configured {role} {field} differs")
+        tracked_metadata[role] = tracked_provenance(build_dir / source_path(sources["sources"][role]))
+        require(tracked_metadata[role]["file_sha256"] == sources["sources"][role]["sha256"],
+                f"{role}: provenance sha256 differs")
     declared = {"genome_fa_url": config["GENOME_FA_URL"],
                 "genome_fa_md5": config["GENOME_FA_MD5"], "status": "declared"}
     require(sources["declared_assembly"] == declared, "source/SOURCES.json: declared assembly differs")
     catalog = catalog_from_payload(build_dir, sources, entries)
     build_sources = sources_from_payload(build_dir, sources, entries,
-                                         ("rmsk_table", "chromAlias", "chrom_sizes"))
+                                         (*SOURCE_CONFIG, *TRACKED_SOURCE_CONFIG), tracked_metadata)
     return {
         "schema_version": SCHEMA_VERSION, "family": f"te_{genome}", "species": SPECIES[genome],
         "assembly": {"ucsc": genome, "name": config["ASSEMBLY"]}, "declared_assembly": declared,
@@ -420,6 +475,7 @@ def identity_from_payload(build_dir, config, entries, lines, parent_dir=None, ro
         "build_sources": build_sources,
         "universes": read_json(build_dir / "universes.json"),
         "taxonomy_rule_version": TAXONOMY_RULE_VERSION,
+        "rank_scheme_version": RANK_SCHEME_VERSION,
         "export_contracts": export_contracts(build_dir, entries, lines),
         "parent_build_id": None, "parent_catalog_id": None, "inventory": entries,
     }
@@ -446,6 +502,9 @@ def provenance(sources, argv):
                            capture_output=True, text=True, env=env)
     acquisitions = {}
     for role, source in sources.items():
+        if "path" in source:
+            acquisitions[role] = source["path"]
+            continue
         cache = os.environ.get("TE_TRACKS_SOURCE_CACHE")
         candidate = Path(cache) / Path(source_path(source)).name if cache else None
         acquisitions[role] = (str(candidate.resolve()) if candidate and candidate.is_file()
@@ -523,6 +582,9 @@ def verify_build(build_dir, emit=print, parent_dir=None, root=None):
     is_child = identity.get("parent_build_id") is not None or identity.get("parent_catalog_id") is not None
     if is_child:
         required |= CHILD_IDENTITY_KEYS
+    if "rank_scheme_version" in identity:
+        required.add("rank_scheme_version")
+        require(identity["rank_scheme_version"] == RANK_SCHEME_VERSION, "unsupported rank_scheme_version")
     require(set(identity) == required, "MANIFEST.json: identity fields differ")
     expected = identity["inventory"]
     for item in expected:
@@ -559,8 +621,24 @@ def verify_build(build_dir, emit=print, parent_dir=None, root=None):
     sources = read_json(build_dir / "source/SOURCES.json")
     require(identity["catalog"] == catalog_from_payload(build_dir, sources, entries),
             "identity.catalog differs from source/SOURCES.json or canonical table digests")
-    require(identity["build_sources"] == sources_from_payload(
-        build_dir, sources, entries, ("rmsk_table", "chromAlias", "chrom_sizes")),
+    roles = set(identity["build_sources"])
+    tracked_roles = set(sources["sources"]) & set(TRACKED_SOURCE_CONFIG)
+    require(roles in SOURCE_LAYOUTS
+            and roles & set(TRACKED_SOURCE_CONFIG) == tracked_roles, "identity.build_sources: source roles differ")
+    expected_payload = CORE_PAYLOAD_PATHS | {source_path(source) for source in sources["sources"].values()}
+    if "dfam_snapshot" in tracked_roles:
+        expected_payload |= DFAM_PAYLOAD_PATHS
+        if "rank_scheme_version" in identity:
+            expected_payload |= {provenance_path(source_path(sources["sources"][role])).as_posix()
+                                 for role in tracked_roles}
+    observed_payload = {entry["path"] for entry in entries if not entry["path"].startswith("exports/")}
+    require(observed_payload == expected_payload,
+            f"payload roster differs: {sorted(observed_payload ^ expected_payload)}")
+    observed_sources = sources_from_payload(build_dir, sources, entries, sorted(roles), identity["build_sources"])
+    for role in tracked_roles:
+        require(identity["build_sources"][role]["fetch_finished"] == observed_sources[role]["fetch_finished"],
+                f"{role}: fetch_finished differs from retained provenance")
+    require(identity["build_sources"] == observed_sources,
         "identity.build_sources differs from source/SOURCES.json or inventory")
     require(identity["assembly"] == {"ucsc": sources["genome"], "name": sources["assembly"]},
             "identity.assembly differs from source/SOURCES.json")

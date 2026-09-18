@@ -145,11 +145,11 @@ def main():
         f"exports/{namespace}/interspersed/full/{name}"
         for namespace in ("ucsc", "ensembl", "gencode") for name in shape.FILES
     } | {f"exports/{namespace}/all_rmsk/full/record.bed" for namespace in ("ucsc", "ensembl", "gencode")}
-    assert len(inventory) == 24
+    assert len(inventory) == 27
     assert inventory.export_path.tolist() == sorted(actual_paths)
     for row in inventory.itertuples(index=False):
         path = BUILD / row.export_path
-        level = path.stem
+        level = "record" if path.name == "record_starsolo.gtf" else path.stem
         assert row.namespace in {"ucsc", "ensembl", "gencode"}
         assert row.universe_name in {"interspersed", "all_rmsk"}
         assert row.export_path == f"exports/{row.namespace}/{row.universe_name}/full/{path.name}"
@@ -206,11 +206,15 @@ def main():
                         attributes["gene_id"] + "|" + chunk[0].map(to_ucsc) + ":" + chunk[3] + "-" + chunk[4] + "|" + chunk[6])
                 members = record_index.get_indexer(keys)
                 assert (members >= 0).all(), (path, "GTF record membership")
+                if path.name == "record_starsolo.gtf":
+                    shape.equal(attributes["gene_id"], identities[1][members], (path, "registered gene_id"))
+                    shape.equal(attributes["transcript_id"], identities[1][members], (path, "registered transcript_id"))
                 composed = (attributes["transcript_id"] + ":" + attributes["gene_id"] + ":"
                             + attributes["family_id"] + ":" + attributes["class_id"])
                 tuple_slot = slot_index.get_loc((level, "four_tuple"))
-                shape.equal(composed, identities[tuple_slot][members], (path, "registered four-tuple"))
-                assert (counts[tuple_slot, members] == 1).all(), path
+                if path.name != "record_starsolo.gtf":
+                    shape.equal(composed, identities[tuple_slot][members], (path, "registered four-tuple"))
+                    assert (counts[tuple_slot, members] == 1).all(), path
                 if level == "record":
                     shape.equal(attributes["instance_id"], identities[7][members],
                                 (path, "registered instance"))
@@ -222,7 +226,7 @@ def main():
         assert seen.all() and seen.sum() == row.distinct_features, path
     conservation(pd.concat(conservation_rows, ignore_index=True))
     print(f"registrations: interspersed={rows} all_rmsk={all_rows}; eight interspersed ID spellings; instances={instance_count}; "
-          "24 inventory hashes, feature sets and GTF tuple/instance joins pass; "
+          "27 inventory hashes, feature sets and GTF tuple/instance joins pass; "
           "three record grammars; count 7 stays 7 at record, subfamily and family levels")
 
 

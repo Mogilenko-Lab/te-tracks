@@ -15,7 +15,7 @@ from records import BUILD, KEY, require
 
 
 DIRECTORY = "exports/ucsc/interspersed/full"
-FILES = ["record.bed", "subfamily.bed", "family.bed", "record.gtf", "subfamily.gtf",
+FILES = ["record.bed", "subfamily.bed", "family.bed", "record.gtf", "record_starsolo.gtf", "subfamily.gtf",
          "subfamily.saf", "taxonomy_triple.saf"]
 ALPHABET = r"[A-Za-z0-9_.+?()|:/-]+"
 ATTRIBUTES = ["gene_id", "transcript_id", "locus", "family_id", "class_id",
@@ -103,22 +103,28 @@ def main():
                 assert chunk["source"].eq("te-tracks").all(), filename
                 assert chunk["type"].eq("exon").all() and chunk["frame"].eq(".").all(), filename
                 equal(chunk["score"], expected["sw_score"], filename)
-                keys = ATTRIBUTES + (["instance_id", "rmsk_record_id"]
-                                     if filename == "record.gtf" else [])
+                keys = (["gene_id", "transcript_id", "gene_name", "gene_type", "locus", "rmsk_name",
+                         "family_id", "class_id", "rmsk_family", "rmsk_class", "instance_id", "rmsk_record_id"]
+                        if filename == "record_starsolo.gtf" else ATTRIBUTES + (["instance_id", "rmsk_record_id"]
+                                     if filename == "record.gtf" else []))
                 pattern = " ".join(f'{key} "({ALPHABET})";' for key in keys)
                 values = chunk["attributes"].str.extract("^" + pattern + "$", expand=True)
                 assert values.notna().all().all(), (filename, "attribute grammar", offset)
                 values.columns = keys
-                identity = "alias" if filename == "record.gtf" else "rmsk_name"
-                for attribute, column in (("gene_id", "rmsk_name"), ("transcript_id", identity),
+                identity = "alias" if filename.startswith("record") else "rmsk_name"
+                for attribute, column in (("gene_id", "alias" if filename == "record_starsolo.gtf" else "rmsk_name"), ("transcript_id", identity),
                                           ("locus", identity), ("family_id", "family"),
                                           ("class_id", "class"), ("rmsk_family", "rmsk_family"),
                                           ("rmsk_class", "rmsk_class")):
                     equal(values[attribute], expected[column], (filename, attribute, offset))
-                if filename == "record.gtf":
+                if filename.startswith("record"):
                     equal(values["rmsk_record_id"], expected["rmsk_record_id"], filename)
                     equal(values["instance_id"], "I|mm39|" + expected["rmsk_instance_id"], filename)
-                else:
+                if filename == "record_starsolo.gtf":
+                    equal(values["gene_name"], expected["rmsk_name"], filename)
+                    equal(values["rmsk_name"], expected["rmsk_name"], filename)
+                    assert values["gene_type"].eq("transposable_element").all()
+                if filename != "record.gtf":
                     equal(values["transcript_id"], values["gene_id"], filename)
                 for position in sorted(sample.intersection(range(offset, offset + len(chunk)))):
                     attributes = chunk.at[position - offset, "attributes"]
@@ -127,7 +133,7 @@ def main():
                     assert " ".join(f'{key} "{value}";' for key, value in parsed) == attributes
                 chunk["feature"] = values["locus"]
             assert chunk["feature"].str.fullmatch(ALPHABET).all(), filename
-            if not filename.startswith("record."):
+            if not filename.startswith("record"):
                 distinct.update(chunk["feature"])
             offset += len(chunk)
         assert offset == 3_764_949, (filename, offset)
@@ -135,7 +141,7 @@ def main():
     assert features["subfamily.bed"] == features["subfamily.gtf"] == features["subfamily.saf"] == 1220
     assert features["taxonomy_triple.saf"] == 1220
     assert features["family.bed"] == records["family_feature"].nunique()
-    print(f"seven exports: 3764949 rows each; subfamilies=1220 "
+    print(f"eight exports: 3764949 rows each; subfamilies=1220 "
           f"families={features['family.bed']} taxonomy_triples=1220; coordinates and identifiers pass")
 
 

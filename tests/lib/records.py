@@ -50,3 +50,19 @@ def read_tsv(path, schema):
     assert table.schema.equals(schema, check_metadata=False), (path, table.schema, schema)
     assert all(column.null_count == 0 for column in table.columns), path
     return table
+
+
+DFAM_COLUMNS = [
+    "rmsk_name", "rmsk_class", "rmsk_family", "canonical_class", "canonical_family", "record_count",
+    "match_status", "dfam_accessions", "dfam_model_names", "dfam_model_versions", "dfam_model_lengths_bp",
+    "available_part_count", "part_roles_present", "model_length_sum_bp", "classification_path",
+    "classification_leaf", "clades", "clade_count", "clade_leaves", "clade_compatibility", "dfam_release", "wicker_code",
+    "wicker_code_uncertain", "wicker_class", "wicker_class_status", "wicker_subclass", "wicker_subclass_status",
+    "wicker_order", "wicker_order_status", "wicker_superfamily", "wicker_superfamily_status",
+    "wicker_family", "wicker_family_status", "subfamily", "subfamily_status", "dfam_repeat_type", "dfam_repeat_subtype",
+]
+DFAM_MODEL_COLUMNS = ["rmsk_name", "role", "accession", "model_name", "model_version", "model_length_bp",
+                      "classification_path", "clades", "repeat_type", "repeat_subtype"]
+DFAM_NODE_COLUMNS = ["full_path", "parent_path", "name", "depth", "wicker_code", "repeatmasker_type",
+                     "repeatmasker_subtype", "family_count"]
+DFAM_CLADE_COLUMNS = ["accession", "clade_path", "clade_leaf"]

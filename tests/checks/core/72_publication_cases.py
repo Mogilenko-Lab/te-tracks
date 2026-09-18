@@ -84,7 +84,7 @@ with TemporaryDirectory(prefix="cases-", dir=SCRATCH) as directory:
         release("verify-current", message=evolution_a_id)
         assert current.readlink() == Path("archive") / evolution_a_id
         assert catalog(archive / evolution_a_id) == catalog(archive / evolution_b_id) == first_catalog
-        for value, count in ((evolution_a_id, 24), (evolution_b_id, 27)):
+        for value, count in ((evolution_a_id, 27), (evolution_b_id, 30)):
             declared = json.loads((archive / value / "MANIFEST.json").read_text())
             assert len(declared["identity"]["export_contracts"]) == count
         assert len(list(archive.iterdir())) == 4
@@ -93,6 +93,16 @@ with TemporaryDirectory(prefix="cases-", dir=SCRATCH) as directory:
         (bad / "source/qualification.md").write_text("corrupt\n")
         release("install", "--staging", bad, "--select", status=1, message="source/qualification.md")
         assert bad.exists() and current.readlink() == Path("archive") / second_id
+        interrupted = make_build(family, note="interrupted")
+        (interrupted / "MANIFEST.json").unlink()
+        (interrupted / "tables/taxonomy_dfam.tsv").write_bytes(b"rmsk_name\t")
+        selected_before = current.readlink()
+        archives_before_failure = set(archive.iterdir())
+        release("install", "--staging", interrupted, "--select", status=1, message="MANIFEST.json")
+        assert interrupted.is_dir() and current.readlink() == selected_before
+        assert set(archive.iterdir()) == archives_before_failure
+        shutil.rmtree(interrupted)
+        assert not interrupted.exists()
         candidates = [make_build(family, note="concurrent") for _ in range(2)]
         race_id = identifier(candidates[0])
         assert identifier(candidates[1]) == race_id
@@ -244,6 +254,6 @@ with TemporaryDirectory(prefix="cases-", dir=SCRATCH) as directory:
         assert old.is_dir() and identifier(old) == first_id
     finally:
         writable(root)
-print("identical and changed builds, export-roster evolution (4 archives), failed verification, "
+print("identical and changed builds, export-roster evolution (4 archives), failed verification and interrupted staging cleanup, "
       "concurrent installs/selects (5 archives), old IDs, forged ID, corrupt current, selector and root cases, "
       "occupied targets, symlinks and 0444/0555 modes pass")

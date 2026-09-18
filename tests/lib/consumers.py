@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import random
+import re
 import shutil
 import subprocess
 import sys
@@ -19,12 +20,12 @@ import traceback
 sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[2]
 CHECKOUTS = ROOT.parent / ".ref"
-FIXTURES = Path(os.environ.get(
+FIXTURES = Path(os.environ.get("TE_TRACKS_CONSUMER_FIXTURES", str(Path(os.environ.get(
     "TE_TRACKS_REFROOT", "/workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot"
-)).resolve() / "fixtures/consumers"
+)).resolve() / "fixtures/consumers")))
 EXPECTED = json.loads((ROOT / "tests/fixtures/consumers/expected.json").read_text())
 TOOLS = ("irescue", "featureCounts", "stellarscope", "TEsingle", "TEcount", "TElocal",
-         "bedtools", "samtools")
+         "bedtools", "samtools", "STAR", "cellranger")
 CONTIGS = {"chrA": 5000, "chrB": 3000}
 CELL = "ACGTACGTACGTACGT-1"
 ROSTER = [
@@ -541,45 +542,358 @@ def featurecounts_check():
     return "-s 0; two fragments per subfamily and triple SAF feature; inclusive one-base overlap"
 
 
-def irescue_check():
+def refused_case(check, message):
+    """Require a replay to fail with its named discrepancy."""
+    try:
+        check()
+    except AssertionError as error:
+        assert message in str(error), str(error)
+    else:
+        raise AssertionError(f"accepted corrupt replay: {message}")
+    return message
+
+
+def irescue_counts(counts_dir, expected_total):
+    """Bind matrix dimensions, feature identities and mass before reducing counts."""
     import numpy as np
     from scipy.io import mmread
 
+    with gzip.open(counts_dir / "features.tsv.gz", "rt") as handle:
+        features = [line.rstrip().split("\t") for line in handle]
+    assert all(row[0] == row[1] for row in features), features
+    with gzip.open(counts_dir / "barcodes.tsv.gz", "rt") as handle:
+        barcodes = handle.read().splitlines()
+    matrix = mmread(counts_dir / "matrix.mtx.gz")
+    assert matrix.shape == (len(features), len(barcodes)), "IRescue matrix dimensions differ from rosters"
+    assert len({row[0] for row in features}) == len(features), "IRescue duplicate feature name"
+    assert np.isclose(matrix.sum(), expected_total), "IRescue matrix molecule total differs from fixture"
+    assert barcodes == [CELL]
+    counts = np.asarray(matrix.sum(axis=1)).ravel()
+    return dict(zip((row[0] for row in features), counts))
+
+
+def irescue_check():
+    import numpy as np
+    from scipy.io import mmread, mmwrite
+    from scipy.sparse import csr_matrix, vstack
+
     build_fixture()
+    manifest = json.loads((FIXTURES / "bam_manifest.json").read_text())
+
+    def molecule_total(bam, bed):
+        intervals = [line.split("\t")[:3] for line in export_path(bed).read_text().splitlines()]
+        return len({mol["umi"] for mol in manifest[bam]["molecules"]
+                    if any(chrom == site[0] and int(start) < site[1] + site[2] and site[1] < int(end)
+                           for site in mol["sites"] for chrom, start, end in intervals)})
 
     def quantify(bam, bed, label):
         output = FIXTURES / label
         command(["irescue", "-b", FIXTURES / bam, "-r", export_path(bed), "-o", output,
                  "-u", "UB", "-p", "1", "--locus-level", "disabled", "--strandedness", "unstranded"])
-        counts_dir = output / "counts"
-        with gzip.open(counts_dir / "features.tsv.gz", "rt") as handle:
-            features = [line.rstrip().split("\t") for line in handle]
-        assert all(row[0] == row[1] for row in features), features
-        with gzip.open(counts_dir / "barcodes.tsv.gz", "rt") as handle:
-            assert handle.read().splitlines() == [CELL]
-        counts = np.asarray(mmread(counts_dir / "matrix.mtx.gz").sum(axis=1)).ravel()
-        return dict(zip((row[0] for row in features), counts))
+        return irescue_counts(output / "counts", molecule_total(bam, bed))
 
     allocation = {}
+    registered = assert_registered({record_key(row) for row in ROSTER}, "record", "rmsk_record_id")
+    registered_names = assert_registered({row[4] for row in ROSTER}, "subfamily", "rmsk_name")
     for layout in ("arc", "ocm"):
         subfamily = quantify(f"irescue_simple_{layout}.bam", "subfamily.bed", f"irescue_{layout}_subfamily")
         records = quantify(f"irescue_simple_{layout}.bam", "record.bed", f"irescue_{layout}_record")
         assert subfamily == {"SubA": 2}, subfamily
+        assert set(subfamily) <= set(registered_names) and set(records) <= set(registered)
         keys = [record_key(row) for row in ROSTER if row[4] == "SubA"]
         assert records == dict.fromkeys(keys, 1), records
         for left, right in ((4, 2), (3, 3)):
             counts = quantify(f"allocation_{left}_{right}_{layout}.bam", "record.bed",
                               f"irescue_{layout}_allocation_{left}_{right}")
-            assert set(counts) == set(keys), counts
+            assert set(counts) == set(keys) and set(counts) <= set(registered), counts
             x = float(counts[keys[0]] - left)
             assert -1e-6 <= x <= 3 + 1e-6, counts
             assert np.isclose(counts[keys[1]], right + (3 - x)) and np.isclose(sum(counts.values()), 9), counts
-            fixed_point = (6.0, 3.0) if (left, right) == (4, 2) else (4.5, 4.5)
-            assert np.allclose([counts[key] for key in keys], fixed_point, atol=0.05, rtol=0), counts
+            assert all(floor - 1e-6 <= counts[key] <= floor + 3 + 1e-6
+                       for key, floor in zip(keys, (left, right))), counts
             allocation[f"{layout}_{left}_{right}"] = {"A": float(counts[keys[0]]),
                                                        "B": float(counts[keys[1]]), "EM_x": x}
     (FIXTURES / "irescue_allocation.json").write_text(json.dumps(allocation, indent=2) + "\n")
-    return "SubA=2, records=1+1; " + json.dumps(allocation, sort_keys=True)
+    source = FIXTURES / "irescue_arc_allocation_4_2/counts"
+    refusals = []
+    for label, message in (("extra_row", "IRescue matrix dimensions differ from rosters"),
+                            ("duplicate_feature", "IRescue duplicate feature name")):
+        replay = FIXTURES / ("irescue_replay_" + label)
+        if replay.exists():
+            shutil.rmtree(replay)
+        shutil.copytree(source, replay)
+        matrix = mmread(replay / "matrix.mtx.gz")
+        added = csr_matrix([[100]])
+        matrix = vstack([added, matrix] if label == "duplicate_feature" else [matrix, added])
+        with gzip.open(replay / "matrix.mtx.gz", "wb") as stream:
+            mmwrite(stream, matrix)
+        if label == "duplicate_feature":
+            with gzip.open(replay / "features.tsv.gz", "rt") as stream:
+                lines = stream.readlines()
+            with gzip.open(replay / "features.tsv.gz", "wt") as stream:
+                stream.writelines([lines[0], *lines])
+        refusals.append(refused_case(lambda: irescue_counts(
+            replay, molecule_total("allocation_4_2_arc.bam", "record.bed")), message))
+    return "SubA=2, records=1+1; refused: " + "; ".join(refusals) + "; " + json.dumps(allocation, sort_keys=True)
+
+
+STARSOLO_ATTRIBUTES = ["gene_id", "transcript_id", "gene_name", "gene_type", "locus", "rmsk_name",
+                       "family_id", "class_id", "rmsk_family", "rmsk_class", "instance_id", "rmsk_record_id"]
+
+
+def gtf_rows(path):
+    """Parse nine-column GTF rows with ordered, completely consumed attributes."""
+    opener = gzip.open if str(path).endswith(".gz") else open
+    with opener(path, "rt") as stream:
+        for line in stream:
+            if line.startswith("#"):
+                continue
+            fields = line.rstrip("\n").split("\t")
+            assert len(fields) == 9, (path, fields)
+            pairs = re.findall(r'(\w+) "([^"\n]*)";', fields[8])
+            assert " ".join(f'{key} "{value}";' for key, value in pairs) == fields[8], path
+            assert len(dict(pairs)) == len(pairs), path
+            yield fields, dict(pairs)
+
+
+def combined_gtf_preflight(host, te):
+    """Require distinct host and TE identities and reserve record-alias prefixes."""
+    te_rows = list(gtf_rows(te))
+    genes = {a["gene_id"] for _, a in te_rows}
+    transcripts = {a["transcript_id"] for _, a in te_rows}
+    assert len(genes) == len(transcripts) == len(te_rows)
+    transcript_genes = {}
+    for _, attributes in gtf_rows(host):
+        for key, values in (("gene_id", genes), ("transcript_id", transcripts)):
+            value = attributes[key]
+            if value in values:
+                raise ValueError(f"host {key} collides with TE alias: {value}")
+            if value.startswith("R|mm39|"):
+                raise ValueError(f"host {key} uses reserved R|mm39| prefix: {value}")
+        transcript, gene = attributes["transcript_id"], attributes["gene_id"]
+        if transcript in transcript_genes and transcript_genes[transcript] != gene:
+            raise ValueError(f"host transcript maps to several genes: {transcript}")
+        transcript_genes[transcript] = gene
+
+
+def starsolo_profile_check():
+    build_fixture()
+    from contigs import rename_export
+    path = export_path("record_starsolo.gtf")
+    assert declared_key(path.name, "STARsolo") == declared_key(path.name, "cellranger") == "gene_id"
+    observed = list(gtf_rows(path))
+    assert len(observed) == len(ROSTER)
+    expected = {record_alias(row): row for row in ROSTER}
+    for fields, attributes in observed:
+        assert list(attributes) == STARSOLO_ATTRIBUTES
+        gene = attributes["gene_id"]
+        row = expected[gene]
+        assert gene == attributes["transcript_id"] == attributes["locus"]
+        assert attributes["gene_name"] == attributes["rmsk_name"] == row[4]
+        assert attributes["gene_type"] == "transposable_element"
+        assert attributes["rmsk_record_id"] == record_key(row)
+        assert (fields[0], int(fields[3]), int(fields[4]), fields[6]) == row[:4]
+    assert_registered([a["gene_id"] for _, a in observed], "record", "record_alias")
+    suba = [a for _, a in observed if a["gene_name"] == "SubA"]
+    assert len(suba) == len({a["gene_id"] for a in suba}) == 2
+    edge = next(fields for fields, a in observed if a["gene_name"] == "Edge")
+    left, right = int(edge[3]) - 1, int(edge[4])
+    assert [int(left <= p < right) for p in (99, 100, 109, 110)] == [0, 1, 1, 0]
+    onebase = FIXTURES / "starsolo_onebase.gtf"
+    onebase.write_text((ROOT / "tests/fixtures/exports/expected/record_starsolo.gtf").read_text().splitlines()[0] + "\n")
+    for namespace, mapping in (("ensembl", {"chrA": "A", "chrB": "B"}),
+                               ("gencode", {"chrA": "CM_A.1", "chrB": "CM_B.1"})):
+        target = FIXTURES / f"starsolo_{namespace}.gtf"
+        rename_export(path, target, mapping)
+        renamed = {a["gene_id"]: (f, a) for f, a in gtf_rows(target)}
+        for original, a in observed:
+            fields, attributes = renamed[a["gene_id"]]
+            assert fields == [mapping[original[0]], *original[1:]] and attributes == a
+        rename_export(onebase, target, {"chr10": "10" if namespace == "ensembl" else "chr10"})
+        fields, _ = next(gtf_rows(target))
+        assert fields[3:5] == ["1", "1"]
+    fixtures = ROOT / "tests/fixtures/consumers"
+    combined_gtf_preflight(fixtures / "starsolo_host.gtf", path)
+    for filename, message in (("starsolo_collision.gtf", "host gene_id collides with TE alias"),
+                               ("starsolo_reserved.gtf", "host gene_id uses reserved R|mm39| prefix")):
+        try:
+            combined_gtf_preflight(fixtures / filename, path)
+        except ValueError as error:
+            assert message in str(error), str(error)
+        else:
+            raise AssertionError(f"accepted collision fixture: {filename}")
+    return "12 ordered attributes; 11 record genes; same-name separation, registration, namespaces, one-base endpoints and host collisions pass"
+
+
+def combined_fixture():
+    build_fixture()
+    host = ROOT / "tests/fixtures/consumers/starsolo_host.gtf"
+    te = export_path("record_starsolo.gtf")
+    combined_gtf_preflight(host, te)
+    combined = FIXTURES / "starsolo_combined.gtf"
+    combined.write_bytes(host.read_bytes() + te.read_bytes())
+    return combined
+
+
+def starsolo_support(raw, selected, combined, feature):
+    """Conserve fixture molecules within their supported genes for each counting mode."""
+    import numpy as np
+    from scipy.io import mmread
+
+    intervals = {}
+    for fields, attrs in gtf_rows(combined):
+        intervals.setdefault((attrs["gene_id"], fields[0]), []).append((int(fields[3]) - 1, int(fields[4])))
+    if feature == "GeneFull":
+        intervals = {key: [(min(a for a, _ in spans), max(b for _, b in spans))]
+                     for key, spans in intervals.items()}
+    supports = [{gene for (gene, chrom), spans in intervals.items() if chrom == mol["chrom"]
+                 and any(start < int(mol["start_0"]) + int(mol["read_length"]) and int(mol["start_0"]) < end
+                         for start, end in spans)} for mol in selected]
+    allowed = set().union(*supports)
+    features = [line.split("\t")[0] for line in (raw / "features.tsv").read_text().splitlines()]
+    for filename, total in (("matrix.mtx", sum(len(s) == 1 for s in supports)),
+                             ("UniqueAndMult-EM.mtx", sum(bool(s) for s in supports))):
+        matrix = mmread(raw / filename)
+        assert matrix.shape[0] == len(features), "STARsolo matrix rows differ from features"
+        values = np.asarray(matrix.sum(axis=1)).ravel()
+        assert np.isfinite(values).all() and (values >= 0).all()
+        active = {gene for gene, value in zip(features, values) if value != 0}
+        assert active <= allowed, f"STARsolo support outside fixture genes: {feature} {filename}: {sorted(active - allowed)}"
+        assert np.isclose(sum(value for gene, value in zip(features, values) if gene in allowed), total), (
+            f"STARsolo supported molecule total differs from fixture: {feature} {filename}")
+
+
+def starsolo_check():
+    import numpy as np
+    import pysam
+    from scipy.io import mmread, mmwrite
+
+    combined = combined_fixture()
+    with (ROOT / "tests/fixtures/consumers/starsolo_molecules.tsv").open() as stream:
+        molecules = list(csv.DictReader(stream, delimiter="\t"))
+    lengths = {int(m["read_length"]) for m in molecules}
+    assert len(lengths) == 1
+    read_length = lengths.pop()
+    index = FIXTURES / "starsolo_index"
+    if index.exists():
+        shutil.rmtree(index)
+    index.mkdir()
+    command(["STAR", "--runMode", "genomeGenerate", "--runThreadN", "1", "--genomeDir", index,
+             "--genomeFastaFiles", FIXTURES / "reference.fa", "--sjdbGTFfile", combined,
+             "--genomeSAindexNbases", "4", "--sjdbOverhang", str(read_length - 1),
+             "--outFileNamePrefix", str(index) + "/"])
+    expected = {record_alias(row): row[4] for row in ROSTER}
+    observations = {}
+    with pysam.FastaFile(str(FIXTURES / "reference.fa")) as fasta:
+        for case in dict.fromkeys(m["case"] for m in molecules):
+            directory = FIXTURES / ("starsolo_" + case)
+            if directory.exists():
+                shutil.rmtree(directory)
+            directory.mkdir()
+            first, second = directory / "read1.fastq", directory / "read2.fastq"
+            selected = [m for m in molecules if m["case"] == case]
+            with first.open("w") as r1, second.open("w") as r2:
+                for mol, umi in zip(selected, umi_sequences(len(selected))):
+                    start = int(mol["start_0"])
+                    cdna = fasta.fetch(mol["chrom"], start, start + read_length)
+                    if mol["reverse"] == "true":
+                        cdna = cdna.translate(str.maketrans("ACGT", "TGCA"))[::-1]
+                    for stream, sequence in ((r1, mol["barcode"] + umi), (r2, cdna)):
+                        stream.write(f"@{mol['molecule']}\n{sequence}\n+\n{'I' * len(sequence)}\n")
+            command(["STAR", "--runThreadN", "1", "--genomeDir", index,
+                     "--readFilesIn", second, first, "--outFileNamePrefix", str(directory) + "/",
+                     "--soloType", "CB_UMI_Simple", "--soloCBstart", "1", "--soloCBlen", "16",
+                     "--soloUMIstart", "17", "--soloUMIlen", "12", "--soloCBwhitelist", "None",
+                     "--soloFeatures", "Gene", "GeneFull", "--soloMultiMappers", "EM",
+                     "--soloStrand", "Unstranded", "--soloCellFilter", "None", "--outSAMtype", "None"])
+            observations[case] = {}
+            for feature in ("Gene", "GeneFull"):
+                raw = directory / "Solo.out" / feature / "raw"
+                starsolo_support(raw, selected, combined, feature)
+                features = [line.split("\t") for line in (raw / "features.tsv").read_text().splitlines()]
+                assert len(features) == len(expected) + 1 and len({r[0] for r in features}) == len(features)
+                te_features = {r[0]: r[1] for r in features if r[0] in expected}
+                assert te_features == expected
+                assert all(r[2] == "Gene Expression" for r in features)
+                assert_registered(te_features, "record", "record_alias")
+                unique = np.asarray(mmread(raw / "matrix.mtx").sum(axis=1)).ravel()
+                em = np.asarray(mmread(raw / "UniqueAndMult-EM.mtx").sum(axis=1)).ravel()
+                assert len(unique) == len(em) == len(features)
+                u, e = [dict(zip((r[0] for r in features), values)) for values in (unique, em)]
+                assert np.isfinite(em).all() and (em >= 0).all() and (unique >= 0).all()
+                observations[case][feature] = {"unique": {k: float(v) for k, v in u.items() if v},
+                                               "EM": {k: float(v) for k, v in e.items() if v}}
+                if case == "same_name":
+                    keys = [record_alias(row) for row in ROSTER if row[4] == "SubA"]
+                    assert all(u[k] == e[k] == 1 for k in keys) and sum(u.values()) == sum(e.values()) == 2
+                elif case == "gap":
+                    assert sum(u[k] for k in expected) == sum(e[k] for k in expected) == 0
+                elif case == "overlap":
+                    te = next(k for k, name in expected.items() if name == "SubB")
+                    floor = 1 if feature == "Gene" else 0
+                    assert u["HostGene"] == 1 and u[te] == floor and sum(u.values()) == 1 + floor, observations[case]
+                    assert 1 <= e["HostGene"] <= 3 - floor and floor <= e[te] <= 2
+                elif case == "intronic" and feature == "Gene":
+                    te = next(k for k, name in expected.items() if name == "SubB-int")
+                    assert u[te] == 1 and sum(u.values()) == 1
+    (FIXTURES / "starsolo_allocation.json").write_text(json.dumps(observations, indent=2) + "\n")
+    for feature in ("Gene", "GeneFull"):
+        counts = observations["overlap"][feature]["EM"]
+        unique_total = sum(observations["overlap"][feature]["unique"].values())
+        if np.isclose(sum(counts.values()), unique_total):
+            raise Unsupported("STAR multi-annotation molecule omitted from EM; " + json.dumps(observations, sort_keys=True))
+        assert np.isclose(sum(counts.values()), 3), observations
+        te = next(k for k, name in expected.items() if name == "SubB")
+        floor = 1 if feature == "Gene" else 0
+        assert 1 < counts["HostGene"] < 3 - floor and floor < counts[te] < 2, observations
+    refusals = []
+    selected = [mol for mol in molecules if mol["case"] == "overlap"]
+    for feature in ("Gene", "GeneFull"):
+        source = FIXTURES / "starsolo_overlap/Solo.out" / feature / "raw"
+        for filename in ("matrix.mtx", "UniqueAndMult-EM.mtx"):
+            replay = FIXTURES / ("starsolo_replay_" + feature + "_" + filename)
+            if replay.exists():
+                shutil.rmtree(replay)
+            shutil.copytree(source, replay)
+            genes = [line.split("\t")[0] for line in (replay / "features.tsv").read_text().splitlines()]
+            matrix = mmread(replay / filename).astype(float).tolil()
+            edge = next(k for k, name in expected.items() if name == "Edge")
+            matrix[genes.index("HostGene"), 0] -= 0.3
+            matrix[genes.index(edge), 0] += 0.3
+            mmwrite(replay / filename, matrix)
+            refusals.append(refused_case(lambda: starsolo_support(replay, selected, combined, feature),
+                                         "STARsolo support outside fixture genes"))
+    return ("record gene identities and molecule conservation pass; four replays refused: " + refusals[0]
+            + "; " + json.dumps(observations, sort_keys=True))
+
+
+def cellranger_check():
+    combined = combined_fixture()
+    work = FIXTURES / "cellranger_reference"
+    if work.exists():
+        shutil.rmtree(work)
+    work.mkdir()
+    filtered = work / "filtered.gtf"
+    command(["cellranger", "mkgtf", combined, filtered,
+             "--attribute=gene_type:transposable_element", "--attribute=gene_type:protein_coding"])
+    expected = {record_alias(row) for row in ROSTER}
+    for path in (filtered,):
+        observed = {a["gene_id"] for _, a in gtf_rows(path)}
+        assert observed == expected | {"HostGene"}
+    args = ["cellranger", "mkref", "--genome=tiny", f"--fasta={FIXTURES / 'reference.fa'}",
+            f"--genes={filtered}", "--nthreads=1", "--memgb=3"]
+    result = subprocess.run(args, cwd=work, capture_output=True, text=True)
+    (work / "mkref.log").write_text(result.stdout + result.stderr)
+    assert result.returncode == 0, (args, result.returncode, result.stdout, result.stderr)
+    reference = work / "tiny"
+    genes = reference / "genes/genes.gtf"
+    if not genes.exists():
+        genes = genes.with_suffix(".gtf.gz")
+    observed = {a["gene_id"] for _, a in gtf_rows(genes)}
+    assert observed == expected | {"HostGene"}, observed
+    assert_registered(observed & expected, "record", "record_alias")
+    assert (reference / "star").is_dir() and (reference / "star/Genome").is_file()
+    return "mkgtf retains TE and host biotypes; mkref pins 3 GB and keeps 11 alias genes and its STAR index"
 
 
 def executable_check(tool):
@@ -588,7 +902,8 @@ def executable_check(tool):
         print(f"unsupported: {tool} absent")
         raise SystemExit(3)
     checks = {"irescue": irescue_check, "featureCounts": featurecounts_check,
-              "bedtools": bedtools_check, "samtools": samtools_check}
+              "bedtools": bedtools_check, "samtools": samtools_check,
+              "STAR": starsolo_check, "cellranger": cellranger_check}
     run_check(tool, info["version"].removeprefix(f"{tool} "), checks[tool])
 
 

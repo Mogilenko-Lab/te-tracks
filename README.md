@@ -12,6 +12,7 @@ provenance. The redesign contract below lands in phases 1–9.
 | UCSC browser `rmsk` table | One-time source qualification against the `.out`, with a retained report |
 | UCSC `chromAlias` | Contig mappings across UCSC, Ensembl, GenBank and RefSeq namespaces |
 | UCSC `chrom.sizes` | Contig lengths and coordinate bounds |
+| Pinned Dfam metadata snapshot | Model lengths, classification lineage, Wicker ranks and curated clades |
 
 The gene GTF belongs to the child family `te_<assembly>_gene`, which pins its parent core build
 and one gene annotation.
@@ -38,14 +39,17 @@ Tests run in-container against a scratch reference root:
 
 ```bash
 tests/run.sh core
+source /workspaces/Meta-Aging/.venv/te-consumers/activate.sh
 tests/run.sh consumers
 tests/run.sh acceptance --refroot /workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot
 ```
 
 The default reference root is `/workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot`.
-Each mode reports `pass`, `fail` or `unsupported` per check. Core checks cover the parser fixtures,
+Each mode reports `pass`, `fail` or `unsupported` per check.
+[Consumer environment](docs/RUNBOOK.md#consumer-environment) records the activation recipe
+and suite outcomes with and without executable shims. Core checks cover the parser fixtures,
 the qualification report, the record schema, instances, universes, the record fixtures,
-taxonomy (30 to 32), exports (40 to 42), contigs (60 to 62), identity and publication (70 to 72),
+taxonomy (30 to 34), exports and matrix binding (40 to 43), contigs (60 to 62), identity and publication (70 to 72),
 and gene subtraction, identity and dependencies (80 to 83).
 
 ## Outputs
@@ -74,7 +78,7 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 | `tests/fixtures/taxonomy/rollup_counts.tsv` | delivered, tested | 3 |
 | `tests/fixtures/taxonomy/weighting_context.tsv` | delivered, tested | 3 |
 | `tests/fixtures/exports/` | delivered, tested | 4 |
-| `tests/fixtures/consumers/` | tested: IRescue identity, TEsingle, TEtranscripts and TElocal parsers; MATES adapter supported in isolation, installed package needs `pkg_resources` (setuptools below 82); Stellarscope parser exercised, unsupported on observed `0,1,1,1` right-boundary defect (expected `0,1,1,0`); IRescue `chrcat` unsupported (`gawk` absent); bedtools and samtools supported; executables `irescue`, `featureCounts`, `stellarscope`, `TEsingle`, `TEcount`, `TElocal` absent; DuckDB query unsupported (`duckdb` absent); `00_tool_inventory.required.py` reporting-only | 5 |
+| `tests/fixtures/consumers/` | delivered, tested: parser identities, registration, IRescue conservation, featureCounts, STARsolo, cellranger reference, bedtools, samtools and DuckDB; Stellarscope unsupported on its right-boundary defect | 5, 9a |
 | `tests/lib/consumers.py` | delivered, tested | 5 |
 | `tests/lib/records.py` | delivered, tested | 2 |
 | `tests/fixtures/contigs/` | delivered, tested | 6 |
@@ -85,6 +89,15 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 | `tables/rmsk_taxonomy.tsv` | delivered, tested | 2 |
 | `tables/taxonomy_canonical.tsv` | delivered, tested | 3 |
 | `tables/taxonomy_resolution_report.tsv` | delivered, tested | 3 |
+| `source/dfam_interspersed_mm39_snapshot.json.gz` | delivered, tested | 9a |
+| `source/dfam_interspersed_mm39_snapshot.provenance.json` | delivered, tested; core payload has 52 files | 9a |
+| `tables/taxonomy_dfam.tsv` | delivered, tested | 9a |
+| `tables/taxonomy_dfam_models.tsv` | delivered, tested | 9a |
+| `tables/dfam_lineage_nodes.tsv` | delivered, tested | 9a |
+| `tables/dfam_model_clades.tsv` | delivered, tested | 9a |
+| `tests/checks/consumers/17_starsolo_profile.required.py` | delivered, tested | 9a |
+| `tests/checks/consumers/24_starsolo_exec.sh` | delivered, tested with consumer environment | 9a |
+| `tests/checks/consumers/25_cellranger_mkref.sh` | delivered, tested with consumer environment | 9a |
 | `universes.json` | delivered, tested | 2 |
 | `tables/universe_members.tsv.gz` | delivered, tested | 2 |
 | `tables/universe_summary.tsv` | delivered, tested | 2 |
@@ -96,6 +109,7 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 | `exports/ucsc/interspersed/full/subfamily.bed` | delivered, tested | 4 |
 | `exports/ucsc/interspersed/full/family.bed` | delivered, tested | 4 |
 | `exports/ucsc/interspersed/full/record.gtf` | delivered, tested | 4 |
+| `exports/ucsc/interspersed/full/record_starsolo.gtf` | delivered, tested | 9a |
 | `exports/ucsc/interspersed/full/subfamily.gtf` | delivered, tested | 4 |
 | `exports/ucsc/interspersed/full/subfamily.saf` | delivered, tested | 4 |
 | `exports/ucsc/interspersed/full/taxonomy_triple.saf` | delivered, tested | 4 |
@@ -103,6 +117,7 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 | `exports/ensembl/interspersed/full/subfamily.bed` | delivered, tested | 6 |
 | `exports/ensembl/interspersed/full/family.bed` | delivered, tested | 6 |
 | `exports/ensembl/interspersed/full/record.gtf` | delivered, tested | 6 |
+| `exports/ensembl/interspersed/full/record_starsolo.gtf` | delivered, tested | 9a |
 | `exports/ensembl/interspersed/full/subfamily.gtf` | delivered, tested | 6 |
 | `exports/ensembl/interspersed/full/subfamily.saf` | delivered, tested | 6 |
 | `exports/ensembl/interspersed/full/taxonomy_triple.saf` | delivered, tested | 6 |
@@ -110,6 +125,7 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 | `exports/gencode/interspersed/full/subfamily.bed` | delivered, tested | 6 |
 | `exports/gencode/interspersed/full/family.bed` | delivered, tested | 6 |
 | `exports/gencode/interspersed/full/record.gtf` | delivered, tested | 6 |
+| `exports/gencode/interspersed/full/record_starsolo.gtf` | delivered, tested | 9a |
 | `exports/gencode/interspersed/full/subfamily.gtf` | delivered, tested | 6 |
 | `exports/gencode/interspersed/full/subfamily.saf` | delivered, tested | 6 |
 | `exports/gencode/interspersed/full/taxonomy_triple.saf` | delivered, tested | 6 |
@@ -146,9 +162,9 @@ The redesign contract establishes these guarantees as the listed phases land:
   `interspersed` is the default.
 - `rmsk_record_id` is `<rmsk_name>|<chrom>:<start_1>-<end_1>|<strand>`. Export membership
   registers each emitted feature and interval block to its source records.
-- The `interspersed` full-interval exports contain seven files in each of `ucsc`, `ensembl` and
+- The `interspersed` full-interval exports contain eight files in each of `ucsc`, `ensembl` and
   `gencode`: `record.bed`, `subfamily.bed`, `family.bed`, `record.gtf`, `subfamily.gtf`,
-  `subfamily.saf` and `taxonomy_triple.saf`.
+  `record_starsolo.gtf`, `subfamily.saf` and `taxonomy_triple.saf`.
 - Tables, GTF and SAF use 1-based inclusive coordinates; BED uses 0-based half-open coordinates.
   Contig aliases preserve record identity across `ucsc`, `ensembl` and `gencode` exports.
 - Exon subtraction guarantees exon-disjoint sequence support under the declared mask;

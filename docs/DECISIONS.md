@@ -164,15 +164,18 @@ A join fixture over `interspersed` and `all_rmsk` proves the rule.
 
 ## 15. Rank vocabulary and Dfam
 
-Raw and canonical RepeatMasker labels stay as they are; a later core view stores Dfam lineage,
+Raw and canonical RepeatMasker labels stay as they are; the phase 9 core view stores Dfam lineage,
 accession, model version, model length, clade and release as truth, admitting `interspersed`
 names first.
 It derives a named rank scheme with per-rank status (`mapped`, `inherited`, `missing`,
-`inapplicable`, `part_model_set`), mapping L1 whole-element names to sets of Dfam part models.
-The rank vocabulary is named at admission, with Wicker's ranks recommended and the dissertation's
+`inapplicable`, `part_model_set`), with `wicker_code_uncertain` recording code uncertainty,
+and maps L1 and L2/CR1 whole-element names to sets of Dfam part models.
+The rank vocabulary is `rank_scheme_wicker_v1`, with Wicker's ranks and the dissertation's
 five names kept as a documented alias table so both vocabularies read onto the same rows.
 Documentation explains label surprises consumers need to interpret: B1 under `Alu`, `ERVL-MaLR`,
 hyphenated DNA superfamilies and class-less records.
+The normalized companions are `taxonomy_dfam_models`, `dfam_lineage_nodes` and
+`dfam_model_clades`, beside the per-name `taxonomy_dfam` view.
 
 ## 16. Wording
 

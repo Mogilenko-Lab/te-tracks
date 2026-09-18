@@ -1,0 +1,8 @@
+case	molecule	chrom	start_0	read_length	reverse	barcode
+same_name	unique_a	chrA	1030	40	false	ACGTACGTACGTACGT
+same_name	unique_b	chrA	2030	40	true	ACGTACGTACGTACGT
+gap	gap_only	chrA	3120	40	false	ACGTACGTACGTACGT
+overlap	host_unique	chrA	2960	40	false	ACGTACGTACGTACGT
+overlap	te_unique	chrA	3060	40	false	ACGTACGTACGTACGT
+overlap	host_te_overlap	chrA	3010	40	false	ACGTACGTACGTACGT
+intronic	host_intron_te	chrA	3230	40	false	ACGTACGTACGTACGT

@@ -18,7 +18,7 @@ sys.path.insert(0, str(ROOT / "tests/lib"))
 from records import BUILD, require
 
 
-FILES = ("record.bed", "subfamily.bed", "family.bed", "record.gtf", "subfamily.gtf",
+FILES = ("record.bed", "subfamily.bed", "family.bed", "record.gtf", "record_starsolo.gtf", "subfamily.gtf",
          "subfamily.saf", "taxonomy_triple.saf")
 NAMESPACES = ("ucsc", "ensembl", "gencode")
 require("tables/contig_aliases.tsv", "tables/exports.tsv", "tables/export_feature_members.tsv.gz",
@@ -27,7 +27,7 @@ require("tables/contig_aliases.tsv", "tables/exports.tsv", "tables/export_featur
 aliases = pd.read_csv(BUILD / "tables/contig_aliases.tsv", sep="\t", keep_default_na=False)
 with (BUILD / "tables/exports.tsv").open() as stream:
     inventory = list(csv.DictReader(stream, delimiter="\t"))
-assert len(inventory) == 24
+assert len(inventory) == 27
 assert [row["export_path"] for row in inventory] == sorted({row["export_path"] for row in inventory})
 by_path = {row["export_path"]: row for row in inventory}
 
@@ -126,4 +126,4 @@ assert levels == Counter({
     ("interspersed", "instance", "instance_alias"): 3_764_949,
     ("all_rmsk", "record", "rmsk_record_id"): 5_320_771,
 }), levels
-print("24 sorted exports and SHA-256 digests; 16 complete renamed files regenerated; interspersed=3764949 all_rmsk=5320771 per namespace; registrations=30119592+5320771")
+print("27 sorted exports and SHA-256 digests; 18 complete renamed files regenerated; interspersed=3764949 all_rmsk=5320771 per namespace; registrations=30119592+5320771")

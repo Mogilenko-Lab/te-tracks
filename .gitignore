@@ -17,5 +17,8 @@ work/
 # Fixtures preserve consumer inputs and expected results.
 !tests/fixtures/**
 
+# Pinned Dfam metadata ships with the builder.
+!data/dfam/**
+
 # Internal memory carries its tables and worksheets.
 !docs/_internal/**/*.tsv
