@@ -159,7 +159,8 @@ Parent archives transfer and verify before their children are installed or selec
 The publication checks leave interrupted transfer into staging, readers during selector replacement,
 disk exhaustion during rename, staging on another filesystem and ACL access for consumers to host qualification.
 
-Publication proceeds from a fresh complete `--root` build; a staging directory left by an
+Host publication requires `provenance.builder_git_dirty` to be `false` and proceeds from a fresh
+complete `--root` build; a staging directory left by an
 interruption is for inspection and is removed before republication.
 The owner removes the abandoned directory with `shutil.rmtree(staging_path)` after
 confirming that its builder or transfer process has exited. A missing `MANIFEST.json`
@@ -178,12 +179,14 @@ feature level and required parent IDs. Record ledgers use
 `(te_catalog_id, rmsk_record_id)` and retain `te_build_id` as provenance. Historical builds resolve
 directly at `archive/<BUILD_ID>/` after newer selections.
 
-Every installed build and its dependency closure stays on disk. Identical rebuilds converge;
+Every installed build and its dependency closure stays on disk. Every build a consumer pins is
+retained beside `current`, including after a later selection. Identical rebuilds converge;
 retention planning reserves space for each distinct build at each reference root. Measured sums
 of regular file sizes for mm39 exports are 4,638,043,480 bytes for `ucsc`,
 4,531,250,735 for `ensembl` and 4,637,401,144 for `gencode`. Registration occupies
 347,526,106 bytes. The 52-file payload totals 15,301,538,537 bytes; the complete
-scratch build measures 15,301,659,615 bytes with `du -sb`, about 15.30 GB.
+acceptance core retains 15,301,581,825 regular-file bytes including its manifest and IDs,
+about 15.30 GB.
 Manifest provenance and filesystem directory sizes contribute to the whole-build total.
 The `all_rmsk` record BED occupies 332,554,184 / 316,524,255 / 332,461,688 bytes
 in `ucsc` / `ensembl` / `gencode` respectively.
@@ -200,11 +203,17 @@ in `ucsc` / `ensembl` / `gencode` respectively.
 | `source/dfam_interspersed_mm39_snapshot.json.gz` | 278,952 |
 | `source/dfam_interspersed_mm39_snapshot.provenance.json` | 921 |
 
-Reserve additional working space for staging and sorting. The export writer has measured
-5.5 GB to 6.0 GB resident across in-container builds, including a peak of
-5,994,254,336 bytes; `provenance.peak_rss_bytes` records that stage's
-measurement. A measured complete core rebuild peaked at 9,026,424,832 resident bytes
-and took 717.201 seconds in the container.
+Reserve additional working space for staging and sorting. The export writer previously measured
+5.5 GB to 6.0 GB resident across in-container builds, including 5,994,254,336 bytes.
+The phase 9b export writer measured 6,807,732,224 resident bytes initially and 4,936,556,544
+in the final fresh build. These resource deviations bracket the earlier range while both
+builds reproduce the same payload identity; `provenance.peak_rss_bytes` records each measurement.
+An earlier complete core rebuild peaked at 9,026,424,832 resident bytes and took 717.201 seconds.
+The final acceptance child's subtraction stage measured 881,565,696 resident bytes and
+154.376 seconds; the initial build measured 874,917,888 bytes and 152.012 seconds.
+The child payload adds 2,157,717,760 bytes, for 17,459,256,297 payload bytes per retained pair.
+[RUNBOOK.md](RUNBOOK.md#resource-floors-and-consumer-pins) records these producer floors and the
+measured consumer annotation-load floors.
 
 ## Gene child snapshots
 
@@ -244,3 +253,32 @@ under the same root. Earlier core archives remain selectable after a child is pu
 Transfer the parent dependency first; then transfer, verify and install the child under
 `te_mm39_gene`. Child provenance records each stage's wall time and maximum resident bytes
 through `RUSAGE_CHILDREN`.
+
+
+## Phase 9b acceptance witness
+
+The acceptance build publishes into
+`/workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot/acceptance/` and retains the six earlier
+development archives under `refroot/pubroot/`. Its independent census anchors precede the
+comparison with `refroot/te_mm39/build` and `refroot/te_mm39_gene/build`.
+
+| Family | Acceptance BUILD_ID | CATALOG_ID |
+|---|---|---|
+| `te_mm39` | `5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813` | `90cc18be5d4ee9342b57b58e4b8ad19e59f9e6b48b9a94bab9db615db1091b5e` |
+| `te_mm39_gene` | `198f39f0ef16875121fa65e1b1301f0d58c894488cc557765ce7f50c57a38bd1` | `90cc18be5d4ee9342b57b58e4b8ad19e59f9e6b48b9a94bab9db615db1091b5e` |
+
+Acceptance compared every table's SHA-256 and both IDs with the development builds: both
+families agree exactly. The check performs that comparison whenever the development build is present.
+A `CATALOG_ID` difference stops for investigation. With an equal `CATALOG_ID` and differing
+`BUILD_ID`, compare the recorded toolchain and payload and publish the host build with this
+in-container build recorded as its content witness. The in-container acceptance manifests record
+revision `51c016243c8991b27f0da112a00d90a815ead929` with `builder_git_dirty: true`.
+That revision advances the prompt's `d28336f` through documentation-only commits; the source
+and configuration bytes retain the phase 9a identities. The owner's clean host build supplies
+the production provenance.
+
+The host publisher tightens each family root to 0755 and `archive/` to 2755, with effective ACLs
+matching owner-only write. The named backup target is the verified CRI mirror at
+`/gpfs/data/rathmell-lab/data/refdata`, transferred parent first through fresh staging and
+`release.py install`. The host gate records the image ID, complete-build resources, clean
+revision, both family verifications, backup verification and filesystem/ACL qualification.

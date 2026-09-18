@@ -4,6 +4,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/../lib/common.sh"
 usage() {
   printf '%s\n' \
     'usage: tests/run.sh <core|consumers|acceptance> [--refroot DIR]' \
+    '       tests/run.sh acceptance --build [--refroot DIR]' \
     'checks: tests/checks/<mode>/*.sh and tests/checks/<mode>/*.py, sorted by name' \
     'consumer environment: source /workspaces/Meta-Aging/.venv/te-consumers/activate.sh' \
     'consumer suite: tests/run.sh consumers' \
@@ -17,17 +18,25 @@ case "$mode" in
 esac
 
 refroot=/workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot
-case "$#" in
-  0) ;;
-  2)
-    if [ "$1" != --refroot ] || [ -z "$2" ]; then
-      usage
-      exit 2
-    fi
-    refroot="$2"
-    ;;
-  *) usage; exit 2 ;;
-esac
+acceptance_build=0
+refroot_seen=0
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --refroot)
+      [ "$#" -ge 2 ] && [ -n "$2" ] && [[ "$2" != --* ]] && [ "$refroot_seen" -eq 0 ] || { usage; exit 2; }
+      refroot="$2"
+      refroot_seen=1
+      shift 2
+      ;;
+    --build)
+      [ "$mode" = acceptance ] && [ "$acceptance_build" -eq 0 ] || { usage; exit 2; }
+      acceptance_build=1
+      shift
+      ;;
+    *) usage; exit 2 ;;
+  esac
+done
+export TE_TRACKS_ACCEPTANCE_BUILD="$acceptance_build"
 refroot=$(realpath -m -- "$refroot")
 export TE_TRACKS_REFROOT="$refroot"
 

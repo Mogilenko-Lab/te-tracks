@@ -2,7 +2,8 @@
 
 te-tracks builds a reference projection of RepeatMasker for one assembly. Canonical tables,
 named universes, registered exports and consumer fixtures share record identities and source
-provenance. The redesign contract below lands in phases 1–9.
+provenance. The mm39 package supplies the contracts below; the host publication follows
+[the runbook](docs/RUNBOOK.md).
 
 ## Sources
 
@@ -41,16 +42,26 @@ Tests run in-container against a scratch reference root:
 tests/run.sh core
 source /workspaces/Meta-Aging/.venv/te-consumers/activate.sh
 tests/run.sh consumers
-tests/run.sh acceptance --refroot /workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot
+tests/run.sh acceptance --build
+tests/run.sh acceptance
 ```
 
 The default reference root is `/workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot`.
-Each mode reports `pass`, `fail` or `unsupported` per check.
+Each mode reports `pass`, `fail` or `unsupported` per check. `acceptance --build` creates fresh
+core and child archives under `$TE_TRACKS_REFROOT/acceptance/`; `acceptance` checks that pair again.
+Set `TE_TRACKS_SOURCE_CACHE=/workspaces/Meta-Aging/_scratch/te-tracks-audit/source` for the offline
+acceptance build. Existing archives stay retained. [Acceptance anchors](tests/expectations/mm39/README.md)
+name the independent evidence behind each expected census.
 [Consumer environment](docs/RUNBOOK.md#consumer-environment) records the activation recipe
 and suite outcomes with and without executable shims. Core checks cover the parser fixtures,
 the qualification report, the record schema, instances, universes, the record fixtures,
 taxonomy (30 to 34), exports and matrix binding (40 to 43), contigs (60 to 62), identity and publication (70 to 72),
 and gene subtraction, identity and dependencies (80 to 83).
+
+Phase 9b qualification recorded 11 passes for fresh-build acceptance, 11 for its rerun,
+26 for core, and 15 passes plus one unsupported check for the activated consumer suite.
+All four final commands exited 0. The unsupported check records Stellarscope's right-boundary
+overlap defect; [RUNBOOK.md](docs/RUNBOOK.md#consumer-environment) gives its qualification limits.
 
 ## Outputs
 
@@ -59,7 +70,7 @@ Each build contains `source/`, `tables/`, `universes.json`, `exports/`, `MANIFES
 and selects it through the relative `current` symlink.
 
 The truth table tracks the redesign artifacts: `delivered` means generated, `tested` means
-verified against their contract, and `deferred` names the phase that supplies them.
+verified against their contract, and `deferred` names the next evidence gate.
 Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>[_<profile>].<format>`.
 
 | artifact | status | phase |
@@ -147,14 +158,19 @@ Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>
 | `CATALOG_ID` | delivered, tested | 7 |
 | `bin/te-tracks-preflight` | delivered, tested | 6 |
 | `docs/RUNBOOK.md`: gene child build and verification | delivered, tested | 8 |
-| `docs/RUNBOOK.md`: host qualification | deferred | 9 |
+| `docs/RUNBOOK.md`: host procedure and measured resource floors | delivered; commands reviewed and scratch publication tested; host filesystem qualification pending | 9b |
+| `tests/checks/acceptance/`: eleven complete-build checks | delivered, tested | 9b |
+| `tests/expectations/mm39/{source_pins,source_qualification,record_census,identity,gene_oracle}.tsv` | delivered, tested | 9b |
+| `data/dfam/`: tracked snapshot, provenance and refresh script | delivered; retained input pins tested; refresh qualification recorded in phase 9a | 9a |
+| `docs/OUTPUTS.md`: consumer map | delivered, tested: artifact bindings agree with registered contracts | 9b |
+| `docs/PROVENANCE.md`: qualification and measured census | delivered, tested | 9b |
 | `docs/RELEASES.md` | delivered, tested | 7 |
 
 [docs/OUTPUTS.md](docs/OUTPUTS.md) specifies the schemas, serialization and deferred export contracts.
 
 ## Guarantees
 
-The redesign contract establishes these guarantees as the listed phases land:
+The published contracts establish these guarantees:
 
 - Four feature levels describe record, instance, subfamily and canonical family. Family and
   class rollups use `taxonomy_canonical`.
@@ -187,4 +203,26 @@ a class census, packaged-file reconciliation and source-wide instance numbering 
 ## Design
 
 [docs/DECISIONS.md](docs/DECISIONS.md) records the redesign choices and recorded deferrals.
-[docs/PROVENANCE.md](docs/PROVENANCE.md) retains the legacy derivation and comparison evidence.
+[docs/PROVENANCE.md](docs/PROVENANCE.md) records source qualification, measured censuses and
+the independent Dfam, legacy-GTF and bedtools evidence.
+
+
+## Parking gates
+
+| Artifact | Status | Evidence for the next decision |
+|---|---|---|
+| hg38 catalog and exports | deferred | Source pins, reviewed class census, packaged-file reconciliation and source-wide instance numbering or a contig-scoped key. |
+| Transcript-context relation | deferred | ADR 9 geometry, transcript flags and tied-distance cases; chr1 then whole-mm39 scaling measurements. |
+| ERV reconstruction units | deferred | LTR–internal candidate membership, strand/gap parameters, source instances and validated structural examples. |
+| Age tiers | deferred | Pinned Dfam clade paths, record/median divergence and explicit consumer thresholds; structural evidence for full-length/ORF claims. |
+| Stranded exon-mask companion | deferred | Chemistry pilot establishing the RNA-sense mate and strand-specific counting behavior. |
+| 10x-annotation child | deferred | The exact 10x 2024-A filtered GENCODE vM33 annotation digest and geometry reconciliation with the counting reference. |
+| Instance-level STARsolo profile | deferred | Mixed-name, mixed-strand, gap and junction fixtures with a declared feature grammar. |
+
+The RNA pilot qualifies TEsingle's paired-mate handling, UMI graph and hard ties;
+Stellarscope's right-boundary defect and largest-overlap preselection; and IRescue's even-start
+expectation-maximization. Each consumer owns barcode thresholds, whitelist/empty-cell handling
+and molecule allocation. Host publication and CRI backup verification precede downstream adoption.
+The next gates are whole-release milestone review, the owner's clean host build, host filesystem
+qualification, adoption of `te_catalog_id`/`te_build_id` in the 14761 ledger, the umbrella pin bump,
+and the D2/D3 consumer pilots.

@@ -1,0 +1,12 @@
+contig	metric	value
+chr18	union_intervals	9708
+chr18	blocks	116425
+chr18	retained_bp	34253394
+chr19	input_records	86429
+chr19	union_intervals	10373
+chr19	union_bp	4434265
+chr19	blocks	84268
+chr19	retained_bp	21565706
+chr1_MU069434v1_random	annotation_rows	0
+chr1_MU069434v1_random	input_records	4
+chr1_MU069434v1_random	blocks	4

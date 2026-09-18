@@ -4,6 +4,41 @@ Canonical tables, GTF and SAF use **1-based inclusive** coordinates. BED uses **
 half-open** coordinates: `[start_1 - 1, end_1)`. Record lengths sum `end_1 - start_1 + 1`,
 with overlaps retained.
 
+## Consumer map
+
+Every export row below is published in `ucsc`, `ensembl` and `gencode` namespaces. Choose the
+namespace matching the alignment reference and run `bin/te-tracks-preflight` before counting.
+Core paths are relative to `te_mm39/archive/<BUILD_ID>/`; child paths belong to `te_mm39_gene`.
+
+| Published artifact | Universe / variant | Reader | Counting question or reference join |
+|---|---|---|---|
+| `exports/<ns>/interspersed/full/record.bed` | `interspersed / full` | IRescue, bedtools | Which annotated record supports each RNA molecule or interval overlap? |
+| `exports/<ns>/interspersed/full/subfamily.bed` | `interspersed / full` | IRescue | How much RNA support belongs to each RepeatMasker subfamily? |
+| `exports/<ns>/interspersed/full/family.bed` | `interspersed / full` | bedtools and family overlap readers | Which canonical class/family bucket supplies interval support? |
+| `exports/<ns>/interspersed/full/record.gtf` | `interspersed / full` | TEsingle, TElocal; TEtranscripts; Stellarscope after its boundary gate | Record assignment with the subfamily grammar TEsingle and TElocal consume; TEtranscripts groups by the canonical taxonomy triple. Stellarscope reads `locus` or `instance_id`. |
+| `exports/<ns>/interspersed/full/record_starsolo.gtf` | `interspersed / full` | STARsolo, cellranger | Record counts through the record-as-gene grammar, combined with the full gene annotation. |
+| `exports/<ns>/interspersed/full/subfamily.gtf` | `interspersed / full` | TEsingle, TElocal, TEtranscripts; Stellarscope after its boundary gate | Subfamily-grain sensitivity counting with shared subfamily transcript IDs. |
+| `exports/<ns>/interspersed/full/subfamily.saf` | `interspersed / full` | featureCounts | Full-interval subfamily support for sensitivity comparisons. |
+| `exports/<ns>/interspersed/full/taxonomy_triple.saf` | `interspersed / full` | featureCounts | Full-interval counts labeled by canonical subfamily:family:class. |
+| Child `exports/<ns>/interspersed/exon_subtracted/subfamily.saf` | `interspersed / exon_subtracted` | Bulk RNA-seq featureCounts | The bulk featureCounts product: subfamily counts over support outside the GENCODE vM37 exon union. |
+| Child `exports/<ns>/interspersed/exon_subtracted/taxonomy_triple.saf` | `interspersed / exon_subtracted` | Bulk RNA-seq featureCounts | The same retained blocks grouped with canonical taxonomy-triple IDs. |
+| Child `exports/<ns>/compat_tetranscripts_mm39/exon_subtracted/{subfamily,taxonomy_triple}.saf` | `compat_tetranscripts_mm39 / exon_subtracted` | Bulk RNA-seq featureCounts | Legacy-universe reproduction under the pinned exon mask. |
+| `exports/<ns>/all_rmsk/full/record.bed` | `all_rmsk / full` | 14761 chromatin-accessibility ledger | The interval catalog the ledger keys on, including satellites, simple repeats and structural RNAs. |
+| `tables/rmsk_records.{tsv.gz,parquet}`, `rmsk_instance_members.tsv.gz`, `rmsk_taxonomy.tsv` | `all_rmsk` | RNA result joins and chromatin-accessibility ledger | Resolve record identities, source grouping, coordinates, divergence and raw taxonomy. |
+| `universes.json`, `tables/universe_members.tsv.gz`, `universe_summary.tsv` | All six named universes | Every consuming ledger | Pin eligibility and reconcile the selected reference census. |
+| `tables/taxonomy_canonical.tsv`, `taxonomy_resolution_report.tsv` | `all_rmsk` | Subfamily-to-family/class rollups | Assign each name once under the instance-weighted taxonomy rule. |
+| `tables/taxonomy_dfam.tsv`, `taxonomy_dfam_models.tsv`, `dfam_lineage_nodes.tsv`, `dfam_model_clades.tsv` | `interspersed` | Consumer annotation and age-tier policies | Join pinned Dfam models, rank statuses and complete curated clade paths to names. |
+| `tables/export_feature_members.tsv.gz`, `exports.tsv` in each family | Each declared universe / variant | Matrix binding and provenance ledgers | Join measured features through `(universe_name, variant, feature_level, key_grammar)` and verify export digests. |
+| `tables/contig_aliases.tsv`, core `contig_coverage.tsv` | `all_rmsk`, with interspersed coverage | Preflight and namespace readers | Match contig identity, lengths and reference coverage. |
+| Child `tables/exon_subtraction_status.tsv`, `exon_subtraction_summary.tsv`, `gene_annotation_coverage.tsv` | `all_rmsk`, `interspersed`, `compat_tetranscripts_mm39` | Bulk reference audit | Reconcile retained/removed bases and annotation coverage under the mask. |
+| `source/`, `MANIFEST.json`, `BUILD_ID`, `CATALOG_ID` in each family | Family declaration | Publisher and every consumer | Verify source pins, qualification evidence, immutable bytes and parent dependencies. |
+
+The expectation-maximization routes take the unmasked record exports with the full gene annotation.
+The exon-subtracted SAF is the bulk featureCounts product. Joint counting owns gene/TE molecule
+allocation and records its counting unit, strand policy, barcode thresholds and estimator parameters.
+The three single-cell and single-nucleus pilots qualify those choices in the consuming toolkit;
+the bulk pilot qualifies its featureCounts recipe. [RUNBOOK.md](RUNBOOK.md) gives the build and pin procedure.
+
 ## Canonical records and universes (phase 2)
 
 The build writes the complete source catalog under `tables/` and six executable universe
@@ -128,8 +163,9 @@ the disposition `interspersed` to agree with the authored predicate class by cla
 disposition `satellite` to mark exactly `Satellite`, and every provisional class to be dispositioned
 `interspersed`. Core checks compare measured counts with `tests/expectations/<genome>/class_census.tsv`.
 
-The `compat_tetranscripts_mm39` universe ships as membership, and the legacy comparison is a
-phase 9 reconciliation.
+The core `compat_tetranscripts_mm39` view supplies membership. Acceptance compares all 3,799,629
+members with the checksum-pinned packaged legacy GTF, including the coordinate multiset.
+The gene child publishes the corresponding exon-subtracted SAFs.
 
 ### `tables/universe_members.tsv.gz`
 
@@ -355,10 +391,12 @@ when any model has several clades, otherwise `compatible`; a missing match is
 Primates branch. Consumers derive age tiers from the clade path with
 `taxonomy_canonical.median_divergence_pct` and per-record divergence beside it.
 
-## Published legacy release
+## Legacy audit schemas
 
-Published legacy releases in the reference cache carry `te_loci.tsv.gz`, `te_dim.tsv`,
-`MANIFEST.json` and `BUILD_ID`.
+The earlier audit experiments used `te_loci.tsv.gz` and `te_dim.tsv`; those experiments reside
+under `_scratch/te-tracks-audit/legacy_release_experiments/`. The retained external reconciliation
+oracle is `GRCm39_Ensembl_rmsk_TE.gtf.gz` in the host refcache. The schemas below document
+the migration vocabulary of the earlier experiments.
 
 ### `te_loci.tsv.gz` — legacy canonical table, 1-based
 
@@ -390,12 +428,12 @@ records its membership.
 Columns are `subfamily`, `family`, `class`, `n_loci` and `total_bp`. Each row summarizes one
 source `(subfamily, family, class)` triple.
 
-## Exports and later phases
+## Exports
 
 Exports follow `exports/<contig_namespace>/<universe>/<interval_variant>/<level>[_<profile>].<format>`.
 The core release supplies eight `interspersed` full-interval exports in each of the `ucsc`,
 `ensembl` and `gencode` contig namespaces. The gene child family supplies `exon_subtracted`
-intervals in phase 8. Each emitted feature and block registers to source records through
+intervals under its GENCODE vM37 annotation pin. Each emitted feature and block registers to source records through
 `tables/export_feature_members.tsv.gz`.
 
 ### Legacy names and their disposition
@@ -805,4 +843,8 @@ The transcript-context relation enters a later snapshot after its chr1 and mm39 
 ### Phase 9: acceptance and host runbook
 
 `docs/RUNBOOK.md` supplies the host build, verification, publication, transfer and recovery
-procedure. Full mm39 acceptance verifies the published contracts and updates artifact status.
+procedure. `tests/run.sh acceptance --build` builds both families into
+`$TE_TRACKS_REFROOT/acceptance/`; `tests/run.sh acceptance` checks those archives again. Eleven
+areas cover the source, records/universes, canonical taxonomy, Dfam, exports, record gene profile,
+namespaces, publication, child census, independent bedtools geometry and packaged-GTF reconciliation.
+[Acceptance anchors](../tests/expectations/mm39/README.md) name the authoring evidence for every census.

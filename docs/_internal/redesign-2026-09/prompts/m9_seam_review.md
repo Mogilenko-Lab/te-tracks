@@ -114,4 +114,61 @@ than re-arguing it.
 
 ## Phase 9b specifics
 
-__SPECIFICS__
+Phase 9b landed as commit `__HEAD9B__`, the last implementation commit on the branch. It added eleven
+acceptance checks, their library, six expectation tables, the `--build` mode, the host section of the
+runbook, the acceptance witness in `docs/RELEASES.md`, and the deferral table in `README.md`.
+
+The eleven checks under `tests/checks/acceptance/` are five-line wrappers. The work sits in
+`tests/checks/acceptance/lib/`: `common.py` resolves the acceptance archives, runs `build()` for
+`--build`, and offers `core_checks()`, which re-runs existing `tests/checks/core/` checks against an
+acceptance archive by symlinking it as `build` under a private reference root. `areas.py` holds the nine
+measuring areas. `oracles.py` holds the bedtools exon-subtraction oracle and the packaged legacy-GTF
+reconciliation. `consumer_floor.py` is a probe the runbook invokes by hand.
+
+Spend your effort in judgement 5 on two specific questions, because they decide whether this suite is worth
+having:
+
+- **Does `core_checks()` make an acceptance check, or does it re-run a contract?** Re-running a core
+  contract at full scale is a real measurement, and it is also not independent authoring. State for each
+  area which part is a fresh measurement written for acceptance and which part is a core check replayed,
+  and say whether the mixture leaves any acceptance claim resting only on a replay.
+- **Could each expectation literal have been produced by the build it now judges?** `tests/expectations/mm39/README.md`
+  claims a provenance per file. Test that claim: for each expectation table, decide whether its values are
+  derivable from an earlier plan, ruling or review in `docs/_internal/`, or whether they could only have come
+  from running the build. Name any file where the second is true.
+
+Four deviations the implementer reported, each of which you should confirm or correct rather than accept:
+
+1. It edited `tests/run.sh` during that runner's own first invocation; the invocation ended with a shell
+   parse error and exit 2. It then froze the runner and repeated the complete fresh build successfully. Judge
+   whether the frozen runner is correct, including its argument parsing and every usage exit.
+2. The orchestrator's prompt named a `--config` flag that `build.sh` does not have. The implementation and
+   the runbook use `--family gene`, which selects `config/mm39_gene.env`. Confirm the runbook's commands
+   match the CLI as built.
+3. The repository's HEAD advanced through documentation-only commits while the build ran, so the acceptance
+   manifests record revision `51c0162` with `builder_git_dirty: true`. The source and configuration bytes
+   retain the phase 9a identities. Confirm that, and confirm the dirty flag cannot reach a host publication.
+4. The export writer's peak resident bytes measured 6,807,732,224 in the first fresh build and
+   4,936,556,544 in the second, against an earlier measured range of 5.5 to 6.0 GB, while both builds
+   reproduced the same payload identity. Say what a 1.9 GB spread across two identical-output builds means
+   for the 16 GB reservation the runbook asks a host to make.
+
+Three smaller things to check while you are in the files:
+
+- `tests/expectations/mm39/gene_oracle.tsv` pins twelve metrics while the oracle measures eighteen across
+  its three contigs. Name the unpinned ones and say whether their absence weakens the oracle.
+- `consumer_floor.py` lives under `tests/checks/acceptance/lib/` and no check imports it; the runbook calls
+  it directly. Judge the placement.
+- `areas.publication()` collects identity differences into a `discrepancies` list before asserting. Confirm
+  that a `BUILD_ID` difference fails the check rather than printing a warning.
+
+The measured identities to hold against the artifacts: core `BUILD_ID`
+`5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813`, child
+`198f39f0ef16875121fa65e1b1301f0d58c894488cc557765ce7f50c57a38bd1`, `CATALOG_ID`
+`90cc18be5d4ee9342b57b58e4b8ad19e59f9e6b48b9a94bab9db615db1091b5e` in both, 52 core inventory entries and
+27 export contracts, 21 child inventory entries and 12 export contracts, core payload 15,301,538,537 bytes
+and child payload 2,157,717,760 bytes.
+
+The orchestrator has already re-run all four suite modes and verified all ten archives; do not repeat that
+as your contribution. Your contribution is the seam.
+

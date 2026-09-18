@@ -1,0 +1,13 @@
+metric	value
+all_multi_record_instances	445649
+interspersed_instances	3152636
+interspersed_multi_record_instances	434707
+interspersed_mixed_name_instances	30569
+interspersed_mixed_name_records	95830
+interspersed_mixed_strand_instances	23244
+all_overlapping_records	429440
+all_ltr_only_instances	722280
+l1_model_base_one_records	588
+interspersed_score_above_1000	1224713
+consensus_start_above_end	2
+overlap_flag_true	0

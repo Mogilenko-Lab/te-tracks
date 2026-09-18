@@ -135,6 +135,26 @@ path, identifier, command, table row or contract. Compress and clarify sentences
 reads as wrong rather than as verbose, leave it and report it; a false claim is the next pass's subject and
 rewriting it here hides it.
 
+## 3c. Where the 120 lines come from, and what the phase numbers become
+
+`README.md` is 225 lines and 105 of them are the artifact truth table, so the budget is met by moving that
+table rather than by thinning prose. Move it into `docs/OUTPUTS.md` as its own section, which is where the
+schemas and export contracts already live, and leave the README one sentence naming what the table records
+and where it is. Move nothing else out of the README; the six questions above are its content.
+
+The phase numbers leave the public documents, because a consumer cannot act on them:
+
+- the truth table's `phase` column goes. The `status` column stays, and it says what is true of the artifact
+  now: delivered, tested, or deferred with the evidence its next decision needs.
+- `docs/OUTPUTS.md` headings carry "(phase 2)" and "(phase 3)". Name the subject instead.
+- the README paragraph beginning "Phase 9b qualification recorded" states suite counts as a phase result.
+  State them as the package's current test surface, in the build and test section, with the counts intact.
+- the "Parking gates" heading names the project's process. The table under it is the list of deferrals with
+  the evidence each needs, so name it that, and place it beside the questions the outputs do not settle.
+
+The internal records under `docs/_internal/` keep every phase number; they are the history, and this
+instruction is about the documents a consumer reads.
+
 ## Rules
 - Touch only: `README.md`, `AGENTS.md`, `tests/fixtures/**`, `tests/checks/**`, `tests/lib/**`, `src/**`,
   `config/**`, `build.sh`, `lib/**`, and `docs/*.md`. In `docs/*.md` the licence is wording alone: every
