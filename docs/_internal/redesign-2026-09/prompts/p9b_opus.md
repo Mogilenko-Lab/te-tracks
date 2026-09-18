@@ -1,5 +1,5 @@
 Review phase 9b of the te-tracks redesign, the acceptance suite and the host runbook. Repository:
-/workspaces/Meta-Aging/01_modules/te-tracks (git branch redesign-2026-09, HEAD `__HEAD9B__`). You are
+/workspaces/Meta-Aging/01_modules/te-tracks (git branch redesign-2026-09, HEAD `204ee66`). You are
 read-only: no edits, no git writes, no installs, no network.
 
 No review of phase 9b exists yet. A codex reviewer is working in parallel on a different question, the
@@ -9,7 +9,7 @@ consumer map. Your question is narrower and harder: **can this acceptance suite 
 Read, in order:
 1. docs/_internal/_project/plans/2026-09-16_te-tracks-redesign/19_phase9_acceptance_park.md (the contract)
 2. docs/_internal/redesign-2026-09/prompts/p9b_impl.md (what was asked)
-3. `git -C /workspaces/Meta-Aging/01_modules/te-tracks show --stat __HEAD9B__` and the full diff of that commit
+3. `git -C /workspaces/Meta-Aging/01_modules/te-tracks show --stat 204ee66` and the full diff of that commit
 4. tests/checks/acceptance/ in full, including lib/
 5. tests/expectations/mm39/ in full, including its README.md
 6. /workspaces/Meta-Aging/AGENTS.md sections "Prose" and "Comments"

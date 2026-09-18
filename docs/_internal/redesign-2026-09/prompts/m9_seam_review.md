@@ -114,7 +114,7 @@ than re-arguing it.
 
 ## Phase 9b specifics
 
-Phase 9b landed as commit `__HEAD9B__`, the last implementation commit on the branch. It added eleven
+Phase 9b landed as commit `204ee66`, the last implementation commit on the branch. It added eleven
 acceptance checks, their library, six expectation tables, the `--build` mode, the host section of the
 runbook, the acceptance witness in `docs/RELEASES.md`, and the deferral table in `README.md`.
 
