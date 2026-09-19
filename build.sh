@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Build and verify a private directory, then install when a reference root is supplied.
+export PYTHONDONTWRITEBYTECODE=1
 SCRIPT_NAME=build
 source "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
 

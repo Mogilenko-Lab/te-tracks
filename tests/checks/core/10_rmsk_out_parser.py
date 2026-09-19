@@ -64,8 +64,8 @@ assert (id2["chrom"], id2["start_1"], id2["end_1"], id2["strand"]) == (
 )
 assert (id2["consensus_start_1"], id2["consensus_end_1"], id2["consensus_left_bp"]) == (5, 104, 48)
 assert next(row for row in observed if row["rmsk_name"] == "SplitName")["consensus_start_1"] == -2
-malformed_text = (FIXTURES / "malformed.out").read_text().splitlines()[3]
-assert_malformed(FIXTURES / "malformed.out", 4, malformed_text)
+malformed_text = (FIXTURES / "unparenthesized_reverse_left.out").read_text().splitlines()[3]
+assert_malformed(FIXTURES / "unparenthesized_reverse_left.out", 4, malformed_text)
 
 with TemporaryDirectory(prefix="te-tracks-parser-") as directory:
     compressed = Path(directory) / "records.out.gz"
@@ -99,7 +99,7 @@ with TemporaryDirectory(prefix="te-tracks-parser-") as directory:
         bad_rows.append(row)
     for row in bad_rows:
         text = " ".join(row)
-        path = Path(directory) / "malformed.out"
+        path = Path(directory) / "unparenthesized_reverse_left.out"
         path.write_text("\n" + text + "\n")
         assert_malformed(path, 2, text)
 

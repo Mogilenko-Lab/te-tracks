@@ -13,7 +13,7 @@ covered the text you are reading.
 
 ## Your scope
 
-`docs/OUTPUTS.md`, 850 lines, the densest claim surface in the package.
+`docs/OUTPUTS.md`, 948 lines, the densest claim surface in the package.
 
 Every row of every artifact table is a claim with four parts: the path, the grain, the contig namespace and
 the coordinate convention. Check all four per row against the artifact itself, in both published families

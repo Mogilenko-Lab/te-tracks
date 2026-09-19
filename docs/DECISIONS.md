@@ -22,7 +22,7 @@ The observed class set matches the reviewed disposition file (`config/<genome>.c
 
 ## 3. Delivered scope
 
-The parked mm39 release contains the canonical tables, instance membership, raw and canonical
+The mm39 release contains the canonical tables, instance membership, raw and canonical
 taxonomy, universe definitions, and the `interspersed` full-interval exports: BED at record,
 subfamily and family level, GTF at record and subfamily level, SAF at subfamily level and at the
 legacy taxonomy-triple grouping, plus the complete-catalog record BED under `all_rmsk`, each in
@@ -35,11 +35,11 @@ Additional adapters enter a release together with a named consumer and a passing
 
 `te_<assembly>_gene` publishes immutable snapshots pinning one parent core by full `BUILD_ID`,
 one gene annotation by digest and one versioned policy bundle (mask, minimum retained block,
-context capability and later context envelope), with the parent's `CATALOG_ID`.
-Consumers match the snapshot's annotation digest to their counting annotation: the first snapshot
-pins GENCODE vM37 and the second pins the 10x 2024-A annotation (GENCODE vM33 filtered) used for
-the current single-cell counts; a mismatch requires documented geometry reconciliation or another
-snapshot.
+context capability and a context envelope upon qualification), with the parent's `CATALOG_ID`.
+Consumers match the snapshot's annotation digest to their counting annotation; a mismatch requires
+documented geometry reconciliation or another snapshot. The delivered child pins GENCODE vM37;
+the deferred 10x 2024-A child awaits the digest of the filtered GENCODE vM33 annotation used for
+the current single-cell counts and geometry reconciliation.
 Each child carries an exact, digest-verified copy of the parent's contig alias and length table,
 normalizes annotation contigs through it and fails on an unmapped contig; the
 `compat_tetranscripts_mm39` exon-subtracted SAF pair stays a published family view for legacy
@@ -67,7 +67,8 @@ declared format profile that keeps raw strand, raw class/family token, consensus
 the overlap flag.
 The manifest records the assembly, contig set and declared RepeatMasker software and library
 identity with their evidence.
-The UCSC browser table is compared once at source qualification and the report is retained.
+Source qualification compares the browser table and retains its report; canonical-record
+construction also checks source keys and class/family agreement.
 
 ## 7. Build identity and publication
 
@@ -87,26 +88,25 @@ The default mask, `all_exons_unstranded_union_v1`, subtracts the unstranded unio
 row in the pinned annotation and retains every positive-length block (`min_retained_block_bp = 1`),
 registered to its record, because an all-exon gene pass counts every exon row and the guarantee
 is exon-disjoint sequence support.
-The same-strand companion, `all_exons_stranded_union_v1`, joins in a later snapshot after a
-chemistry pilot establishes which mate is RNA-sense; protein-coding and basic masks stay measured
+The same-strand companion, `all_exons_stranded_union_v1`, requires a chemistry pilot establishing
+which mate is RNA-sense for snapshot admission. Protein-coding and basic masks are measured
 alternatives admitted with a named consumer.
 EM routes use unmasked record exports with the full gene annotation; molecule exclusivity belongs
 to the joint counting run.
 
 ## 9. Transcript context is geometry
 
-te-tracks publishes a sparse record-by-transcript geometry relation with per-pair status and a
+The deferred transcript-context design specifies a sparse record-by-transcript geometry relation with per-pair status and a
 per-record roll-up, carrying exon, intron and UTR overlap, relative strand, and signed closest-base
 distance to each transcript's start and end, with gene-body distance beside transcript distance
 so consumers can derive their own labels.
-Rows cover body overlaps, the nearest start, end and exon edge on the record's contig with ties
+The proposed relation covers body overlaps, the nearest start, end and exon edge on the record's contig with ties
 kept, and records overlapping a window from 10 kb upstream to 2 kb downstream of an annotated
 transcript start; narrower promoter policies are consumer filters on the stored distance.
-Each transcript carries `Ensembl_canonical` and `mRNA_start_NF` flags so consumers can exclude
-incomplete starts.
-The first child snapshot declares context `not_computed`; the relation follows in a later
-snapshot after passing the chr1 then mm39 scaling gate, and consuming ledgers key on
-`te_catalog_id` and `te_build_id`.
+The proposed relation records `Ensembl_canonical` and `mRNA_start_NF` status for each transcript
+so consumers can exclude incomplete starts.
+The first child snapshot declares context `not_computed`. The relation requires the chr1 then
+mm39 scaling gate for snapshot admission. Consuming ledgers key on `te_catalog_id` and `te_build_id`.
 
 ## 10. Records, instances and insertions
 
@@ -116,19 +116,19 @@ An instance id is RepeatMasker's grouping hypothesis for records descended from 
 carried on every record and registered as its own feature level; it is a starting group whose
 errors can split one insertion or combine distinct insertions.
 Insertion-level units, including full-length copies, proviruses and solo LTRs, are reconstructions
-with declared parameters and evidence, published later as candidate views.
+with declared parameters and evidence, admitted as candidate views.
 Documentation states the annotation's limits so consumers can interpret these units: records align
 to a pinned library, fragmentation and nesting split elements, consensus coordinates are
 model-relative, records overlap one another, and genic context depends on the annotation pin.
 
 ## 11. Structural candidate views
 
-Later core snapshots publish geometry computed solely from catalog columns under declared parameters:
+The deferred core candidate views are designed to contain geometry computed solely from catalog columns under declared parameters:
 the block union of an instance's records with gaps preserved, record 5′ windows with model-prefix
 eligibility, LTR–internal candidate pairs by family, strand and gap with per-pair status, and
 divergence bins with pinned thresholds.
-Views carry neutral names, support and candidate status, and enter after the host build, batched
-into a later core snapshot when a consumer names the need.
+The proposed candidate-view contract uses neutral names, support and candidate status. Admission requires the host build and
+a named consumer need, with views batched into one core snapshot.
 Biological verdicts such as promoter-intact, solo LTR and young belong to consuming analyses
 because they require interpretation of the candidate evidence.
 
@@ -142,8 +142,9 @@ landing on their feature; each tool's allocation of ambiguous molecules is recor
 behaviour outside these assertions.
 Alignment parameters, estimator choice, forks and allocation behaviour belong to the consuming
 toolkit, so te-tracks documents its observed qualification limits.
-The consumer environment is delivered by reference to the consuming module in
-[RUNBOOK.md](RUNBOOK.md#consumer-environment), with source pins, installed versions and execution
+The consuming recipe lives at `/workspaces/Meta-Aging/01_modules/te-quant/env/`; the installed
+environment activates through `/workspaces/Meta-Aging/.venv/te-consumers/activate.sh`.
+[RUNBOOK.md](RUNBOOK.md#consumer-environment) records source pins, installed versions and execution
 evidence. Execution checks report `unsupported` when a binary is absent.
 
 ## 13. STARsolo record profile
@@ -152,20 +153,19 @@ evidence. Execution checks report `unsupported` when a binary is absent.
 `transcript_id` and `locus` equal to the record alias, `gene_name` the RepeatMasker name,
 `gene_type` `transposable_element`, and provenance attributes kept, so gene-level counters count
 loci.
-The existing `record.gtf` keeps the subfamily grammar consumed by TEsingle and TElocal.
-The profile reuses record alias membership in registration and enters with its contract and
-fixture; an instance-level profile awaits mixed-name, mixed-strand, gap and junction tests.
+`record.gtf` keeps the subfamily grammar consumed by TEsingle and TElocal.
+The profile reuses record alias membership in registration and has a contract and fixture.
+An instance-level profile requires mixed-name, mixed-strand, gap and junction tests.
 
 ## 14. Matrix binding
 
-A run's matrix binds to a registration through the full key
-`(universe_name, variant, feature_level, key_grammar)` because registration holds each record
-under multiple universes and joining on level and grammar alone doubles counts.
+Matrices bind through the full key `(universe_name, variant, feature_level, key_grammar)`;
+omitting universe duplicates record keys shared by `interspersed` and `all_rmsk`.
 A join fixture over `interspersed` and `all_rmsk` proves the rule.
 
 ## 15. Rank vocabulary and Dfam
 
-Raw and canonical RepeatMasker labels stay as they are; the phase 9 core view stores Dfam lineage,
+Raw and canonical RepeatMasker labels retain their source and resolved values. The core view stores Dfam lineage,
 accession, model version, model length, clade and release as truth, admitting `interspersed`
 names first.
 It derives a named rank scheme with per-rank status (`mapped`, `inherited`, `missing`,
@@ -180,8 +180,7 @@ The normalized companions are `taxonomy_dfam_models`, `dfam_lineage_nodes` and
 
 ## 16. Wording
 
-Each decision states the chosen behaviour and its reason in two to four brief affirmative
-sentences.
+Each decision records its chosen behaviour and supporting rationale.
 Contracts and test evidence live in [OUTPUTS.md](OUTPUTS.md), [RELEASES.md](RELEASES.md) and
 [PROVENANCE.md](PROVENANCE.md).
 Deferred work names the evidence its next decision needs.
@@ -192,16 +191,16 @@ Deferred work names the evidence its next decision needs.
   median divergence supplies age-tier evidence; full-length and ORF status need structural evidence.
 - ERV units: the LTR–internal candidate view, instance relation and consensus coordinates precede
   reconstruction; validated LTR–internal membership defines the unit.
-- hg38: source pins and packaged-file reconciliation follow parking, using the shared schema,
-  class-census gate and config shape.
+- hg38: admission after mm39 requires source pins and packaged-file reconciliation, using the
+  shared schema, class-census gate and config shape.
 - Transcript context: section 9 defines the relation and its chr1 then mm39 scaling gate.
 - Stranded mask companion: the chemistry pilot establishes which mate is RNA-sense before
-  `all_exons_stranded_union_v1` joins the default mask.
-- TES-side window: evidence of need from the 3′ pilot admits a later context envelope.
+  admission of `all_exons_stranded_union_v1` beside the default mask.
+- TES-side window: evidence of need from the 3′ pilot qualifies a context envelope.
 - Instance-level STARsolo profile: mixed-name, mixed-strand, gap and junction tests qualify its
   feature grammar.
 - Consumer pilots: barcode/empty-cell policy, chemistry, paired-mate and UMI handling,
   the Stellarscope boundary defect and bulk counting-unit/strand policy retain their
   consuming-project evidence gates.
-- Cross-build record correspondence on `(chrom, start_1, end_1, strand)` awaits an explicit mapping rule.
+- Cross-build record correspondence on `(chrom, start_1, end_1, strand)` requires an explicit mapping rule.
 - hg38 admission requires source-wide instance numbering or a contig-scoped instance key.

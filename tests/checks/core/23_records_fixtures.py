@@ -87,16 +87,16 @@ with TemporaryDirectory(prefix="te-tracks-records-") as directory:
     identity_sizes = scratch / "identity.chrom.sizes"
     identity_sizes.write_text((FIXTURES / "chrom.sizes").read_text() + "chr:Bad\t100\n")
     for filename, table, message, offender in (
-        ("duplicate.out", "rmsk.tsv", "exact duplicate key", "Duplicate"),
+        ("duplicate_key.out", "rmsk.tsv", "exact duplicate key", "Duplicate"),
         ("beyond_end.out", "beyond_end.tsv", "outside contig bounds", "BeyondEnd"),
         ("missing_chrom.out", "missing_chrom.tsv", "absent from chrom.sizes", "chrMissing"),
         ("spanning_instance.out", "spanning_instance.tsv", "instance spans multiple contigs", "007"),
-        ("invalid_name.out", "invalid_name.tsv", "invalid rmsk_name", "Bad|Name"),
-        ("invalid_chrom.out", "invalid_chrom.tsv", "invalid chrom", "chr:Bad"),
+        ("pipe_name.out", "pipe_name.tsv", "invalid rmsk_name", "Bad|Name"),
+        ("colon_chrom.out", "colon_chrom.tsv", "invalid chrom", "chr:Bad"),
         ("colon_name.out", "colon_name.tsv", "invalid rmsk_name for record identity", "Bad:Name"),
         ("slash_name.out", "slash_name.tsv", "invalid rmsk_name for record identity", "Bad/Name"),
     ):
-        sizes = identity_sizes if filename == "invalid_chrom.out" else FIXTURES / "chrom.sizes"
+        sizes = identity_sizes if filename == "colon_chrom.out" else FIXTURES / "chrom.sizes"
         expect_failure(lambda: build_records(FIXTURES / filename, FIXTURES / table,
                                              sizes, scratch / "failed"),
                        message, offender)
@@ -109,9 +109,9 @@ with TemporaryDirectory(prefix="te-tracks-records-") as directory:
     for label, lines, message, offender in (
         ("duplicate", original_table + original_table[:1], "UCSC exact duplicate key", "'A'"),
         ("missing", original_table[1:], "UCSC join requires a 1:1 match", "'A'"),
-        ("extra", original_table + [(FIXTURES / "unreviewed.tsv").read_text()],
+        ("extra", original_table + [(FIXTURES / "unlisted_class.tsv").read_text()],
          "UCSC join requires a 1:1 match", "NovelName"),
-        ("disagree", (FIXTURES / "disagree.tsv").read_text().splitlines(keepends=True),
+        ("disagree", (FIXTURES / "family_disagreement.tsv").read_text().splitlines(keepends=True),
          "UCSC rmsk_family disagreement", "Split"),
     ):
         altered = scratch / f"{label}.tsv"
@@ -121,7 +121,7 @@ with TemporaryDirectory(prefix="te-tracks-records-") as directory:
                        message, offender)
     unknown = scratch / "unreviewed"
     with contextlib.redirect_stdout(io.StringIO()):
-        build_records(FIXTURES / "unreviewed.out", FIXTURES / "unreviewed.tsv",
+        build_records(FIXTURES / "unlisted_class.out", FIXTURES / "unlisted_class.tsv",
                       FIXTURES / "chrom.sizes", unknown / "tables")
     expect_failure(lambda: build_universes(unknown, FIXTURES / "classes.tsv"),
                    "class set gate", "Novel")

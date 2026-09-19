@@ -1,15 +1,10 @@
 # Export fixtures
 
-`records.tsv` supplies six records for a typed scratch parquet; `universe_members.tsv` selects
-five records, and `taxonomy.tsv` supplies their canonical rank labels and statuses.
-`universes.json` declares the default universe with an all-record predicate, so the selected
-five rows establish membership as the export authority.
-The third declared universe, `all_rmsk`, selects the complete six-record catalog.
-`expected/all_rmsk/record.bed` contains all six sorted records, including `Excluded`, with one
-registration per record appended after the forty interspersed registrations.
-
-`expected/` contains hand-authored export bytes and the decompressed feature registration.
-The rows cover C-locale contig order, score clipping, a one-base interval, two names at equal
-coordinates, two records in instance `007`, changing raw labels, and unresolved family and class
-ranks. Check 42 builds the scratch inputs, compares every expected file and exercises invalid
-identifier components and membership gates.
+- `records.tsv` pins six records with byte-order contigs, clipped scores, one-base support, equal-coordinate names and a shared instance; `tests/checks/core/42_exports_fixtures.py` reads it.
+- `taxonomy.tsv` pins canonical labels beside changing raw labels and unresolved class/family ranks; `tests/checks/core/42_exports_fixtures.py` reads it.
+- `universe_members.tsv` selects five interspersed records and places Excluded in satellites; `tests/checks/core/42_exports_fixtures.py` reads it.
+- `universes.json` pins membership authority despite all-record predicates and declares the complete-catalog universe; `tests/checks/core/42_exports_fixtures.py` reads it.
+- `conservation_counts.tsv` pins one measured feature with count 7; `tests/checks/core/41_export_registration.py` and `tests/checks/consumers/30_registration_duckdb.py` read it.
+- `conservation_members.tsv` pins that feature to three records sharing a subfamily and family; `tests/checks/core/41_export_registration.py` and `tests/checks/consumers/30_registration_duckdb.py` read it.
+- `conservation_totals.tsv` pins count 7 per target after distinct-feature selection; `tests/checks/core/41_export_registration.py` and `tests/checks/consumers/30_registration_duckdb.py` read it.
+- `expected/README.md` maps hand-authored export bytes and registration to `tests/checks/core/42_exports_fixtures.py`.

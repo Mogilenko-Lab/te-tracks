@@ -56,7 +56,7 @@ the same contig, either strand (8.0710%). The interspersed selection has 3,152,6
 mixed-strand instances. Across `all_rmsk`, 445,649 instances have several records. The LTR-only
 composition screen finds 722,280 instances with an LTR non-`-int` member and zero `-int` members;
 588 raw LINE/L1 records begin at model base 1. These are annotation measurements used as inputs
-to later structural qualification.
+to structural qualification.
 
 ## Class census
 
@@ -135,12 +135,12 @@ GENCODE vM37. Annotation covers 38 of 61 contigs; 2,638 catalog records occupy t
 The unstranded exon union spans 160,549,642 bp. The `interspersed` subtraction retains
 3,684,934 blocks from 3,668,830 records, totaling 1,090,369,890 bp, with 26,235,918 bp removed.
 The compatibility subtraction retains 3,717,740 blocks totaling 1,094,973,237 bp.
-All three complete status censuses are independently recomputed against the phase 8 expectation.
+All three complete status censuses are independently recomputed against the exon-subtraction expectation.
 
 Acceptance's independent bedtools pipeline converts the retained GTF exons to BED, sorts and
 merges them, and subtracts that union from the parent's record BED. It compares exact block
 multisets `(start, end, strand, name)` with the child SAF on chr18, chr19,
-`chr1_MU069434v1_random` and chr7. All four comparisons passed against the acceptance archive:
+`chr1_MU069434v1_random` and chr7. All four comparisons agree with the acceptance archive:
 
 | Contig | Parent records | GTF exons | Exon-union intervals | Exon-union bp | Retained blocks | Retained bp |
 |---|---:|---:|---:|---:|---:|---:|
@@ -150,10 +150,10 @@ multisets `(start, end, strand, name)` with the child SAF on chr18, chr19,
 | chr7 | 214,663 | 90,795 | 24,978 | 12,521,871 | 207,048 | 60,028,394 |
 | Covered blocks / child interspersed blocks | — | — | — | — | 407,745 / 3,684,934 (11.07%) | — |
 
-The original three contigs agree with the independently recorded phase 8 block/length anchors.
-The chr7 measurements are new milestone 9 bedtools anchors in
+The original three contigs agree with the independently recorded block/length anchors.
+The chr7 bedtools anchors are in
 [`gene_oracle_m9.tsv`](../tests/expectations/mm39/gene_oracle_m9.tsv), carried by the
-[milestone 9 rulings](_internal/redesign-2026-09/reviews/m9_rulings.md#fix-round-evidence).
+[geometry rulings](_internal/redesign-2026-09/reviews/m9_rulings.md#fix-round-evidence).
 
 ## Packaged legacy reconciliation
 
@@ -165,7 +165,7 @@ contig normalization. The comparison retains duplicate coordinate multiplicity a
 direction of an interval difference. The check reports the named path as unsupported when the
 packaged file is unavailable.
 
-The acceptance comparison found 3,799,629 rows on each side, with zero compatibility-only
+The acceptance comparison has 3,799,629 rows on each side, with zero compatibility-only
 and zero legacy-only intervals, including duplicate multiplicity.
 
 The legacy selection removes 2,548 tRNA-derived SINE records: LFSINE_Vert 1,235, MamSINE1 925

@@ -2,7 +2,7 @@
 
 You are the implementer of the parking pass, the last change to te-tracks before it is consumed. Working
 directory (absolute): `/workspaces/Meta-Aging/01_modules/te-tracks`, git branch `redesign-2026-09`, HEAD
-`__HEAD__`. Every phase from 0 to 9b has landed and been reviewed. Read `AGENTS.md`, `README.md`,
+`26f0c7e`. Every phase from 0 to 9b has landed and been reviewed. Read `AGENTS.md`, `README.md`,
 `docs/*.md`, `src/`, `tests/`, `config/` and
 `docs/_internal/_project/plans/2026-09-16_te-tracks-redesign/19_phase9_acceptance_park.md`.
 

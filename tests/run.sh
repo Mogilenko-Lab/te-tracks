@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+export PYTHONDONTWRITEBYTECODE=1
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/common.sh"
 
 usage() {
@@ -8,6 +9,7 @@ usage() {
     'checks: tests/checks/<mode>/*.sh and tests/checks/<mode>/*.py, sorted by name' \
     'consumer environment: source /workspaces/Meta-Aging/.venv/te-consumers/activate.sh' \
     'consumer suite: tests/run.sh consumers' \
+    'consumer fixtures: private per run; TE_TRACKS_CONSUMER_FIXTURES selects a retained override' \
     'acceptance scratch: ${TMPDIR:-$TE_TRACKS_REFROOT/tmp}/te-tracks-<root-hash>/acceptance' \
     'execution: bash for .sh; python3 for .py; all file modes included' >&2
 }
@@ -53,6 +55,20 @@ for check in "$check_dir"/*; do
     checks+=("$check")
   fi
 done
+
+if [ "$mode" = consumers ] && [ "${#checks[@]}" -gt 0 ] && [ -z "${TE_TRACKS_CONSUMER_FIXTURES+x}" ]; then
+  consumer_run=$(python3 - <<'FIXTURES'
+import os
+from pathlib import Path
+import tempfile
+base = Path(os.environ.get("TMPDIR", str(Path(os.environ["TE_TRACKS_REFROOT"]) / "tmp")))
+base.mkdir(parents=True, exist_ok=True)
+print(tempfile.mkdtemp(prefix="te-tracks-consumers-", dir=base))
+FIXTURES
+  )
+  export TE_TRACKS_CONSUMER_FIXTURES="$consumer_run/fixtures/consumers"
+  trap 'python3 -c "import shutil, sys; shutil.rmtree(sys.argv[1])" "$consumer_run"' EXIT
+fi
 
 if [ "$mode" = acceptance ] && [ "${#checks[@]}" -gt 0 ]; then
   python3 - <<'SCRATCH'

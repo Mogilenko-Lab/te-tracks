@@ -24,13 +24,13 @@ Core paths are relative to `te_mm39/archive/<BUILD_ID>/`; child paths belong to 
 | Child `exports/<ns>/interspersed/exon_subtracted/taxonomy_triple.saf` | `interspersed / exon_subtracted` | Bulk RNA-seq featureCounts | The same retained blocks grouped with canonical taxonomy-triple IDs. |
 | Child `exports/<ns>/compat_tetranscripts_mm39/exon_subtracted/{subfamily,taxonomy_triple}.saf` | `compat_tetranscripts_mm39 / exon_subtracted` | Bulk RNA-seq featureCounts | Legacy-universe reproduction under the pinned exon mask. |
 | `exports/<ns>/all_rmsk/full/record.bed` | `all_rmsk / full` | a chromatin-accessibility ledger | The interval catalog the ledger keys on, including satellites, simple repeats and structural RNAs. |
-| `tables/rmsk_records.{tsv.gz,parquet}`, `rmsk_instance_members.tsv.gz`, `rmsk_taxonomy.tsv` | `all_rmsk` | RNA result joins and chromatin-accessibility ledger | Resolve record identities, source grouping, coordinates, divergence and raw taxonomy. |
-| `universes.json`, `tables/universe_members.tsv.gz`, `universe_summary.tsv` | All six named universes | Every consuming ledger | Pin eligibility and reconcile the selected reference census. |
-| `tables/taxonomy_canonical.tsv`, `taxonomy_resolution_report.tsv` | `all_rmsk` | Subfamily-to-family/class rollups | Assign each name once under the instance-weighted taxonomy rule. |
-| `tables/taxonomy_dfam.tsv`, `taxonomy_dfam_models.tsv`, `dfam_lineage_nodes.tsv`, `dfam_model_clades.tsv` | `interspersed` | Consumer annotation and age-tier policies | Join pinned Dfam models, rank statuses and complete curated clade paths to names. |
-| `tables/export_feature_members.tsv.gz`, `exports.tsv` in each family | Each declared universe / variant | Matrix binding and provenance ledgers | Join measured features through `(universe_name, variant, feature_level, key_grammar)` and verify export digests. |
-| `tables/contig_aliases.tsv`, core `contig_coverage.tsv` | `all_rmsk`, with interspersed coverage | Preflight and namespace readers | Match contig identity, lengths and reference coverage. |
-| Child `tables/exon_subtraction_status.tsv`, `exon_subtraction_summary.tsv`, `gene_annotation_coverage.tsv` | `all_rmsk`, `interspersed`, `compat_tetranscripts_mm39` | Bulk reference audit | Reconcile retained/removed bases and annotation coverage under the mask. |
+| `tables/rmsk_records.{tsv.gz,parquet}`, `tables/rmsk_instance_members.tsv.gz`, `tables/rmsk_taxonomy.tsv` | `all_rmsk` | RNA result joins and chromatin-accessibility ledger | Resolve record identities, source grouping, coordinates, divergence and raw taxonomy. |
+| `universes.json`, `tables/universe_members.tsv.gz`, `tables/universe_summary.tsv` | All six named universes | Every consuming ledger | Pin eligibility and reconcile the selected reference census. |
+| `tables/taxonomy_canonical.tsv`, `tables/taxonomy_resolution_report.tsv` | `all_rmsk` | Subfamily-to-family/class rollups | Assign each name once under the instance-weighted taxonomy rule. |
+| `tables/taxonomy_dfam.tsv`, `tables/taxonomy_dfam_models.tsv`, `tables/dfam_lineage_nodes.tsv`, `tables/dfam_model_clades.tsv` | `interspersed` | Consumer annotation and age-tier policies | Join pinned Dfam models, rank statuses and complete curated clade paths to names. |
+| `tables/export_feature_members.tsv.gz`, `tables/exports.tsv` in each family | Each declared universe / variant | Matrix binding and provenance ledgers | Join measured features through `(universe_name, variant, feature_level, key_grammar)` and verify export digests. |
+| `tables/contig_aliases.tsv`, core `tables/contig_coverage.tsv` | `all_rmsk`, with interspersed coverage | Preflight and namespace readers | Match contig identity, lengths and reference coverage. |
+| Child `tables/exon_subtraction_status.tsv`, `tables/exon_subtraction_summary.tsv`, `tables/gene_annotation_coverage.tsv` | `all_rmsk`, `interspersed`, `compat_tetranscripts_mm39` | Bulk reference audit | Reconcile retained/removed bases and annotation coverage under the mask. |
 | `source/`, `MANIFEST.json`, `BUILD_ID`, `CATALOG_ID` in each family | Family declaration | Publisher and every consumer | Verify source pins, qualification evidence, immutable bytes and parent dependencies. |
 
 The expectation-maximization routes take the unmasked record exports with the full gene annotation.
@@ -39,7 +39,105 @@ allocation and records its counting unit, strand policy, barcode thresholds and 
 The three single-cell and single-nucleus pilots qualify those choices in the consuming toolkit;
 the bulk pilot qualifies its featureCounts recipe. [RUNBOOK.md](RUNBOOK.md) gives the build and pin procedure.
 
-## Canonical records and universes (phase 2)
+## Artifact status
+
+`delivered` means generated; `tested` means verified against the artifact contract.
+Deferred artifacts and their required evidence appear in the [README](../README.md#deferrals-and-required-evidence).
+
+| artifact | status |
+|---|---|
+| `source/{mm39.fa.out.gz,rmsk.txt.gz,mm39.chromAlias.txt,mm39.chrom.sizes,SOURCES.json}` | delivered, tested |
+| `source/qualification.md` | delivered, tested |
+| `docs/_internal/redesign-2026-09/audit/source_qualification_mm39.md` | delivered, tested |
+| `tests/fixtures/source/` | delivered, tested |
+| `tests/fixtures/records/` | delivered, tested |
+| `tests/expectations/mm39/` | delivered, tested |
+| `tests/expectations/mm39/taxonomy_census.tsv` | delivered, tested |
+| `tests/expectations/mm39/exon_subtraction_summary.tsv` | delivered, tested |
+| `tests/fixtures/taxonomy/dfam_snapshot.tsv` | delivered, tested |
+| `tests/fixtures/taxonomy/dfam_snapshot.provenance.json` | delivered, tested |
+| `tests/fixtures/taxonomy/rule_cases.tsv` | delivered, tested |
+| `tests/fixtures/taxonomy/rollup_counts.tsv` | delivered, tested |
+| `tests/fixtures/taxonomy/weighting_context.tsv` | delivered, tested |
+| `tests/fixtures/exports/` | delivered, tested |
+| `tests/fixtures/consumers/` | delivered, tested: parser identities, registration, IRescue conservation, featureCounts, STARsolo, cellranger reference, bedtools, samtools and DuckDB; Stellarscope unsupported on its right-boundary defect |
+| `tests/lib/consumers.py` | delivered, tested |
+| `tests/lib/records.py` | delivered, tested |
+| `tests/fixtures/contigs/` | delivered, tested |
+| `tests/fixtures/publication/` | delivered, tested |
+| `tables/rmsk_records.tsv.gz` | delivered, tested |
+| `tables/rmsk_records.parquet` | delivered, tested |
+| `tables/rmsk_instance_members.tsv.gz` | delivered, tested |
+| `tables/rmsk_taxonomy.tsv` | delivered, tested |
+| `tables/taxonomy_canonical.tsv` | delivered, tested |
+| `tables/taxonomy_resolution_report.tsv` | delivered, tested |
+| `source/dfam_interspersed_mm39_snapshot.json.gz` | delivered, tested |
+| `source/dfam_interspersed_mm39_snapshot.provenance.json` | delivered, tested; core payload has 52 files |
+| `tables/taxonomy_dfam.tsv` | delivered, tested |
+| `tables/taxonomy_dfam_models.tsv` | delivered, tested |
+| `tables/dfam_lineage_nodes.tsv` | delivered, tested |
+| `tables/dfam_model_clades.tsv` | delivered, tested |
+| `tests/checks/consumers/17_starsolo_profile.required.py` | delivered, tested |
+| `tests/checks/consumers/24_starsolo_exec.sh` | delivered, tested with consumer environment |
+| `tests/checks/consumers/25_cellranger_mkref.sh` | delivered, tested with consumer environment |
+| `universes.json` | delivered, tested |
+| `tables/universe_members.tsv.gz` | delivered, tested |
+| `tables/universe_summary.tsv` | delivered, tested |
+| `tables/export_feature_members.tsv.gz` | delivered, tested |
+| `tables/exports.tsv` | delivered, tested |
+| `tables/contig_aliases.tsv` | delivered, tested |
+| `tables/contig_coverage.tsv` | delivered, tested |
+| `exports/ucsc/interspersed/full/record.bed` | delivered, tested |
+| `exports/ucsc/interspersed/full/subfamily.bed` | delivered, tested |
+| `exports/ucsc/interspersed/full/family.bed` | delivered, tested |
+| `exports/ucsc/interspersed/full/record.gtf` | delivered, tested |
+| `exports/ucsc/interspersed/full/record_starsolo.gtf` | delivered, tested |
+| `exports/ucsc/interspersed/full/subfamily.gtf` | delivered, tested |
+| `exports/ucsc/interspersed/full/subfamily.saf` | delivered, tested |
+| `exports/ucsc/interspersed/full/taxonomy_triple.saf` | delivered, tested |
+| `exports/ensembl/interspersed/full/record.bed` | delivered, tested |
+| `exports/ensembl/interspersed/full/subfamily.bed` | delivered, tested |
+| `exports/ensembl/interspersed/full/family.bed` | delivered, tested |
+| `exports/ensembl/interspersed/full/record.gtf` | delivered, tested |
+| `exports/ensembl/interspersed/full/record_starsolo.gtf` | delivered, tested |
+| `exports/ensembl/interspersed/full/subfamily.gtf` | delivered, tested |
+| `exports/ensembl/interspersed/full/subfamily.saf` | delivered, tested |
+| `exports/ensembl/interspersed/full/taxonomy_triple.saf` | delivered, tested |
+| `exports/gencode/interspersed/full/record.bed` | delivered, tested |
+| `exports/gencode/interspersed/full/subfamily.bed` | delivered, tested |
+| `exports/gencode/interspersed/full/family.bed` | delivered, tested |
+| `exports/gencode/interspersed/full/record.gtf` | delivered, tested |
+| `exports/gencode/interspersed/full/record_starsolo.gtf` | delivered, tested |
+| `exports/gencode/interspersed/full/subfamily.gtf` | delivered, tested |
+| `exports/gencode/interspersed/full/subfamily.saf` | delivered, tested |
+| `exports/gencode/interspersed/full/taxonomy_triple.saf` | delivered, tested |
+| `exports/ucsc/all_rmsk/full/record.bed` | delivered, tested |
+| `exports/ensembl/all_rmsk/full/record.bed` | delivered, tested |
+| `exports/gencode/all_rmsk/full/record.bed` | delivered, tested |
+| `te_mm39_gene`: `exports/ucsc/interspersed/exon_subtracted/subfamily.saf` | delivered, tested |
+| `te_mm39_gene`: `exports/ensembl/interspersed/exon_subtracted/subfamily.saf` | delivered, tested |
+| `te_mm39_gene`: `exports/gencode/interspersed/exon_subtracted/subfamily.saf` | delivered, tested |
+| `te_mm39_gene`: `exports/{ucsc,ensembl,gencode}/interspersed/exon_subtracted/taxonomy_triple.saf` | delivered, tested |
+| `te_mm39_gene`: `tables/exon_subtraction_status.tsv` | delivered, tested |
+| `te_mm39_gene`: `exports/{ucsc,ensembl,gencode}/compat_tetranscripts_mm39/exon_subtracted/{subfamily,taxonomy_triple}.saf` | delivered, tested |
+| `te_mm39_gene`: `tables/exon_subtraction_summary.tsv`, `tables/gene_annotation_coverage.tsv` | delivered, tested |
+| `te_mm39_gene`: copied `universes.json`, `tables/contig_aliases.tsv`, registration and export inventory | delivered, tested |
+| `te_mm39_gene`: retained GTF, source declaration, manifest and identities | delivered, tested |
+| `tests/fixtures/gene/` | delivered, tested |
+| `MANIFEST.json` | delivered, tested |
+| `BUILD_ID` | delivered, tested |
+| `CATALOG_ID` | delivered, tested |
+| `bin/te-tracks-preflight` | delivered, tested |
+| `docs/RUNBOOK.md`: gene child build and verification | delivered, tested |
+| `docs/RUNBOOK.md`: host procedure and measured resource floors | delivered; commands reviewed and scratch publication tested; host filesystem qualification required |
+| `tests/checks/acceptance/`: eleven complete-build checks | delivered, tested |
+| `tests/expectations/mm39/{source_pins,source_qualification,record_census,identity,gene_oracle,gene_oracle_m9}.tsv` | delivered, tested |
+| `data/dfam/`: tracked snapshot, provenance and refresh script | delivered; retained input pins tested; refresh qualification recorded |
+| `docs/OUTPUTS.md`: consumer map | delivered, tested: artifact bindings agree with registered contracts |
+| `docs/PROVENANCE.md`: qualification and measured census | delivered, tested |
+| `docs/RELEASES.md` | delivered, tested |
+
+## Canonical records and universes
 
 The build writes the complete source catalog under `tables/` and six executable universe
 definitions in `universes.json`. The default universe is `interspersed`.
@@ -94,7 +192,8 @@ with different names retain separate record identities; exact duplicate keys fai
 ### Records, instances and insertions
 
 A record is one RepeatMasker alignment of a genome stretch to a consensus model.
-Every per-locus count measures a record. An instance is the source grouping of
+Record-grain counts measure individual records; instance-grain counts measure source groupings.
+An instance is the source grouping of
 records hypothesized to descend from one element; its member records preserve
 fragmentation and nesting. An insertion is the DNA produced by one insertion
 event. Insertion-level candidates require reconstruction parameters and supporting
@@ -183,9 +282,9 @@ distinct raw `(rmsk_name, rmsk_family, rmsk_class)` labels; summed record length
 
 TSV files use UTF-8, LF endings, tabs and one header. Integers use decimal notation, floating
 point values use a period decimal separator, and booleans use `true` and `false`. Text retains
-case, literal `Unknown` and empty strings. Every phase 2 field is required; source values must
+case, literal `Unknown` and empty strings. Every field in these tables is required; source values must
 be free of embedded tabs and line endings. Readers supply explicit schemas, including text
-instance IDs. The reserved null token for future nullable companion fields is `\N`.
+instance IDs. The reserved null token for nullable companion fields is `\N`.
 
 `universes.json` uses insertion order, indent 2, `ensure_ascii=False`, UTF-8 and one final LF.
 Its `schema_version` owns predicate semantics; adding a predicate key requires a version bump.
@@ -206,12 +305,13 @@ schema with int64, float64, bool and UTF-8 string types. Both record serializati
 typed rows. Identical input produces byte-identical tables and universe definitions under the
 same builder and serialization libraries.
 
-## Canonical taxonomy (phase 3)
+## Canonical taxonomy
 
 ### `tables/taxonomy_canonical.tsv`
 
 One row per `rmsk_name`, sorted by name, derives canonical labels and rank statuses from the raw
-taxonomy. The 15 columns appear in this order. `canonical_family` is unique within `canonical_class`.
+taxonomy. The 15 columns appear in this order. Canonical family identity is
+`(canonical_class, canonical_family)`; several names share a family.
 
 | Column | Type | Contract |
 |---|---|---|
@@ -285,16 +385,16 @@ rank. `Unknown` and `Unspecified` retain their literal source classification.
 The pinned Dfam snapshot under `tests/fixtures/taxonomy/` supplies test evidence; the build derives
 labels from the two source tables under `tables/`. Every report name requires a snapshot row,
 and every snapshot name belongs to the canonical table. Agreement compares each type and subtype
-that Dfam names. Snapshot rows may also cover concordant names. The current snapshot covers class
+that Dfam names. Snapshot rows may also cover concordant names. The snapshot covers class
 `DNA`; `Unknown` and `Unspecified` have their evidence in the raw source labels.
 `tests/expectations/mm39/taxonomy_census.tsv` records the measured acceptance census, including
 snapshot row count. The snapshot provenance records its fetch date, endpoint pattern, source,
-role and per-family version evidence; the next refresh adds the release endpoint response.
+role and per-family version evidence; the release endpoint response is required for its next refresh.
 
 Check 30 proves the published canonical table equals the rule's output on every row.
 `tests/fixtures/taxonomy/rule_cases.tsv` through check 32 proves the rule itself, including ties, plurality and weighting cases mm39 never exercises.
 
-### Dfam lineage, ranks and clades (phase 9a)
+### Dfam lineage, ranks and clades
 
 The tracked Dfam 4.0 snapshot under `data/dfam/` supplies metadata for the 1,220
 `interspersed` names. Stage 25 reads its checksum-verified copy under `source/`.
@@ -440,31 +540,32 @@ intervals under its GENCODE vM37 annotation pin. Each emitted feature and block 
 
 | Legacy name | Disposition |
 |---|---|
-| `te_subfamily.saf` | `subfamily.saf` (phase 4) |
+| `te_subfamily.saf` | `subfamily.saf` |
 | `te_locus.saf` | A record-level SAF enters a release with a named consumer and a passing fixture ([ADR 3](DECISIONS.md#3-delivered-scope)); record-level counting reads `record.bed` or `record.gtf` |
-| `te_subfamily.bed` | `subfamily.bed` (phase 4) |
-| `te_locus.bed` | `record.bed` (phase 4) |
-| `te_subfamily.gtf` | `subfamily.gtf` (phase 4) |
-| `te_locus.gtf` | `record.gtf` (phase 4) |
-| `te_locus.locInd` | `.locInd` index built from `record.gtf` by TElocal's own indexer (fixture, phase 5) |
-| `te_subfamily_noExon.saf` | `exon_subtracted/subfamily.saf` in `te_mm39_gene` (phase 8) |
-| `te_context_*.saf` | Deferred to the transcript-context design session after phase 8 |
-| `locus_context.tsv` | Deferred to the transcript-context design session after phase 8 |
-| `rename_map.tsv` | Superseded by `tables/taxonomy_canonical.tsv` (phase 3); the legacy selection is reproducible as the `compat_tetranscripts_mm39` membership |
-| `te_loci.tsv.gz` | `tables/rmsk_records.tsv.gz` (phase 2) |
-| `te_loci.parquet` | `tables/rmsk_records.parquet` (phase 2) |
-| `te_dim.tsv` | `tables/rmsk_taxonomy.tsv` and `tables/universe_summary.tsv` (phase 2) |
-| Legacy `MANIFEST.json` | `MANIFEST.json` with `identity` and `provenance` sections (phase 7) |
-| Legacy `BUILD_ID` | `BUILD_ID` computed from the manifest `identity` section (phase 7) |
-| `ensembl_named/` | `exports/ensembl/` (phase 6) |
+| `te_subfamily.bed` | `subfamily.bed` |
+| `te_locus.bed` | `record.bed` |
+| `te_subfamily.gtf` | `subfamily.gtf` |
+| `te_locus.gtf` | `record.gtf` |
+| `te_locus.locInd` | `.locInd` index built from `record.gtf` by TElocal's own indexer (fixture) |
+| `te_subfamily_noExon.saf` | `exon_subtracted/subfamily.saf` in `te_mm39_gene` |
+| `te_context_*.saf` | Deferred to the transcript-context design session |
+| `locus_context.tsv` | Deferred to the transcript-context design session |
+| `rename_map.tsv` | Superseded by `tables/taxonomy_canonical.tsv`; the legacy selection is reproducible as the `compat_tetranscripts_mm39` membership |
+| `te_loci.tsv.gz` | `tables/rmsk_records.tsv.gz` |
+| `te_loci.parquet` | `tables/rmsk_records.parquet` |
+| `te_dim.tsv` | `tables/rmsk_taxonomy.tsv` and `tables/universe_summary.tsv` |
+| Legacy `MANIFEST.json` | `MANIFEST.json` with `identity` and `provenance` sections |
+| Legacy `BUILD_ID` | `BUILD_ID` computed from the manifest `identity` section |
+| `ensembl_named/` | `exports/ensembl/` |
 
-### Phase 4: UCSC full-interval exports
+### UCSC full-interval exports
 
-Nine exports land under `exports/ucsc/`: eight interspersed files under
+Nine exports reside under `exports/ucsc/`: eight interspersed files under
 `exports/ucsc/interspersed/full/` and the complete-catalog record BED under `exports/ucsc/all_rmsk/full/`.
 The builder accepts an explicit universe and export set, validates the universe in `universes.json`,
-and selects interspersed records through `tables/universe_members.tsv.gz`. Provisional status is a
-class property recoverable by joining names to `rmsk_taxonomy` or records to `universe_members`.
+and selects interspersed records through `tables/universe_members.tsv.gz`. Interspersed provisional
+flags follow each record's raw class and are keyed by `(universe_name, rmsk_record_id)` in
+`tables/universe_members.tsv.gz`.
 
 Every file is uncompressed UTF-8 with LF endings, sorted by its contig column in C-locale
 byte order, start and end numerically, strand, then its own name column in byte order
@@ -607,7 +708,7 @@ or positional unresolved tokens emitted by the GTFs.
 | 8 | `instance` | `instance_alias` | `I\|mm39\|<rmsk_instance_id>` |
 
 Emitted IDs retain UCSC names inside record identities and are namespace-invariant; the same
-registration serves phase 6 namespaces. Rows follow export record order, then the spelling
+registration serves all three namespaces. Rows follow export record order, then the spelling
 order above. Gzip uses the deterministic table serialization above. The mm39 interspersed
 registration has 30,119,592 rows and 3,152,636 distinct instance aliases.
 
@@ -636,11 +737,12 @@ One row per export file, sorted by `export_path`, inventories these columns in o
 | `distinct_features` | int64 | Distinct values of the declared feature identity: BED names, GTF `locus` or STARsolo-profile `gene_id`, and SAF GeneIDs. |
 | `sha256` | text | SHA-256 of the complete emitted file bytes. |
 
-### Consumer contracts (phase 5)
+### Consumer contracts
 
 `tests/run.sh consumers` reports parser and executable support separately. The local checkout
 parsers establish feature identity; executable fixtures establish the stated counting and overlap
-behavior. Generated inputs live under `$TE_TRACKS_REFROOT/fixtures/consumers/`.
+behavior. Each consumer suite run shares a private temporary fixture directory across its checks;
+`TE_TRACKS_CONSUMER_FIXTURES` selects a retained directory.
 `00_tool_inventory.required.py` is reporting-only for executable availability; its in-process import
 self-test verifies exit 1 for a missing symbol and exit 3 for an absent external module.
 Every checkout parser support line reports its declared version and `git describe --tags --always`.
@@ -691,8 +793,8 @@ passes on `0,1,1,0` and fails on every other result. Its annotation dependency i
 MATES resolves
 `record_mates.csv` to its companion correctly; a dotted stem resolves to `record.bed`.
 Its preparation fixture supplies coverage vectors and executes the upstream model-group filter.
-MATES works in `$TE_TRACKS_REFROOT/fixtures/consumers_scratch/mates/` and removes that directory.
-The MATES pair is fixture-only, its index is the fixture roster's ordinal, and a MATES release export waits for a named consumer.
+MATES uses `consumers_scratch/mates/` beside the selected fixture directory and removes that workspace.
+The MATES pair is fixture-only, its index is the fixture roster's ordinal, and a MATES release export requires a named consumer.
 IRescue's five parser `.tsv.gz` files have mtime 0 and an empty gzip filename. TElocal indexes
 are compared by feature tuples across GTF paths.
 The DuckDB registration query verifies identity joins and conserved count totals.
@@ -719,7 +821,7 @@ genes and the host gene. `cellranger count`, chemistry and barcode policy belong
 to the consuming module's recipe. Execution checks report the binary name when
 it is absent from PATH. [RUNBOOK.md](RUNBOOK.md#consumer-environment) gives activation.
 
-### Phase 6: contig namespaces and qualification
+### Contig namespaces and qualification
 
 The release supplies nine files per namespace: eight under
 `exports/<namespace>/interspersed/full/` and `record.bed` under
@@ -774,14 +876,14 @@ and the shared set is nonempty. Exit 1 means a shared contig disagrees in length
 intersection is empty, or an input cannot be read.
 Export completeness against its inventory is the manifest's job.
 
-### Phase 7: identity and publication
+### Identity and publication
 
 `MANIFEST.json` separates build `identity` from builder and validation `provenance`.
 `BUILD_ID = sha256("te-tracks-build-v1\n" + canonical_json(identity))` covers the identity,
 including the complete file inventory with SHA-256 digests. Verified staging builds install
 once into `archive/<BUILD_ID>/`; an atomic replacement selects the single `current` symlink.
 
-### Phase 8: gene child family
+### Gene child family
 
 `te_mm39_gene` pins one verified `te_mm39` parent by full `BUILD_ID`, one gene annotation
 and a versioned policy bundle. The first snapshot uses GENCODE vM37 and keeps the parent's
@@ -838,9 +940,9 @@ rows; the exon union spans 160,549,642 bp.
 `universes.json` and `tables/contig_aliases.tsv` are exact parent copies whose SHA-256 digests
 appear in `identity.copied_inputs`. The child retains the GTF and `source/SOURCES.json`, which
 records assembly, parent family and IDs, the `gene_gtf` source role and policy bundle.
-The transcript-context relation enters a later snapshot after its chr1 and mm39 scaling checks.
+The transcript-context relation requires its chr1 and mm39 scaling checks for snapshot admission.
 
-### Phase 9: acceptance and host runbook
+### Acceptance and host runbook
 
 `docs/RUNBOOK.md` supplies the host build, verification, publication, transfer and recovery
 procedure. `tests/run.sh acceptance --build` builds both families into

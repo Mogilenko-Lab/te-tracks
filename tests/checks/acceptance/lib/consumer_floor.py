@@ -1,4 +1,4 @@
-"""Reproduce the reviewed 50,000-row annotation-load measurements."""
+"""Measure annotation-load memory and time on 50,000 rows."""
 
 import argparse
 import json

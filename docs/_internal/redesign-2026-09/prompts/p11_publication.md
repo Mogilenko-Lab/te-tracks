@@ -13,7 +13,7 @@ covered the text you are reading.
 
 ## Your scope
 
-`docs/RELEASES.md` (284 lines), `docs/PROVENANCE.md` (187 lines) and `docs/RUNBOOK.md` (334 lines).
+`docs/RELEASES.md` (281 lines), `docs/PROVENANCE.md` (192 lines) and `docs/RUNBOOK.md` (398 lines).
 
 These three carry the identity, the pinned inputs and the host procedure. The claims that matter most:
 

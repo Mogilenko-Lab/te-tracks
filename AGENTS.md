@@ -24,6 +24,9 @@ qualification), `acceptance` (both complete acceptance archives), and `acceptanc
 (fresh core and child publication followed by acceptance). Activate the consuming environment
 with `source /workspaces/Meta-Aging/.venv/te-consumers/activate.sh` before consumer qualification.
 Offline consumer qualification sets `TENX_DISABLE_TELEMETRY=1`.
+Each consumer suite run shares a private generated-fixture directory across its checks and removes
+it on exit. `TE_TRACKS_CONSUMER_FIXTURES` selects a retained override; concurrent overrides need
+separate parent directories for the MATES scratch workspace.
 
 The default `TE_TRACKS_REFROOT` is `/workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot`;
 `--refroot DIR` selects another scratch root for any mode and is exported as an absolute path.
@@ -38,15 +41,15 @@ regardless of file mode. A check exit of 0 is pass, 3 is unsupported and any oth
 A failing check makes the runner exit 1, as does an unsupported check whose name ends in
 `.required.sh` or `.required.py`. Bad usage, a missing check directory and a mode with no checks exit 2.
 
-Export `PYTHONDONTWRITEBYTECODE=1` in every shell. Acceptance and the consumer floor probe use
+`tests/run.sh` and `build.sh` export `PYTHONDONTWRITEBYTECODE=1`; export it for direct Python commands.
+Acceptance and the consumer floor probe use
 `${TMPDIR:-$TE_TRACKS_REFROOT/tmp}/te-tracks-<root-hash>/acceptance`, where `root-hash` is the
 first twelve SHA-256 digits of the absolute reference-root path. The runner prints this path;
 `tempfile.mkdtemp` isolates each task and Python `shutil.rmtree` removes its directory.
 Core publication fixtures also honor `TMPDIR`.
 Source refresh is an explicit re-pin decision. Acceptance expectations retain reviewed oracle
 values and prior-output reproduction pins; report deviations for investigation. Sequence mutation reviews and suite runs,
-and capture complete output with exit status. Give concurrent consumer runs separate
-`TE_TRACKS_CONSUMER_FIXTURES` directories.
+and capture complete output with exit status.
 
 ## Review
 

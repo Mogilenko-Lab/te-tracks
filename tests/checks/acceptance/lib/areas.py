@@ -1,4 +1,4 @@
-"""Measure the parked mm39 contracts and their independent reference evidence."""
+"""Measure the mm39 contracts and their independent reference evidence."""
 
 from collections import Counter
 import gzip

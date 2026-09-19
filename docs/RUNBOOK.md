@@ -40,8 +40,8 @@ to check the counting reference's contigs and lengths.
 ## Consumer environment
 
 The consuming module owns the environment recipe at
-`/workspaces/Meta-Aging/01_modules/te-consumers/env/bootstrap.sh`. Its adjacent
-`requirements.txt`, `MANIFEST.tsv`, `pip-freeze.txt` and `python-version.txt`
+`/workspaces/Meta-Aging/01_modules/te-quant/env/bootstrap.sh`. The adjacent files under `te-quant/env/`,
+`requirements.txt`, `MANIFEST.tsv`, `pip-freeze.txt` and `python-version.txt`,
 record the five pinned Python-tool commits, executable archive versions, installed versions and Python.
 The recipe installs the five pinned tool commits and records the installed versions;
 `pip-freeze.txt` describes the qualified installation. Pinning packaging-tool upgrades,
@@ -67,8 +67,8 @@ gawk and DuckDB capabilities run in both environments.
 STARsolo fixtures record Gene/GeneFull EM allocations while asserting identities,
 unique support and molecule conservation. Cellranger qualification runs `mkgtf`
 with TE and host biotypes followed by `mkref --memgb=3` on the tiny genome.
-The `cellranger count` recipe, chemistry, FASTQs and retained-cell policy belong
-to `/workspaces/Meta-Aging/01_modules/te-consumers/recipes/`.
+The consuming module owns pilot counting recipes, chemistry, FASTQs and retained-cell policy
+under `/workspaces/Meta-Aging/01_modules/te-quant/recipes/`.
 
 TEsingle's mate selection, UMI graph and hard ties remain consuming-toolkit
 qualification gates. Stellarscope's parser exposes its right-boundary defect,
@@ -124,7 +124,7 @@ Use `--build` with an empty acceptance root; use `--refroot DIR` to isolate anot
 An absent pair reports `unsupported: run tests/run.sh acceptance --build` and exits 1.
 A selected archive missing an identity file fails. The untouched reference-root replay took
 **54 minutes 33 seconds**, with 11 of 11 checks passing, as recorded in the
-[phase 9b Opus review](_internal/redesign-2026-09/reviews/p9b_opus.md#closing-verification).
+[acceptance review](_internal/redesign-2026-09/reviews/p9b_opus.md#closing-verification).
 
 ## Host build and publication
 
@@ -153,7 +153,7 @@ docker run --rm -it --user "$(id -u):$(id -g)" \
   --env PYTHONDONTWRITEBYTECODE=1 "$TE_TRACKS_IMAGE" bash -leuo pipefail
 ```
 
-The following versions were read from this container. The producer uses
+The table records this container's qualified versions. The producer uses
 `/opt/venvs/base/bin/python3`. Verify the same versions in the host container before building;
 retain the version output beside its image ID.
 
@@ -302,8 +302,8 @@ retains the first installed manifest. Apply the owner-only directory policy to b
 [RELEASES.md](RELEASES.md#transfer-and-recovery) defines the transfer integrity contract.
 
 After interruption, confirm the builder or transfer process has exited. Preserve its log for
-diagnosis, remove its abandoned private staging directory with `shutil.rmtree`, and start a fresh
-complete build or transfer. A complete unselected archive can be verified and selected by ID.
+diagnosis, restore owner write access on its abandoned private staging directories, remove staging
+with `shutil.rmtree`, and start a fresh complete build or transfer. A complete unselected archive can be verified and selected by ID.
 An invalid `current` target requires owner investigation with the damaged archive preserved.
 Check concurrent selection, interrupted copy, disk exhaustion, cross-filesystem refusal and
 consumer ACL access on the host filesystem before pilot adoption.
@@ -323,7 +323,7 @@ Read every input from those resolved paths. A child operation uses its declared
 also verifies that dependency. When combining the two selected families, require that parent
 ID to equal `CORE_ID`; a selection mismatch is resolved by using the child's retained parent.
 Pin `BUILD_ID`, `CATALOG_ID`, annotation and export SHA-256 digests, namespace, universe,
-variant, feature level and key grammar. The 14761 ledger adopts `te_catalog_id` and `te_build_id`.
+variant, feature level and key grammar. The 14761 ledger reserves `te_catalog_id` and `te_build_id` for downstream adoption.
 The bulk featureCounts route reads the child's exon-subtracted SAF. EM routes read unmasked
 record exports and pin the full gene annotation used by their counting reference. For the
 exon-subtracted route, match the gene annotation digest to the child; the current child's
@@ -341,15 +341,15 @@ copy per new build, sort workspace and the verified CRI backup in addition.
 | Child exon subtraction, stage 50 | 881,565,696 | 0.882 GB; 154.376 seconds for subtraction and child export writing, retained in the child manifest’s stage metrics. |
 
 The initial producer measurements are recorded in the
-[milestone 9 rulings](_internal/redesign-2026-09/reviews/m9_rulings.md#observations-that-lost-their-carrier).
-The [phase 9a review prompt](_internal/redesign-2026-09/prompts/p9a_review.md)
+[resource rulings](_internal/redesign-2026-09/reviews/m9_rulings.md#observations-that-lost-their-carrier).
+The [core review prompt](_internal/redesign-2026-09/prompts/p9a_review.md)
 records the earlier complete-build peak near 9 GB,
 so stage-only floors describe their own work. Reserve at least 16 GB resident for a single producer
 and measure the host run's complete peak beside these per-stage figures.
 
-The reviewed 50,000-row head measurements provide the following annotation-load planning floor.
+The 50,000-row head measurements provide the annotation-load planning floor.
 Projections scale the measured cost to all 3,764,949 rows of `record.gtf`.
-The anchors are recorded in the [phase 9a rulings](_internal/redesign-2026-09/reviews/p9a_rulings.md#consumer-annotation-floors-orchestrator-for-the-milestone-5-ruling-h3-anchor);
+The anchors are recorded in the [consumer resource rulings](_internal/redesign-2026-09/reviews/p9a_rulings.md#consumer-annotation-floors-orchestrator-for-the-milestone-5-ruling-h3-anchor);
 the reproduction command below measures the file supplied to it.
 
 | Reader | Resident bytes, 50,000 rows | Seconds | Per row | Full-profile projection |
@@ -381,8 +381,7 @@ The acceptance runner prints the derived path.
 
 Consumer installations pin the following clone commits in the ignored sibling directory. The consuming module's
 `env/MANIFEST.tsv` and the installed `direct_url.json` metadata record the same five Python-tool commits. An alternate installation
-records its exact commit and fixture divergence before adoption; MATES qualification covers its
-isolated adapter. The table is the output of `git describe --tags --always` beside the full commit.
+records its exact commit and fixture divergence before adoption. MATES qualification covers its isolated adapter. The table is the output of `git describe --tags --always` beside the full commit.
 
 | Consumer | git describe | Commit |
 |---|---|---|

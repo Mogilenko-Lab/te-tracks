@@ -68,13 +68,12 @@ The first two tables are stored as gzip files; `rmsk_taxonomy.tsv` is plain text
 Parquet and compressed file bytes remain bound through the inventory to `BUILD_ID`, so a
 serializer or compressor change moves `BUILD_ID` alone. One source-wide RepeatMasker run
 numbers the instances. A new export, universe or taxonomy rule version changes build identity
-while an unchanged catalog keeps its
-catalog identity. The core family has null `parent_build_id` and `parent_catalog_id`.
+while an unchanged catalog keeps its catalog identity. The core family has null `parent_build_id` and `parent_catalog_id`.
 
 The 27 export contracts derive from the export writer's shared contract dictionary and job
 roster, cross-checked against `tables/exports.tsv`: path, namespace, universe, variant, format,
 feature level, identity field, attribute source mapping, selectable levels and coordinate convention.
-Reader key columns and grammars are documented in [OUTPUTS.md](OUTPUTS.md#consumer-contracts-phase-5)
+Reader key columns and grammars are documented in [OUTPUTS.md](OUTPUTS.md#consumer-contracts)
 and asserted by the consumer checks against the exporter's contract table; the identity binds
 what bytes and semantics depend on.
 `universes.schema_version` owns predicate grammar; adding a predicate
@@ -149,8 +148,7 @@ it guarantees atomic visibility. Power-loss durability depends on the host files
 
 Resolve the source `current` once and record its full ID and raw `MANIFEST.json` SHA-256 as the
 transfer-integrity check. Create a fresh directory under the destination family's `.staging/`,
-copy the resolved archive contents
-there, and compare the manifest's raw SHA-256 with the source pin. Run `99_verify.py` on that
+copy the resolved archive contents there, and compare the manifest's raw SHA-256 with the source pin. Run `99_verify.py` on that
 staging directory, then run `release.py install` with the destination root and family.
 An existing identical archive retains its first manifest on convergence; compare the installed
 manifest checksum with the transfer pin before `release.py select`. Keep the source archive
@@ -159,11 +157,10 @@ Parent archives transfer and verify before their children are installed or selec
 The publication checks leave interrupted transfer into staging, readers during selector replacement,
 disk exhaustion during rename, staging on another filesystem and ACL access for consumers to host qualification.
 
-Host publication requires `provenance.builder_git_dirty` to be `false` and proceeds from a fresh
-complete `--root` build; a staging directory left by an
-interruption is for inspection and is removed before republication.
-The owner removes the abandoned directory with `shutil.rmtree(staging_path)` after
-confirming that its builder or transfer process has exited. A missing `MANIFEST.json`
+Host publication requires clean builder provenance and a fresh complete build in private family
+staging, followed by installation and explicit selection. An interrupted staging directory is for inspection and removal before republication.
+After confirming that the builder or transfer process has exited, the owner restores write access
+on the abandoned staging directories and removes staging with `shutil.rmtree`. A missing `MANIFEST.json`
 or truncated table causes a named install refusal and leaves `current` unchanged;
 check 72 exercises the failed-build staging and owner removal. A complete
 unselected archive is a valid state; verify it and select its full ID to finish publication.
@@ -205,13 +202,13 @@ in `ucsc` / `ensembl` / `gencode` respectively.
 
 Reserve additional working space for staging and sorting. The export writer previously measured
 5.5 GB to 6.0 GB resident across in-container builds, including 5,994,254,336 bytes.
-The final phase 9b export writer measured 4,936,556,544 resident bytes, retained in the
+The acceptance export writer measured 4,936,556,544 resident bytes, retained in the
 acceptance core manifest’s `provenance.peak_rss_bytes`. The initial export observation is
-recorded in the [milestone 9 rulings](_internal/redesign-2026-09/reviews/m9_rulings.md#observations-that-lost-their-carrier).
+recorded in the [resource rulings](_internal/redesign-2026-09/reviews/m9_rulings.md#observations-that-lost-their-carrier).
 An earlier complete core rebuild peaked at 9,026,424,832 resident bytes and took 717.201 seconds.
 The final acceptance child's subtraction stage measured 881,565,696 resident bytes and
 154.376 seconds, retained in its manifest’s stage metrics. The initial child observations
-are recorded in the [milestone 9 rulings](_internal/redesign-2026-09/reviews/m9_rulings.md#observations-that-lost-their-carrier).
+are recorded in the [resource rulings](_internal/redesign-2026-09/reviews/m9_rulings.md#observations-that-lost-their-carrier).
 The child payload adds 2,157,717,760 bytes, for 17,459,256,297 payload bytes per retained pair.
 [RUNBOOK.md](RUNBOOK.md#resource-floors-and-consumer-pins) records these producer floors and the
 measured consumer annotation-load floors.
@@ -256,7 +253,7 @@ Transfer the parent dependency first; then transfer, verify and install the chil
 through `RUSAGE_CHILDREN`.
 
 
-## Phase 9b acceptance witness
+## Acceptance witness
 
 The acceptance build publishes into
 `/workspaces/Meta-Aging/_scratch/te-tracks-audit/refroot/acceptance/` and retains the six earlier
@@ -268,14 +265,13 @@ comparison with `refroot/te_mm39/build` and `refroot/te_mm39_gene/build`.
 | `te_mm39` | `5e2a156362cddc58c10ca90a4afee06be53086134a746937de4dc651c63bf813` | `90cc18be5d4ee9342b57b58e4b8ad19e59f9e6b48b9a94bab9db615db1091b5e` |
 | `te_mm39_gene` | `198f39f0ef16875121fa65e1b1301f0d58c894488cc557765ce7f50c57a38bd1` | `90cc18be5d4ee9342b57b58e4b8ad19e59f9e6b48b9a94bab9db615db1091b5e` |
 
-Acceptance compared every table's SHA-256 and both IDs with the development builds: both
-families agree exactly. The check performs that comparison whenever the development build is present.
+Every table's SHA-256 and both IDs agree exactly with the development builds for both families. The check performs that comparison whenever the development build is present.
 A `CATALOG_ID` difference stops for investigation. With an equal `CATALOG_ID` and differing
 `BUILD_ID`, compare the recorded toolchain and payload and publish the host build with this
 in-container build recorded as its content witness. The in-container acceptance manifests record
 revision `51c016243c8991b27f0da112a00d90a815ead929` with `builder_git_dirty: true`.
-That revision advances the prompt's `d28336f` through documentation-only commits; the source
-and configuration bytes retain the phase 9a identities. The owner's clean host build supplies
+That revision follows the prompt's `d28336f` through documentation-only commits; the source
+and configuration bytes retain the qualified core identities. The owner's clean host build supplies
 the production provenance.
 
 The host publisher tightens each family root to 0755 and `archive/` to 2755, with effective ACLs

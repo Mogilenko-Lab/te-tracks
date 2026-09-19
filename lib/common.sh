@@ -1,4 +1,4 @@
-# Shared settings and helpers. Every script sources this first.
+# Keep shell settings consistent across entry points.
 
 # Sort order stays identical across machines and locales.
 export LC_ALL=C
@@ -16,7 +16,7 @@ die()  { printf '[%s] FATAL %s\n' "${SCRIPT_NAME:-te-tracks}" "$*" >&2; exit 1; 
 md5_of() { md5sum "$1" | cut -d' ' -f1; }
 
 # Verify a file against an expected md5. An empty expectation records the observed value.
-verify_md5() {  # verify_md5 <file> <expected|"">
+verify_md5() {
   local f="$1" want="${2:-}" got
   got="$(md5_of "$f")"
   if [ -n "$want" ] && [ "$got" != "$want" ]; then
@@ -25,9 +25,8 @@ verify_md5() {  # verify_md5 <file> <expected|"">
   printf '%s' "$got"
 }
 
-# Download to a .part file and rename on success, so an interrupted fetch leaves a re-runnable
-# state and a later run repeats the download.
-fetch() {  # fetch <url> <dest>
+# Keep interrupted downloads retryable until the destination is complete.
+fetch() {
   local url="$1" dest="$2"
   [ -f "$dest" ] && { log "present: $(basename "$dest")"; return 0; }
   rm -f "$dest.part"

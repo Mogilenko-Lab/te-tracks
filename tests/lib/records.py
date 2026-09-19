@@ -1,4 +1,4 @@
-"""Load phase 2 artifacts against independently authored test schemas."""
+"""Load canonical records against independently authored test schemas."""
 
 import os
 from pathlib import Path

@@ -69,4 +69,57 @@ expect_line 'checks=0 pass=0 fail=0 unsupported=0'
 expect_line 'no checks registered for mode acceptance'
 expect_exit 2
 expect_line 'usage: tests/run.sh <core|consumers|acceptance> [--refroot DIR]' stderr
+python3 - "$scratch" <<'PY'
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+root = Path(sys.argv[1])
+checks = root / "tests/checks/consumers"
+checks.mkdir()
+(checks / "probe_module.py").write_text("value = 1\n")
+(checks / "10_probe.py").write_text('''import json, os, time
+from pathlib import Path
+import probe_module
+assert os.environ["PYTHONDONTWRITEBYTECODE"] == "1"
+fixture = Path(os.environ["TE_TRACKS_CONSUMER_FIXTURES"])
+fixture.mkdir(parents=True, exist_ok=True)
+(fixture / "owner").write_text(os.environ["PROBE_NAME"])
+probe = Path(os.environ["PROBE_ROOT"])
+(probe / os.environ["PROBE_NAME"]).write_text(json.dumps(str(fixture)))
+deadline = time.monotonic() + 30
+while len(list(probe.iterdir())) < int(os.environ["PROBE_COUNT"]):
+    assert time.monotonic() < deadline, "concurrent runner did not start"
+    time.sleep(0.05)
+assert (fixture / "owner").read_text() == os.environ["PROBE_NAME"]
+''')
+(checks / "20_reuse.py").write_text('''import os
+from pathlib import Path
+assert (Path(os.environ["TE_TRACKS_CONSUMER_FIXTURES"]) / "owner").read_text() == os.environ["PROBE_NAME"]
+''')
+probe = root / "probe"
+probe.mkdir()
+env = {key: value for key, value in os.environ.items()
+       if key not in {"TE_TRACKS_CONSUMER_FIXTURES", "PYTHONDONTWRITEBYTECODE"}}
+env.update(TMPDIR=str(root), PROBE_ROOT=str(probe), PROBE_COUNT="2")
+command = ["bash", str(root / "tests/run.sh"), "consumers", "--refroot", str(root)]
+runs = [subprocess.Popen(command, env={**env, "PROBE_NAME": name},
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        for name in ("first", "second")]
+for run in runs:
+    stdout, stderr = run.communicate(timeout=60)
+    assert run.returncode == 0, stdout + stderr
+paths = [Path(json.loads((probe / name).read_text())) for name in ("first", "second")]
+assert paths[0] != paths[1] and paths[0].parent != paths[1].parent
+assert all(not path.parent.parent.exists() for path in paths), paths
+override = root / "retained/consumers"
+result = subprocess.run(command, env={**env, "PROBE_NAME": "override", "PROBE_COUNT": "1",
+    "TE_TRACKS_CONSUMER_FIXTURES": str(override)}, capture_output=True, text=True, timeout=60)
+assert result.returncode == 0, result.stdout + result.stderr
+assert (override / "owner").read_text() == "override"
+assert not list(root.rglob("__pycache__"))
+PY
 printf '%s\n' 'runner statuses, required checks, diagnostics, dangling symlinks and usage exits pass'
+printf '%s\n' 'concurrent consumer runs isolate and reuse fixtures, clean private directories, retain overrides and suppress bytecode'
