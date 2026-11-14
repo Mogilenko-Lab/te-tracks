@@ -30,6 +30,7 @@ Core paths are relative to `te_mm39/archive/<BUILD_ID>/`; child paths belong to 
 | `tables/taxonomy_dfam.tsv`, `tables/taxonomy_dfam_models.tsv`, `tables/dfam_lineage_nodes.tsv`, `tables/dfam_model_clades.tsv` | `interspersed` | Consumer annotation and age-tier policies | Join pinned Dfam models, rank statuses and complete curated clade paths to names. |
 | `tables/export_feature_members.tsv.gz`, `tables/exports.tsv` in each family | Each declared universe / variant | Matrix binding and provenance ledgers | Join measured features through `(universe_name, variant, feature_level, key_grammar)` and verify export digests. |
 | `tables/contig_aliases.tsv`, core `tables/contig_coverage.tsv` | `all_rmsk`, with interspersed coverage | Preflight and namespace readers | Match contig identity, lengths and reference coverage. |
+| Child `tables/record_transcript_context.tsv.gz`, `tables/record_context.tsv.gz` | `all_rmsk` | Reference joins | Derive genic-context labels from stored transcript and gene geometry. |
 | Child `tables/exon_subtraction_status.tsv`, `tables/exon_subtraction_summary.tsv`, `tables/gene_annotation_coverage.tsv` | `all_rmsk`, `interspersed`, `compat_tetranscripts_mm39` | Bulk reference audit | Reconcile retained/removed bases and annotation coverage under the mask. |
 | `source/`, `MANIFEST.json`, `BUILD_ID`, `CATALOG_ID` in each family | Family declaration | Publisher and every consumer | Verify source pins, qualification evidence, immutable bytes and parent dependencies. |
 
@@ -119,6 +120,7 @@ Deferred artifacts and their required evidence appear in the [README](../README.
 | `te_mm39_gene`: `exports/gencode/interspersed/exon_subtracted/subfamily.saf` | delivered, tested |
 | `te_mm39_gene`: `exports/{ucsc,ensembl,gencode}/interspersed/exon_subtracted/taxonomy_triple.saf` | delivered, tested |
 | `te_mm39_gene`: `tables/exon_subtraction_status.tsv` | delivered, tested |
+| `te_mm39_gene`: `tables/record_transcript_context.tsv.gz`, `tables/record_context.tsv.gz` | delivered, tested |
 | `te_mm39_gene`: `exports/{ucsc,ensembl,gencode}/compat_tetranscripts_mm39/exon_subtracted/{subfamily,taxonomy_triple}.saf` | delivered, tested |
 | `te_mm39_gene`: `tables/exon_subtraction_summary.tsv`, `tables/gene_annotation_coverage.tsv` | delivered, tested |
 | `te_mm39_gene`: copied `universes.json`, `tables/contig_aliases.tsv`, registration and export inventory | delivered, tested |
@@ -548,8 +550,8 @@ intervals under its GENCODE vM37 annotation pin. Each emitted feature and block 
 | `te_locus.gtf` | `record.gtf` |
 | `te_locus.locInd` | `.locInd` index built from `record.gtf` by TElocal's own indexer (fixture) |
 | `te_subfamily_noExon.saf` | `exon_subtracted/subfamily.saf` in `te_mm39_gene` |
-| `te_context_*.saf` | Deferred to the transcript-context design session |
-| `locus_context.tsv` | Deferred to the transcript-context design session |
+| `te_context_*.saf` | Delivered as child `tables/record_transcript_context.tsv.gz` |
+| `locus_context.tsv` | Delivered as child `tables/record_context.tsv.gz` |
 | `rename_map.tsv` | Superseded by `tables/taxonomy_canonical.tsv`; the legacy selection is reproducible as the `compat_tetranscripts_mm39` membership |
 | `te_loci.tsv.gz` | `tables/rmsk_records.tsv.gz` |
 | `te_loci.parquet` | `tables/rmsk_records.parquet` |
@@ -886,15 +888,16 @@ once into `archive/<BUILD_ID>/`; an atomic replacement selects the single `curre
 ### Gene child family
 
 `te_mm39_gene` pins one verified `te_mm39` parent by full `BUILD_ID`, one gene annotation
-and a versioned policy bundle. The first snapshot uses GENCODE vM37 and keeps the parent's
-`CATALOG_ID`. Context capability is `not_computed`.
+and a versioned policy bundle. The transcript-geometry snapshot uses GENCODE vM37 and keeps
+the parent's `CATALOG_ID`. Context capability is `transcript_geometry_v1`.
 
 The mask unions every exon on both strands, merging overlapping or touching intervals.
 The policy `all_exons_unstranded_union_v1` retains every positive-length block
 (`min_retained_block_bp = 1`). GTF contigs normalize through the copied `chrom_gencode`
 alias column, including scaffolds; every annotation contig must resolve.
-`min_retained_block_bp` and `context_capability` are declared policy values pinned to `1` and
-`not_computed` in this snapshot, so the build refuses other values and applies no block-size filter.
+`min_retained_block_bp = 1` preserves every positive-length block. The context policy pins
+`start_envelope_upstream_bp = 10000`, `start_envelope_downstream_bp = 2000`,
+`end_envelope_downstream_bp = 10000` and `tie_rule = keep all ties`.
 
 Twelve SAFs occupy
 `exports/{ucsc,ensembl,gencode}/{interspersed,compat_tetranscripts_mm39}/exon_subtracted/{subfamily,taxonomy_triple}.saf`.
@@ -941,6 +944,58 @@ rows; the exon union spans 160,549,642 bp.
 appear in `identity.copied_inputs`. The child retains the GTF and `source/SOURCES.json`, which
 records assembly, parent family and IDs, the `gene_gtf` source role and policy bundle.
 The transcript-context relation requires its chr1 and mm39 scaling checks for snapshot admission.
+
+### Transcript context tables
+
+`tables/record_transcript_context.tsv.gz` has one row per selected parent record × transcript pair.
+`tables/record_context.tsv.gz` has one row per parent catalog record, across all universes.
+Both join through `rmsk_record_id`; `export_feature_members.tsv.gz` binds exported features to records.
+Rows follow parent record order, then transcript ID byte order within each record.
+Booleans serialize as `true` and `false`; unavailable geometry serializes as `NA`.
+
+Pair columns appear in this order:
+
+| Columns | Meaning |
+|---|---|
+| `rmsk_record_id`, `transcript_id`, `gene_id` | Record key and versioned annotation IDs |
+| `gene_type`, `transcript_type` | Annotation biotypes |
+| `ensembl_canonical`, `mrna_start_nf` | Transcript tags `Ensembl_canonical` and `mRNA_start_NF` |
+| `strand_relation` | `same` or `opposite` relative to the record |
+| `pair_status` | Semicolon-joined reasons in order: `body`, `nearest_start`, `nearest_end`, `nearest_exon_edge`, `start_envelope`, `end_envelope` |
+| `exon_bp`, `intron_bp`, `utr5_bp`, `utr3_bp` | Bases in transcript exon union, body outside exons, 5′ UTR and 3′ UTR |
+| `body_bp`, `gene_body_bp` | Bases in transcript body and gene span |
+| `dist_start`, `dist_end` | Signed closest-base distance to oriented transcript endpoints |
+| `dist_exon_edge` | Unsigned closest-base distance to transcript exons; exon overlap gives zero |
+| `dist_gene_start`, `dist_gene_end` | Signed closest-base distance to oriented gene endpoints |
+
+Endpoints are the first and last inclusive bases in transcription orientation. Distance is zero
+when the record contains the endpoint, negative upstream and positive downstream; an adjacent
+base has magnitude one. Nearest selections compare absolute distances and retain every tied
+transcript. Every transcript with exon overlap ties at exon distance zero.
+Envelopes include their endpoints: start positions span signed offsets −10000 through +2000;
+end positions span 0 through +10000. Overlap with any envelope base selects the pair.
+Exon and UTR overlaps use interval unions within each transcript. Generic GTF `UTR` rows before
+and after the CDS bounds become oriented 5′ and 3′ UTRs; explicit `five_prime_utr` and
+`three_prime_utr` rows carry their annotated orientation. Transcripts without those UTRs have
+zero UTR overlap. Gene and transcript rows define their respective body spans.
+
+Roll-up columns appear in this order:
+
+| Columns | Meaning |
+|---|---|
+| `rmsk_record_id`, `length_bp` | Parent record key and inclusive length |
+| `annotated` | Contig has annotation rows, matching `gene_annotation_coverage.tsv` |
+| `exon_bp_any` | Bases in the unstranded exon union; equals mask `removed_bp` on annotated contigs |
+| `body_frac_max` | Maximum overlap with one gene span divided by record length; zero for no overlap |
+| `body_genes_same`, `body_genes_opposite` | Distinct overlapping gene spans by strand relation |
+| `nearest_exon_edge_bp` | Unsigned distance to any transcript exon; exon overlap gives zero |
+| `nearest_gene_end_bp`, `nearest_gene_end_strand` | Unsigned distance to the nearest gene entirely upstream of the record in gene orientation, and its strand relation |
+| `nearest_gene_start_bp`, `nearest_gene_start_strand` | Unsigned distance to the nearest gene entirely downstream of the record in gene orientation, and its strand relation |
+
+Outside-gene endpoint queries use all gene spans on the contig. Tied strand relations serialize
+as `same;opposite`, with each relation present once. An absent eligible endpoint gives `NA` for
+both distance and strand. Unannotated contigs have `annotated = false` and `NA` in all nine
+geometry columns. Consumer labels and distance thresholds are derived views over these tables.
 
 ### Acceptance and host runbook
 

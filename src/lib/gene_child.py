@@ -35,16 +35,24 @@ RECORD_COLUMNS = ["rmsk_record_id", "chrom", "start_1", "end_1", "strand", "rmsk
 
 
 def policy_bundle(config):
-    return {"exon_mask_policy": config["EXON_MASK_POLICY"], "mask_definition": MASK_SENTENCE,
+    policy = {"exon_mask_policy": config["EXON_MASK_POLICY"], "mask_definition": MASK_SENTENCE,
             "min_retained_block_bp": int(config["MIN_RETAINED_BLOCK_BP"]),
             "context_capability": config["CONTEXT_CAPABILITY"]}
+    if policy["context_capability"] == "transcript_geometry_v1":
+        from transcript_context import CONTEXT_POLICY
+        policy.update({key: int(config[key.upper()]) if isinstance(value, int) else config[key.upper()]
+                       for key, value in CONTEXT_POLICY.items()})
+    return policy
 
 
 def validate_policy(policy):
     from manifest import require
-    require(policy == {"exon_mask_policy": "all_exons_unstranded_union_v1",
-                       "mask_definition": MASK_SENTENCE, "min_retained_block_bp": 1,
-                       "context_capability": "not_computed"}, "unsupported gene policy bundle")
+    from transcript_context import CONTEXT_POLICY
+    legacy = {"exon_mask_policy": "all_exons_unstranded_union_v1",
+              "mask_definition": MASK_SENTENCE, "min_retained_block_bp": 1,
+              "context_capability": "not_computed"}
+    geometry = {**legacy, "context_capability": "transcript_geometry_v1", **CONTEXT_POLICY}
+    require(policy in (legacy, geometry), "unsupported gene policy bundle")
 
 
 def write_sources(build_dir, parent_dir, config):
@@ -227,9 +235,11 @@ def write_block_exports(parent_dir, child_dir, universe, variant, blocks, roster
         distinct[(universe, level)].update(members.emitted_feature_id.unique())
 
 
-def build_child(parent_dir, child_dir, gtf, universes=CHILD_UNIVERSES, variant=VARIANT, roster=CHILD_ROSTER):
+def build_child(parent_dir, child_dir, gtf, universes=CHILD_UNIVERSES, variant=VARIANT, roster=CHILD_ROSTER, policy=None):
     """Stream the complete catalog into status, summaries, SAFs and block registration."""
     parent_dir, child_dir = Path(parent_dir), Path(child_dir)
+    if policy is not None:
+        validate_policy(policy)
     predicates = selections(parent_dir, universes)
     mask, coverage = annotation_mask(gtf, child_dir / "tables/contig_aliases.tsv")
     write_tsv(coverage, child_dir / "tables/gene_annotation_coverage.tsv")
@@ -280,6 +290,9 @@ def build_child(parent_dir, child_dir, gtf, universes=CHILD_UNIVERSES, variant=V
                     raise ValueError(f"namespace rows differ: {target}")
                 inventory.append({**row, "export_path": target, "namespace": namespace, "sha256": digest})
     write_inventory(child_dir, inventory)
+    if policy and policy["context_capability"] == "transcript_geometry_v1":
+        from transcript_context import write_context
+        write_context(parent_dir, child_dir, gtf, policy)
     print(summary_frame(totals).to_csv(sep="\t", index=False), end="", flush=True)
 
 
@@ -427,6 +440,11 @@ def verify_products(child_dir, parent_dir, identity, emit):
         require(count == registered_count and digest % digest_modulus
                 == registration_digests[(universe, level)][row["namespace"]], content_error)
         require(ordered, order_error)
+    if identity["policy_bundle"]["context_capability"] == "transcript_geometry_v1":
+        from transcript_context import verify_context
+        verify_context(child_dir, parent_dir,
+                       child_dir / source_path(identity["build_sources"]["gene_gtf"]), identity["policy_bundle"])
+        emit("ok transcript context: complete relation and record geometry")
     emit("ok child registration: every parent key, feature and ordered retained block")
     emit("ok child status: complete catalog conservation and summary")
     emit(f"ok annotation coverage: {int(coverage.annotated.sum())} annotated contigs of {len(coverage)}")
@@ -456,7 +474,7 @@ def main():
             require(sources["policy_bundle"] == policy_bundle(config), "configured gene policy differs")
             build_child(args.parent_dir, args.build_dir,
                         args.build_dir / source_path(sources["sources"]["gene_gtf"]),
-                        config["CHILD_UNIVERSES"].split())
+                        config["CHILD_UNIVERSES"].split(), policy=policy_bundle(config))
     except (ValueError, KeyError, TypeError, OSError, StopIteration) as error:
         parser.exit(1, f"gene_child: {error}\n")
 
