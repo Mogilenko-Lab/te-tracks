@@ -49,6 +49,8 @@ The first seven rows give suffixes below `exports/<contig_namespace>/<universe>/
 | `full/{subfamily,taxonomy_triple}.saf` | `interspersed` | featureCounts: full-interval sensitivity counts |
 | Child `exon_subtracted/{subfamily,taxonomy_triple}.saf` | `interspersed`; `compat_tetranscripts_mm39` for legacy reproduction | The bulk featureCounts product: RNA counts over exon-disjoint sequence |
 | `all_rmsk/full/record.bed` | `all_rmsk` | The interval catalog a chromatin-accessibility ledger keys on |
+| Child `tables/record_transcript_context.tsv.gz` | `all_rmsk` | Reference joins: transcript overlap, strand, flags and endpoint distances for consumer context labels |
+| Child `tables/record_context.tsv.gz` | `all_rmsk` | Reference joins: per-record exon support, gene-body overlap and nearest outside gene endpoints |
 | `tables/taxonomy_dfam.tsv` and normalized companions | `interspersed` | Aggregate reporting: lineage, rank and clade vocabulary joined to names |
 
 Expectation-maximization routes take the unmasked record exports with the full gene annotation.
@@ -66,7 +68,6 @@ They do not settle whether a copy transcribes from its own promoter, whether it 
 | Artifact | Status | Evidence for the next decision |
 |---|---|---|
 | hg38 catalog and exports | deferred | Source pins, reviewed class census, packaged-file reconciliation and source-wide instance numbering or a contig-scoped key. |
-| Transcript-context relation | deferred | ADR 9 geometry, transcript flags and tied-distance cases; chr1 then whole-mm39 scaling measurements. |
 | ERV reconstruction units | deferred | LTR–internal candidate membership, strand/gap parameters, source instances and validated structural examples. |
 | Age tiers | deferred | Pinned Dfam clade paths, record/median divergence and explicit consumer thresholds; structural evidence for full-length/ORF claims. |
 | Stranded exon-mask companion | deferred | Chemistry pilot establishing the RNA-sense mate and strand-specific counting behavior. |
@@ -102,7 +103,7 @@ An absent archive yields exit 1 and `unsupported: run tests/run.sh acceptance --
 `acceptance --build` requires an empty `$TE_TRACKS_REFROOT/acceptance/` and publishes a fresh core/child pair there; `acceptance` checks that pair again, with development archives retained.
 The offline build uses `TE_TRACKS_SOURCE_CACHE=/workspaces/Meta-Aging/_scratch/te-tracks-audit/source`.
 [Acceptance anchors](tests/expectations/mm39/README.md) name independent census evidence; the [consumer environment](docs/RUNBOOK.md#consumer-environment) gives activation and outcomes with and without executable shims.
-The qualified test surface has 28 core passes, 11 acceptance passes, and 16 consumer checks with 15 passes and one unsupported Stellarscope boundary check; all three commands exit 0.
+The qualified test surface has 30 core passes, 11 acceptance passes, and 16 consumer checks with 15 passes and one unsupported Stellarscope boundary check; all three commands exit 0.
 Core covers runner prerequisites, parsing, source qualification, records, instances, universes, taxonomy (30–34), exports and matrix binding (40–43), contigs (60–62), publication (70–73) and gene subtraction and dependencies (80–83).
 Consumer runs share private generated fixtures across checks; `TE_TRACKS_CONSUMER_FIXTURES` selects a retained override.
 `tests/run.sh` and `build.sh` disable Python bytecode writes.

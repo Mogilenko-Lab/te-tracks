@@ -35,9 +35,9 @@ Additional adapters enter a release together with a named consumer and a passing
 
 `te_<assembly>_gene` publishes immutable snapshots pinning one parent core by full `BUILD_ID`,
 one gene annotation by digest and one versioned policy bundle (mask, minimum retained block,
-context capability and a context envelope upon qualification), with the parent's `CATALOG_ID`.
+context capability and context envelopes), with the parent's `CATALOG_ID`.
 Consumers match the snapshot's annotation digest to their counting annotation; a mismatch requires
-documented geometry reconciliation or another snapshot. The delivered child pins GENCODE vM37;
+documented geometry reconciliation or another snapshot. The delivered child pins GENCODE vM37 and computes `transcript_geometry_v1`;
 the deferred 10x 2024-A child awaits the digest of the filtered GENCODE vM33 annotation used for
 the current single-cell counts and geometry reconciliation.
 Each child carries an exact, digest-verified copy of the parent's contig alias and length table,
@@ -96,17 +96,21 @@ to the joint counting run.
 
 ## 9. Transcript context is geometry
 
-The deferred transcript-context design specifies a sparse record-by-transcript geometry relation with per-pair status and a
-per-record roll-up, carrying exon, intron and UTR overlap, relative strand, and signed closest-base
-distance to each transcript's start and end, with gene-body distance beside transcript distance
-so consumers can derive their own labels.
-The proposed relation covers body overlaps, the nearest start, end and exon edge on the record's contig with ties
-kept, and records overlapping a window from 10 kb upstream to 2 kb downstream of an annotated
-transcript start; narrower promoter policies are consumer filters on the stored distance.
-The proposed relation records `Ensembl_canonical` and `mRNA_start_NF` status for each transcript
-so consumers can exclude incomplete starts.
-The first child snapshot declares context `not_computed`. The relation requires the chr1 then
-mm39 scaling gate for snapshot admission. Consuming ledgers key on `te_catalog_id` and `te_build_id`.
+The `transcript_geometry_v1` snapshot publishes `record_transcript_context.tsv.gz`, a sparse
+record-by-transcript geometry relation, and `record_context.tsv.gz`, a complete per-record roll-up.
+The relation carries exon, intron and UTR overlap, relative strand, signed closest-base distances
+to transcript and gene starts and ends, and `Ensembl_canonical` and `mRNA_start_NF` tags.
+Consumers derive genic-context labels from stored geometry.
+Pairs cover every transcript body overlap, nearest transcript start, end and exon with all ties,
+and overlaps with oriented start and end envelopes. Start envelopes extend 10,000 bp upstream
+and 2,000 bp downstream; end envelopes extend 10,000 bp downstream. These values and
+`tie_rule = keep all ties` belong to the pinned policy bundle. Consumer thresholds belong to views.
+The roll-up counts distinct overlapping gene bodies by strand and preserves both strand relations
+for a tied nearest outside gene endpoint. Unannotated contigs retain record rows with NA geometry.
+[OUTPUTS.md](OUTPUTS.md#transcript-context-tables) defines endpoints, ties and serialization.
+Snapshot admission measures chr1 then mm39 wall time, peak memory and both table row counts.
+The earlier `not_computed` snapshots remain verifiable. Consuming ledgers key on
+`te_catalog_id` and `te_build_id`.
 
 ## 10. Records, instances and insertions
 
@@ -193,10 +197,8 @@ Deferred work names the evidence its next decision needs.
   reconstruction; validated LTR–internal membership defines the unit.
 - hg38: admission after mm39 requires source pins and packaged-file reconciliation, using the
   shared schema, class-census gate and config shape.
-- Transcript context: section 9 defines the relation and its chr1 then mm39 scaling gate.
 - Stranded mask companion: the chemistry pilot establishes which mate is RNA-sense before
   admission of `all_exons_stranded_union_v1` beside the default mask.
-- TES-side window: evidence of need from the 3′ pilot qualifies a context envelope.
 - Instance-level STARsolo profile: mixed-name, mixed-strand, gap and junction tests qualify its
   feature grammar.
 - Consumer pilots: barcode/empty-cell policy, chemistry, paired-mate and UMI handling,

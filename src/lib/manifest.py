@@ -282,7 +282,9 @@ def verify_export_contracts(build_dir, identity, entries, lines):
 
 
 CHILD_CONFIG_KEYS = ["FAMILY", "PARENT_FAMILY", "GENE_GTF_URL", "GENE_GTF_MD5", "GENE_ANNOTATION_NAME",
-                     "EXON_MASK_POLICY", "MIN_RETAINED_BLOCK_BP", "CONTEXT_CAPABILITY", "CHILD_UNIVERSES"]
+                     "EXON_MASK_POLICY", "MIN_RETAINED_BLOCK_BP", "CONTEXT_CAPABILITY", "CHILD_UNIVERSES",
+                     "START_ENVELOPE_UPSTREAM_BP",
+                     "START_ENVELOPE_DOWNSTREAM_BP", "END_ENVELOPE_DOWNSTREAM_BP", "TIE_RULE"]
 CHILD_IDENTITY_KEYS = {"parent_family", "copied_inputs", "gene_annotation", "policy_bundle", "child_universes"}
 INHERITED_KEYS = ("catalog", "species", "assembly", "declared_assembly", "contig_set_sha256",
                   "universes", "taxonomy_rule_version")
@@ -398,6 +400,9 @@ def child_identity_from_payload(build_dir, config, entries, lines, parent_dir=No
     expected_paths = set(COPIED_INPUTS) | {source_path(source), "source/SOURCES.json", "tables/exports.tsv",
         "tables/export_feature_members.tsv.gz", "tables/exon_subtraction_status.tsv",
         "tables/exon_subtraction_summary.tsv", "tables/gene_annotation_coverage.tsv"}
+    if identity["policy_bundle"]["context_capability"] == "transcript_geometry_v1":
+        from transcript_context import CONTEXT_PATHS
+        expected_paths.update(CONTEXT_PATHS)
     observed_paths = {entry["path"] for entry in entries if not entry["path"].startswith("exports/")}
     require(observed_paths == expected_paths, f"child payload roster differs: {sorted(observed_paths ^ expected_paths)}")
     identity.update(build_sources={"gene_gtf": source}, gene_annotation={"name": config["GENE_ANNOTATION_NAME"], **source},
